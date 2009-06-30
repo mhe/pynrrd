@@ -158,24 +158,25 @@ class Nrrd:
         """Parse the fields in the nrrd header"""
         self.fields = {}
         for field, value in self.raw_fields.iteritems():
-            assert field in _NRRD_FIELD_PARSERS, \
-                   "Unexpected field in nrrd header: %s" % (field)
+            if field not in _NRRD_FIELD_PARSERS:
+                raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
             self.fields[field] = _NRRD_FIELD_PARSERS[field](value)
     def _process_fields(self):
         """Process the fields in the nrrd header"""
         # Check whether the required fields are there
         for field in _REQUIRED_NRRD_FIELDS:
-            assert self.fields.has_key(field), \
-                   "Nrrd header misses required field: %s" % (field)
+            if field not in self.fields:
+                raise NrrdError('Nrrd header misses required field: "%s".' % (field))
         # Process the data type
         numpy_typestring = _NRRD2NUMPYTYPESTRING[self.raw_fields['type']]
-        assert numpy.dtype(numpy_typestring).itemsize > 1 and\
-                self.fields.has_key('endian'),\
-                "Nrrd header misses required field: endian"
-        if self.fields['endian'] == 'big':
-            numpy_typestring = '>' + numpy_typestring
-        elif self.fields['endian'] == 'little':
-            numpy_typestring = '<' + numpy_typestring
+        if numpy.dtype(numpy_typestring).itemsize > 1:
+            if 'endian' not in self.fields:
+                raise NrrdError('Nrrd header misses required field: "endian".')
+            if self.fields['endian'] == 'big':
+                numpy_typestring = '>' + numpy_typestring
+            elif self.fields['endian'] == 'little':
+                numpy_typestring = '<' + numpy_typestring
+            
         self._dtype = numpy.dtype(numpy_typestring)
     def get_lineskip(self):
         """Get the lineskip if present, otherwise return 0."""
@@ -237,7 +238,7 @@ class Nrrd:
             tmp_data = bz2file.read()
             self.data = numpy.fromstring(tmp_data, self._dtype)
         else:
-            assert False, "Unsupported encoding."
+            raise NrrdError('Unsupported encoding: "%s"' % self.fields['encoding'])
         # Reshape the data (we need to reverse the order).
         shape_tmp = list(self.fields['sizes'])
         shape_tmp.reverse()
@@ -247,7 +248,7 @@ class Nrrd:
 def main():
     """Main function to test the nrrd module."""
     print "Reading nrrd file header"
-    testnrrd = Nrrd("helix-ten.nhdr")
+    testnrrd = Nrrd("helix-ten-broken.nhdr")
     print testnrrd.data.shape
     print "Done."
 
