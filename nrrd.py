@@ -24,7 +24,7 @@ def _nrrd_read_header_lines(nrrdfile):
         line = nrrdfile.readline()
     return headerlines
 
-_NRRD2NUMPYTYPESTRING = {
+_NRRD_TYPE_MAPPING = {
                  'signed char': 'i1', 
                  'int8': 'i1', 
                  'int8_t': 'i1',
@@ -124,7 +124,7 @@ _NRRD_FIELD_PARSERS = {
 
 #TODO: block size
 # pre-calculate the list of required fields
-_REQUIRED_NRRD_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
+_NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
 class NrrdError(Exception):
     """Exceptions for Nrrd class."""
@@ -164,11 +164,11 @@ class Nrrd:
     def _process_fields(self):
         """Process the fields in the nrrd header"""
         # Check whether the required fields are there
-        for field in _REQUIRED_NRRD_FIELDS:
+        for field in _NRRD_REQUIRED_FIELDS:
             if field not in self.fields:
                 raise NrrdError('Nrrd header misses required field: "%s".' % (field))
         # Process the data type
-        numpy_typestring = _NRRD2NUMPYTYPESTRING[self.raw_fields['type']]
+        numpy_typestring = _NRRD_TYPE_MAPPING[self.raw_fields['type']]
         if numpy.dtype(numpy_typestring).itemsize > 1:
             if 'endian' not in self.fields:
                 raise NrrdError('Nrrd header misses required field: "endian".')
@@ -252,4 +252,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
