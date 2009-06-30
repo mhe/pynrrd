@@ -120,8 +120,10 @@ nrrdFieldParsers = {
     'space dimension': int,
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
     'space origin': nrrdVector,
-    'space directions': lambda fieldValue: [optionalNrrdVector(x) for x in fieldValue.split(' ')],
-    'measurement frame': lambda fieldValue: [nrrdVector(x) for x in fieldValue.split(' ')],
+    'space directions': lambda fieldValue:
+                        [optionalNrrdVector(x) for x in fieldValue.split(' ')],
+    'measurement frame': lambda fieldValue:
+                        [nrrdVector(x) for x in fieldValue.split(' ')],
 }
 
 #TODO: block size
@@ -133,11 +135,16 @@ class nrrd:
     def __init__(self,filename):
         self.filename = filename
         self.filehandle = open(filename,'rb')
-        rawHeaderLines = [line.strip() for line in nrrdReadHeaderLines(self.filehandle)]
+        rawHeaderLines = [line.strip() for line in
+                          nrrdReadHeaderLines(self.filehandle)]
         headerLines = filter(lambda x: x[0] != '#',rawHeaderLines)
         self.version = headerLines[0]
-        self.rawFields = dict(filter(lambda x: len(x)==2,[line.split(': ',1) for line in headerLines]))
-        self.keyvalue = dict(filter(lambda x: len(x)==2,[line.split(':=',1) for line in headerLines]))
+        self.rawFields = dict(
+                          filter(lambda x: len(x)==2,
+                                 [line.split(': ',1) for line in headerLines]))
+        self.keyvalue = dict(
+                         filter(lambda x: len(x)==2,
+                                [line.split(':=',1) for line in headerLines]))
         self.parseFields()
         self.processFields()
         self.readData(self.filehandle)
@@ -145,15 +152,19 @@ class nrrd:
     def parseFields(self):
         self.fields = {}
         for field,value in self.rawFields.iteritems():
-            assert field in nrrdFieldParsers, "Unexpected field in nrrd header: %s" % (field)
+            assert field in nrrdFieldParsers,\
+                   "Unexpected field in nrrd header: %s" % (field)
             self.fields[field] = nrrdFieldParsers[field](value)
     def processFields(self):
         # Check whether the required fields are there
         for field in requiredNrrdFields:
-            assert self.fields.has_key(field), "Nrrd header misses required field: %s" % (field)
+            assert self.fields.has_key(field),\
+                   "Nrrd header misses required field: %s" % (field)
         # Process the data type
         numpyTypeString = nrrd2numpyTypeString[self.rawFields['type']]
-        assert numpy.dtype(numpyTypeString).itemsize > 1 and self.fields.has_key('endian'), "Nrrd header misses required field: endian"
+        assert numpy.dtype(numpyTypeString).itemsize > 1 and\
+                self.fields.has_key('endian'),\
+                "Nrrd header misses required field: endian"
         if self.fields['endian'] == 'big':
             numpyTypeString = '>' + numpyTypeString
         elif self.fields['endian'] == 'little':
@@ -191,7 +202,8 @@ class nrrd:
         datafilehandle = filehandle
         if datafile:
             datafilehandle = open(datafile,'rb')
-        totalNumBytes = self.dtype.itemsize * numpy.array(self.fields['sizes']).prod()
+        totalNumBytes = self.dtype.itemsize *\
+                        numpy.array(self.fields['sizes']).prod()
         if self.fields['encoding'] == 'raw':
             if byteskip == -1:
                 datafilehandle.seek(-totalNumBytes,2)
@@ -200,18 +212,20 @@ class nrrd:
                     datafilehandle.readline()
                 datafilehandle.read(byteskip)
             self.data = numpy.fromfile(datafilehandle,self.dtype)        
-        elif self.fields['encoding'] == 'gzip' or self.fields['encoding'] == 'gz':
+        elif self.fields['encoding'] == 'gzip' or\
+             self.fields['encoding'] == 'gz':
             self.gzipHandler = gzip.GzipFile(fileobj=datafilehandle)
-            # unfortunately, numpy.fromfile does not support reading from a gzip
-            # stream, so we'll do it like this. I have no idea what the performance
-            # implications are.
+            # Again, unfortunately, numpy.fromfile does not support
+            # reading from a gzip stream, so we'll do it like this.
+            # I have no idea what the performance implications are.
             tmpData = self.gzipHandler.read()
             self.data = numpy.fromstring(tmpData,self.dtype)
-        elif self.fields['encoding'] == 'bzip2' or self.fields['encoding'] == 'bz2':
+        elif self.fields['encoding'] == 'bzip2' or\
+             self.fields['encoding'] == 'bz2':
             self.bz2Handler = bz2.BZ2File(fileobj=datafilehandle)
-            # Again, unfortunately, numpy.fromfile does not support reading from a gzip
-            # stream, so we'll do it like this. I have no idea what the performance
-            # implications are.
+            # Again, unfortunately, numpy.fromfile does not support
+            # reading from a gzip stream, so we'll do it like this.
+            # I have no idea what the performance implications are.
             tmpData = self.bz2Handler.read()
             self.data = numpy.fromstring(tmpData,self.dtype)
         else:
