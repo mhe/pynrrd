@@ -227,16 +227,14 @@ class Nrrd:
             # Again, unfortunately, numpy.fromfile does not support
             # reading from a gzip stream, so we'll do it like this.
             # I have no idea what the performance implications are.
-            tmp_data = gzipfile.read()
-            self.data = numpy.fromstring(tmp_data, self._dtype)
+            self.data = numpy.fromstring(gzipfile.read(), self._dtype)
         elif self.fields['encoding'] == 'bzip2' or\
              self.fields['encoding'] == 'bz2':
             bz2file = bz2.BZ2File(fileobj=datafilehandle)
             # Again, unfortunately, numpy.fromfile does not support
             # reading from a gzip stream, so we'll do it like this.
             # I have no idea what the performance implications are.
-            tmp_data = bz2file.read()
-            self.data = numpy.fromstring(tmp_data, self._dtype)
+            self.data = numpy.fromstring(bz2file.read(), self._dtype)
         else:
             raise NrrdError('Unsupported encoding: "%s"' % self.fields['encoding'])
         # Reshape the data (we need to reverse the order).
