@@ -9,28 +9,22 @@ Created by Maarten Everts on 2009-06-26.
 Copyright (c) 2009 University of Groningen. All rights reserved.
 """
 
-import sys
-import os
-import unittest
 import numpy
 import gzip
 import bz2
 
-def nrrdReadHeaderLines(nrrdFile):
-    line = nrrdFile.readline()
+def _nrrd_read_header_lines(nrrdfile):
+    """Read header lines from a .nrrd/.nhdr file."""
+    line = nrrdfile.readline()
     assert(line[:-2] == 'NRRD000')
     assert(line[-2] <= '5')
-    headerLines = []
+    headerlines = []
     while line != '\n' and line != '':
-        headerLines.append(line)
-        line = nrrdFile.readline()
-    return headerLines
+        headerlines.append(line)
+        line = nrrdfile.readline()
+    return headerlines
 
-def typestring2dtype(typestring):
-    """Converts a string describing a string to a numpy dtype"""
-    pass
-
-nrrd2numpyTypeString = {
+_NRRD2NUMPYTYPESTRING = {
                  'signed char': 'i1', 
                  'int8': 'i1', 
                  'int8_t': 'i1',
@@ -74,18 +68,20 @@ nrrd2numpyTypeString = {
                  'block': 'V'}
 
 
-def nrrdVector(inp):
+def nrrdvector(inp):
+    """Parse a vector from a nrrd header, return a list."""
     assert inp[0] == '(', "Vector should be enclosed by parenthesis."
     assert inp[-1] == ')', "Vector should be enclosed by parenthesis."
     return [float(x) for x in inp[1:-1].split(',')]
 
-def optionalNrrdVector(inp):
+def optional_nrrdvector(inp):
+    """Parse a vector from a nrrd header that can also be none."""
     if (inp == "none"):
         return inp
     else:
-        return nrrdVector(inp)
+        return nrrdvector(inp)
 
-nrrdFieldParsers = {
+_NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
     'sizes': lambda fieldValue: [int(x) for x in fieldValue.split(' ')],
@@ -119,132 +115,142 @@ nrrdFieldParsers = {
     'space': str,
     'space dimension': int,
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'space origin': nrrdVector,
+    'space origin': nrrdvector,
     'space directions': lambda fieldValue:
-                        [optionalNrrdVector(x) for x in fieldValue.split(' ')],
+                        [optional_nrrdvector(x) for x in fieldValue.split(' ')],
     'measurement frame': lambda fieldValue:
-                        [nrrdVector(x) for x in fieldValue.split(' ')],
+                        [nrrdvector(x) for x in fieldValue.split(' ')],
 }
 
 #TODO: block size
 # pre-calculate the list of required fields
-requiredNrrdFields = ['dimension','type','encoding','sizes']
+_REQUIRED_NRRD_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
+
+class NrrdError(Exception):
+    """Exceptions for Nrrd class."""
+    pass
 
 
-class nrrd:
-    def __init__(self,filename):
-        self.filename = filename
-        self.filehandle = open(filename,'rb')
-        rawHeaderLines = [line.strip() for line in
-                          nrrdReadHeaderLines(self.filehandle)]
-        headerLines = filter(lambda x: x[0] != '#',rawHeaderLines)
-        self.version = headerLines[0]
-        self.rawFields = dict(
-                          filter(lambda x: len(x)==2,
-                                 [line.split(': ',1) for line in headerLines]))
-        self.keyvalue = dict(
-                         filter(lambda x: len(x)==2,
-                                [line.split(':=',1) for line in headerLines]))
-        self.parseFields()
-        self.processFields()
-        self.readData(self.filehandle)
-        # self.filehandle.close()
-    def parseFields(self):
+class Nrrd:
+    """An all-python (and numpy) implementation for nrrd files.
+    See http://teem.sourceforge.net/nrrd/format.html for the specification."""
+    def __init__(self, filename):
         self.fields = {}
-        for field,value in self.rawFields.iteritems():
-            assert field in nrrdFieldParsers,\
+        self.data = numpy.zeros(0)
+        self._dtype = None
+        filename = filename
+        filehandle = open(filename,'rb')
+        raw_headerlines = [line.strip() for line in
+                          _nrrd_read_header_lines(filehandle)]
+        headerlines = [line for line in raw_headerlines if line[0] != '#']
+        self.version = headerlines[0]
+        self.raw_fields = dict((splitline for splitline in 
+                                [line.split(': ', 1) for line in headerlines]
+                                if len(splitline)==2))
+        self.keyvalue = dict((splitline for splitline in 
+                                [line.split(':=', 1) for line in headerlines]
+                                if len(splitline)==2))
+        self._parse_fields()
+        self._process_fields()
+        self.read_data(filehandle)
+        filehandle.close()
+    def _parse_fields(self):
+        """Parse the fields in the nrrd header"""
+        self.fields = {}
+        for field, value in self.raw_fields.iteritems():
+            assert field in _NRRD_FIELD_PARSERS, \
                    "Unexpected field in nrrd header: %s" % (field)
-            self.fields[field] = nrrdFieldParsers[field](value)
-    def processFields(self):
+            self.fields[field] = _NRRD_FIELD_PARSERS[field](value)
+    def _process_fields(self):
+        """Process the fields in the nrrd header"""
         # Check whether the required fields are there
-        for field in requiredNrrdFields:
-            assert self.fields.has_key(field),\
+        for field in _REQUIRED_NRRD_FIELDS:
+            assert self.fields.has_key(field), \
                    "Nrrd header misses required field: %s" % (field)
         # Process the data type
-        numpyTypeString = nrrd2numpyTypeString[self.rawFields['type']]
-        assert numpy.dtype(numpyTypeString).itemsize > 1 and\
+        numpy_typestring = _NRRD2NUMPYTYPESTRING[self.raw_fields['type']]
+        assert numpy.dtype(numpy_typestring).itemsize > 1 and\
                 self.fields.has_key('endian'),\
                 "Nrrd header misses required field: endian"
         if self.fields['endian'] == 'big':
-            numpyTypeString = '>' + numpyTypeString
+            numpy_typestring = '>' + numpy_typestring
         elif self.fields['endian'] == 'little':
-            numpyTypeString = '<' + numpyTypeString
-        self.dtype = numpy.dtype(numpyTypeString)
-    def getLineSkip(self):
+            numpy_typestring = '<' + numpy_typestring
+        self._dtype = numpy.dtype(numpy_typestring)
+    def get_lineskip(self):
+        """Get the lineskip if present, otherwise return 0."""
         if "lineskip" in self.fields:
             return self.fields["lineskip"]
         elif "line skip" in self.fields:
             return self.fields["line skip"]
         else:
             return 0
-    def getByteSkip(self):
+    def get_byteskip(self):
+        """Get the byteskip if present, otherwise return 0."""
         if "byteskip" in self.fields:
             return self.fields["byteskip"]
         elif "byte skip" in self.fields:
             return self.fields["byte skip"]
         else:
             return 0
-    def getDataFile(self):
+    def get_datafile(self):
+        """Return the datafile if present, otherwise return None."""
         if "datafile" in self.fields:
             return self.fields["datafile"]
         elif "data file" in self.fields:
             return self.fields["data file"]
         else:
             return None                    
-    def readData(self,filehandle):
-        tmpShape = list(self.fields['sizes'])
-        tmpShape.reverse()
-        newShape = tuple(tmpShape)
+    def read_data(self, filehandle):
+        """Read the actual data into a numpy structure."""
         # determine byte and line skip
-        lineskip = self.getLineSkip()
-        byteskip = self.getByteSkip()
-        datafile = self.getDataFile()
+        lineskip = self.get_lineskip()
+        byteskip = self.get_byteskip()
+        datafile = self.get_datafile()
         datafilehandle = filehandle
-        if datafile:
+        if datafile is not None:
             datafilehandle = open(datafile,'rb')
-        totalNumBytes = self.dtype.itemsize *\
+        totalbytes = self._dtype.itemsize *\
                         numpy.array(self.fields['sizes']).prod()
         if self.fields['encoding'] == 'raw':
             if byteskip == -1:
-                datafilehandle.seek(-totalNumBytes,2)
+                datafilehandle.seek(-totalbytes, 2)
             else:
                 for i in range(lineskip):
                     datafilehandle.readline()
                 datafilehandle.read(byteskip)
-            self.data = numpy.fromfile(datafilehandle,self.dtype)        
+            self.data = numpy.fromfile(datafilehandle, self._dtype)        
         elif self.fields['encoding'] == 'gzip' or\
              self.fields['encoding'] == 'gz':
-            self.gzipHandler = gzip.GzipFile(fileobj=datafilehandle)
+            gzipfile = gzip.GzipFile(fileobj=datafilehandle)
             # Again, unfortunately, numpy.fromfile does not support
             # reading from a gzip stream, so we'll do it like this.
             # I have no idea what the performance implications are.
-            tmpData = self.gzipHandler.read()
-            self.data = numpy.fromstring(tmpData,self.dtype)
+            tmp_data = gzipfile.read()
+            self.data = numpy.fromstring(tmp_data, self._dtype)
         elif self.fields['encoding'] == 'bzip2' or\
              self.fields['encoding'] == 'bz2':
-            self.bz2Handler = bz2.BZ2File(fileobj=datafilehandle)
+            bz2file = bz2.BZ2File(fileobj=datafilehandle)
             # Again, unfortunately, numpy.fromfile does not support
             # reading from a gzip stream, so we'll do it like this.
             # I have no idea what the performance implications are.
-            tmpData = self.bz2Handler.read()
-            self.data = numpy.fromstring(tmpData,self.dtype)
+            tmp_data = bz2file.read()
+            self.data = numpy.fromstring(tmp_data, self._dtype)
         else:
             assert False, "Unsupported encoding."
-        # Reshape the data
-        self.data = numpy.reshape(self.data,newShape)
-        # Ok, assume no detached header for now
-        # Another assumption: gzip
-        # tmpShape = list(self.fields['sizes'])
-        # tmpShape.reverse()
-        # newShape = tuple(tmpShape)
+        # Reshape the data (we need to reverse the order).
+        shape_tmp = list(self.fields['sizes'])
+        shape_tmp.reverse()
+        shape_new = tuple(shape_tmp)
+        self.data = numpy.reshape(self.data, shape_new)
 
-class nrrdTests(unittest.TestCase):
-    def setUp(self):
-        pass
+def main():
+    """Main function to test the nrrd module."""
+    print "Reading nrrd file header"
+    testnrrd = Nrrd("helix-ten.nhdr")
+    print testnrrd.data.shape
+    print "Done."
 
 if __name__ == '__main__':
-    #unittest.main()
-    print "Reading nrrd file header"
-    testNrrd = nrrd("helix-ten.nhdr")
-    print "Done."
+    main()
     
