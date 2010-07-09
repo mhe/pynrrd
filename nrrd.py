@@ -13,11 +13,19 @@ import numpy
 import gzip
 import bz2
 
+class NrrdError(Exception):
+    """Exceptions for Nrrd class."""
+    pass
+
 def _nrrd_read_header_lines(nrrdfile):
     """Read header lines from a .nrrd/.nhdr file."""
     line = nrrdfile.readline()
-    assert(line[:-2] == 'NRRD000')
-    assert(line[-2] <= '5')
+    if line[:-2] != 'NRRD000':
+        raise NrrdError('Missing magic "NRRD" word, is this an NRRD file?')
+    # assert(line[:-2] == 'NRRD000')
+    if line[-2] > '5':
+        raise NrrdError('NRRD file version too new for this library.')
+    # assert(line[-2] <= '5')
     headerlines = []
     while line != '\n' and line != '':
         headerlines.append(line)
@@ -126,9 +134,6 @@ _NRRD_FIELD_PARSERS = {
 # pre-calculate the list of required fields
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
-class NrrdError(Exception):
-    """Exceptions for Nrrd class."""
-    pass
 
 
 class Nrrd:
@@ -240,8 +245,7 @@ class Nrrd:
         # Reshape the data (we need to reverse the order).
         shape_tmp = list(self.fields['sizes'])
         shape_tmp.reverse()
-        shape_new = tuple(shape_tmp)
-        self.data = numpy.reshape(self.data, shape_new)
+        self.data = numpy.reshape(self.data, tuple(shape_tmp))
 
 def main():
     """Main function to test the nrrd module."""
