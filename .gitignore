@@ -1,0 +1,6 @@
+*.pyc
+*.nrrd
+*.nhdr
+*.raw
+dist/*
+MANIFEST
