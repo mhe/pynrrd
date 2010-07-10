@@ -22,10 +22,8 @@ def _nrrd_read_header_lines(nrrdfile):
     line = nrrdfile.readline()
     if line[:-2] != 'NRRD000':
         raise NrrdError('Missing magic "NRRD" word, is this an NRRD file?')
-    # assert(line[:-2] == 'NRRD000')
     if line[-2] > '5':
         raise NrrdError('NRRD file version too new for this library.')
-    # assert(line[-2] <= '5')
     headerlines = []
     while line != '\n' and line != '':
         headerlines.append(line)
@@ -107,7 +105,6 @@ _NRRD_FIELD_PARSERS = {
     'byte skip': int,
     'content': str,
     'sample units': str,
-    'sample units': str,
     'datafile': str,
     'data file': str,
     'spacings': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
@@ -130,11 +127,7 @@ _NRRD_FIELD_PARSERS = {
                         [nrrdvector(x) for x in fieldValue.split(' ')],
 }
 
-#TODO: block size
-# pre-calculate the list of required fields
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
-
-
 
 class Nrrd:
     """An all-python (and numpy) implementation for nrrd files.
@@ -222,7 +215,7 @@ class Nrrd:
             if byteskip == -1:
                 datafilehandle.seek(-totalbytes, 2)
             else:
-                for i in range(lineskip):
+                for _ in range(lineskip):
                     datafilehandle.readline()
                 datafilehandle.read(byteskip)
             self.data = numpy.fromfile(datafilehandle, self._dtype)        
