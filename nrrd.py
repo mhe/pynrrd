@@ -2,11 +2,10 @@
 # encoding: utf-8
 """
 nrrd.py
-An all-python (and numpy) implementation for nrrd files.
+An all-python (and numpy) implementation for reading nrrd files.
 See http://teem.sourceforge.net/nrrd/format.html for the specification.
 
-Created by Maarten Everts on 2009-06-26.
-Copyright (c) 2009 University of Groningen. All rights reserved.
+Copyright (c) 2010 Maarten Everts. See LICENSE.
 """
 
 import numpy
