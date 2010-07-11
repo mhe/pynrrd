@@ -1,7 +1,7 @@
-python-nrrd
+pynrrd
 ===========
 
-python-nrrd is a pure-Python module for reading data in [nrrd][1] files into
+pynrrd is a pure-Python module for reading data in [nrrd][1] files into
 numpy arrays.
 
 [1]: http://teem.sourceforge.net/nrrd/
