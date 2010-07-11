@@ -1,4 +1,4 @@
-nrrd-python
+python-nrrd
 ===========
 
 python-nrrd is a pure-Python module for reading data in [nrrd][1] files into
