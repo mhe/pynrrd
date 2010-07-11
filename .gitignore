@@ -3,4 +3,5 @@
 *.nhdr
 *.raw
 dist/*
+build/*
 MANIFEST
