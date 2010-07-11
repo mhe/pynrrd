@@ -23,7 +23,8 @@ Usage
 
     from nrrd import Nrrd
     nrrdfile = Nrrd('mynrrdfile.nrrd')
-    print nrrd.data.shape
+    # nrrdfile.data has the data as a numpy array
+    print nrrdfile.data.shape
 
 Bugs and shortcomings
 ---------------------
