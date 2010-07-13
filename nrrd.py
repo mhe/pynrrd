@@ -239,12 +239,3 @@ class Nrrd:
         shape_tmp.reverse()
         self.data = numpy.reshape(self.data, tuple(shape_tmp))
 
-def main():
-    """Main function to test the nrrd module."""
-    print "Reading nrrd file header"
-    testnrrd = Nrrd("helix-ten-broken.nhdr")
-    print testnrrd.data.shape
-    print "Done."
-
-if __name__ == '__main__':
-    main()
