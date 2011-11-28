@@ -74,18 +74,18 @@ _NRRD_TYPE_MAPPING = {
                  'block': 'V'}
 
 
-def nrrdvector(inp):
+def parse_nrrdvector(inp):
     """Parse a vector from a nrrd header, return a list."""
     assert inp[0] == '(', "Vector should be enclosed by parenthesis."
     assert inp[-1] == ')', "Vector should be enclosed by parenthesis."
     return [float(x) for x in inp[1:-1].split(',')]
 
-def optional_nrrdvector(inp):
+def parse_optional_nrrdvector(inp):
     """Parse a vector from a nrrd header that can also be none."""
     if (inp == "none"):
         return inp
     else:
-        return nrrdvector(inp)
+        return parse_nrrdvector(inp)
 
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
@@ -120,11 +120,11 @@ _NRRD_FIELD_PARSERS = {
     'space': str,
     'space dimension': int,
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'space origin': nrrdvector,
+    'space origin': parse_nrrdvector,
     'space directions': lambda fieldValue:
-                        [optional_nrrdvector(x) for x in fieldValue.split(' ')],
+                        [parse_optional_nrrdvector(x) for x in fieldValue.split(' ')],
     'measurement frame': lambda fieldValue:
-                        [nrrdvector(x) for x in fieldValue.split(' ')],
+                        [parse_nrrdvector(x) for x in fieldValue.split(' ')],
 }
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
@@ -277,57 +277,57 @@ class Nrrd:
         shape_tmp = list(self.fields['sizes'])
         self.data = numpy.reshape(self.data, tuple(shape_tmp),order='F')
         
-def unparse_space_separated_list(fieldValue) :
+def format_space_separated_list(fieldValue) :
     return ' '.join([str(x) for x in fieldValue])
-def unparse_nrrdvector(v) :
+def format_nrrdvector(v) :
     return '('+','.join([str(x) for x in v])+')'
-def unparse_optional_nrrdvector(v):
+def format_optional_nrrdvector(v):
     if (v=='none') :
         return 'none'
     else :
-        return unparse_nrrdvector(v)
-def unparse_str_or_scalar(x):
+        return format_nrrdvector(v)
+def format_str_or_scalar(x):
     if isinstance(x,str) :
         return x
     else :
         return repr(x)
 
-_NRRD_FIELD_UNPARSERS = {
-    'dimension': unparse_str_or_scalar,
-    'type': unparse_str_or_scalar,
-    'sizes': unparse_space_separated_list,
-    'endian': unparse_str_or_scalar,
-    'encoding': unparse_str_or_scalar,
-    'min': unparse_str_or_scalar,
-    'max': unparse_str_or_scalar,
-    'oldmin': unparse_str_or_scalar,
-    'old min': unparse_str_or_scalar,
-    'oldmax': unparse_str_or_scalar,
-    'old max': unparse_str_or_scalar,
-    'lineskip': unparse_str_or_scalar,
-    'line skip': unparse_str_or_scalar,
-    'byteskip': unparse_str_or_scalar,
-    'byte skip': unparse_str_or_scalar,
-    'content': unparse_str_or_scalar,
-    'sample units': unparse_str_or_scalar,
-    'datafile': unparse_str_or_scalar,
-    'data file': unparse_str_or_scalar,
-    'spacings': unparse_space_separated_list,
-    'thicknesses': unparse_space_separated_list,
-    'axis mins': unparse_space_separated_list,
-    'axismins': unparse_space_separated_list,
-    'axis maxs': unparse_space_separated_list,
-    'axismaxs': unparse_space_separated_list,
-    'centerings': unparse_space_separated_list,
-    'labels': unparse_space_separated_list,
-    'units': unparse_space_separated_list,
-    'kinds': unparse_space_separated_list,
-    'space': unparse_str_or_scalar,
-    'space dimension': unparse_str_or_scalar,
-    'space units': unparse_space_separated_list,
-    'space origin': unparse_nrrdvector,
-    'space directions': lambda fieldValue: ' '.join([unparse_optional_nrrdvector(x) for x in fieldValue]),
-    'measurement frame': lambda fieldValue: ' '.join([unparse_optional_nrrdvector(x) for x in fieldValue]),
+_NRRD_FIELD_FORMATTERS = {
+    'dimension': format_str_or_scalar,
+    'type': format_str_or_scalar,
+    'sizes': format_space_separated_list,
+    'endian': format_str_or_scalar,
+    'encoding': format_str_or_scalar,
+    'min': format_str_or_scalar,
+    'max': format_str_or_scalar,
+    'oldmin': format_str_or_scalar,
+    'old min': format_str_or_scalar,
+    'oldmax': format_str_or_scalar,
+    'old max': format_str_or_scalar,
+    'lineskip': format_str_or_scalar,
+    'line skip': format_str_or_scalar,
+    'byteskip': format_str_or_scalar,
+    'byte skip': format_str_or_scalar,
+    'content': format_str_or_scalar,
+    'sample units': format_str_or_scalar,
+    'datafile': format_str_or_scalar,
+    'data file': format_str_or_scalar,
+    'spacings': format_space_separated_list,
+    'thicknesses': format_space_separated_list,
+    'axis mins': format_space_separated_list,
+    'axismins': format_space_separated_list,
+    'axis maxs': format_space_separated_list,
+    'axismaxs': format_space_separated_list,
+    'centerings': format_space_separated_list,
+    'labels': format_space_separated_list,
+    'units': format_space_separated_list,
+    'kinds': format_space_separated_list,
+    'space': format_str_or_scalar,
+    'space dimension': format_str_or_scalar,
+    'space units': format_space_separated_list,
+    'space origin': format_nrrdvector,
+    'space directions': lambda fieldValue: ' '.join([format_optional_nrrdvector(x) for x in fieldValue]),
+    'measurement frame': lambda fieldValue: ' '.join([format_optional_nrrdvector(x) for x in fieldValue]),
 }
 
 
@@ -347,23 +347,23 @@ def write_nrrdfile(filename,fields,data) :
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in fields:
             raise NrrdError('Required field "%s" missing from input to write_nrrdfile.' % (field))
-    # "unparse" all fields (i.e. convert to strings)
-    unparsed_fields={}
+    # Format all fields (i.e., convert to strings)
+    formatted_fields={}
     for field,value in fields.iteritems() :
         if field not in _NRRD_FIELD_UNPARSERS:
             raise NrrdError('Unexpected field passed to write_nrrdfile : "%s".' % field)
         if isinstance(value,str):
-            # only call unparser if value is not already string ...
-            # this makes unparse operation idempotent
-            unparsed_fields[field]=value
+            # only call formatter if value is not already string ...
+            # this makes format operation idempotent
+            formatted_fields[field]=value
         else :
-            unparsed_fields[field]=_NRRD_FIELD_UNPARSERS[field](value)
+            formatted_fields[field]=_NRRD_FIELD_UNPARSERS[field](value)
 
     # I choose not to functionality implied by the following fields, so remove them
-    # from unparsed_fields
+    # from formatted_fields
     undesired_fields=['datafile','data file','lineskip','line skip','byteskip','byte skip']
     for field in undesired_fields :
-        if unparsed_fields.has_key(field) :
+        if formatted_fields.has_key(field) :
             uparsed_fields.pop(field)
             print "note : removed unused field "+field
     
@@ -375,8 +375,8 @@ def write_nrrdfile(filename,fields,data) :
 
     # write the fields in order, this ignores fields not in _NRRD_FIELD_ORDER
     for field in _NRRD_FIELD_ORDER :
-        if unparsed_fields.has_key(field):
-            outline = field+': '+unparsed_fields[field]+'\n'
+        if formatted_fields.has_key(field):
+            outline = field+': '+formatted_fields[field]+'\n'
             outfilehandle.write(outline)
     outfilehandle.write('\n')
 
@@ -389,18 +389,18 @@ def write_nrrdfile(filename,fields,data) :
     
     # now write data directly
     rawdata=data.tostring(order='F');
-    if unparsed_fields['encoding']=='raw' :
+    if formatted_fields['encoding']=='raw' :
         outfilehandle.write(rawdata)
-    elif unparsed_fields['encoding']=='gzip':
+    elif formatted_fields['encoding']=='gzip':
         gzfileobj=gzip.GzipFile(fileobj=outfilehandle)
         gzfileobj.write(rawdata)
         gzfileobj.close()
-#    elif unparsed_fields['encoding']=='bz2':
+#    elif formatted_fields['encoding']=='bz2':
 #        bz2fileobj=bz2.BZ2File(fileobj=outfilehandle)
 #        bz2fileobj.write(rawdata)
 #        bz2fileobj.close()
     else :
-        raise NrrdError('Unsupported encoding: "%s"' % unparsed_fields['encoding'])
+        raise NrrdError('Unsupported encoding: "%s"' % formatted_fields['encoding'])
     
     outfilehandle.close()    
     print "wrote %s"%(filename)
