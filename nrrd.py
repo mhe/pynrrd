@@ -213,36 +213,13 @@ class Nrrd:
                 numpy_typestring = '<' + numpy_typestring
             
         self._dtype = numpy.dtype(numpy_typestring)
-    def get_lineskip(self):
-        """Get the lineskip if present, otherwise return 0."""
-        if "lineskip" in self.fields:
-            return self.fields["lineskip"]
-        elif "line skip" in self.fields:
-            return self.fields["line skip"]
-        else:
-            return 0
-    def get_byteskip(self):
-        """Get the byteskip if present, otherwise return 0."""
-        if "byteskip" in self.fields:
-            return self.fields["byteskip"]
-        elif "byte skip" in self.fields:
-            return self.fields["byte skip"]
-        else:
-            return 0
-    def get_datafile(self):
-        """Return the datafile if present, otherwise return None."""
-        if "datafile" in self.fields:
-            return self.fields["datafile"]
-        elif "data file" in self.fields:
-            return self.fields["data file"]
-        else:
-            return None                    
+
     def read_data(self, filehandle):
         """Read the actual data into a numpy structure."""
         # determine byte and line skip
-        lineskip = self.get_lineskip()
-        byteskip = self.get_byteskip()
-        datafile = self.get_datafile()
+        lineskip = self.fields.get('lineskip', self.fields.get('line skip', 0))
+        byteskip = self.fields.get('byteskip', self.fields.get('byteskip', 0))
+        datafile = self.fields.get("datafile", self.fields.get("data file", None))
         datafilehandle = filehandle
         if datafile is not None:
             datafilehandle = open(datafile,'rb')
