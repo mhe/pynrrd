@@ -12,6 +12,7 @@ Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
 import numpy
 import gzip
 import bz2
+from datetime import datetime
 
 class NrrdError(Exception):
     """Exceptions for Nrrd class."""
@@ -30,49 +31,63 @@ def _nrrd_read_header_lines(nrrdfile):
         line = nrrdfile.readline()
     return headerlines
 
-_NRRD_TYPE_MAPPING = {
-                 'signed char': 'i1', 
-                 'int8': 'i1', 
-                 'int8_t': 'i1',
-                 'uchar': 'u1',
-                 'unsigned char': 'u1',
-                 'uint8': 'u1',
-                 'uint8_t': 'u1',
-                 'short': 'i2',
-                 'short int': 'i2',
-                 'signed short': 'i2',
-                 'signed short int': 'i2',
-                 'int16': 'i2',
-                 'int16_t': 'i2',
-                 'ushort': 'u2',
-                 'unsigned short': 'u2',
-                 'unsigned short int': 'u2',
-                 'uint16': 'u2',
-                 'uint16_t': 'u2',
-                 'int': 'i4',
-                 'signed int': 'i4',
-                 'int32': 'i4',
-                 'int32_t': 'i4',
-                 'uint': 'u4',
-                 'unsigned int': 'u4',
-                 'uint32': 'u4',
-                 'uint32_t': 'u4',
-                 'longlong': 'i8',
-                 'long long': 'i8',
-                 'long long int': 'i8',
-                 'signed long long': 'i8',
-                 'signed long long int': 'i8',
-                 'int64': 'i8',
-                 'int64_t': 'i8',
-                 'ulonglong': 'u8',
-                 'unsigned long long': 'u8',
-                 'unsigned long long int': 'u8',
-                 'uint64': 'u8',
-                 'uint64_t': 'u8',
-                 'float': 'f4',
-                 'double': 'f8',
-                 'block': 'V'}
+_TYPEMAP_NRRD2NUMPY = {
+    'signed char': 'i1', 
+    'int8': 'i1', 
+    'int8_t': 'i1',
+    'uchar': 'u1',
+    'unsigned char': 'u1',
+    'uint8': 'u1',
+    'uint8_t': 'u1',
+    'short': 'i2',
+    'short int': 'i2',
+    'signed short': 'i2',
+    'signed short int': 'i2',
+    'int16': 'i2',
+    'int16_t': 'i2',
+    'ushort': 'u2',
+    'unsigned short': 'u2',
+    'unsigned short int': 'u2',
+    'uint16': 'u2',
+    'uint16_t': 'u2',
+    'int': 'i4',
+    'signed int': 'i4',
+    'int32': 'i4',
+    'int32_t': 'i4',
+    'uint': 'u4',
+    'unsigned int': 'u4',
+    'uint32': 'u4',
+    'uint32_t': 'u4',
+    'longlong': 'i8',
+    'long long': 'i8',
+    'long long int': 'i8',
+    'signed long long': 'i8',
+    'signed long long int': 'i8',
+    'int64': 'i8',
+    'int64_t': 'i8',
+    'ulonglong': 'u8',
+    'unsigned long long': 'u8',
+    'unsigned long long int': 'u8',
+    'uint64': 'u8',
+    'uint64_t': 'u8',
+    'float': 'f4',
+    'double': 'f8',
+    'block': 'V'
+}
 
+_TYPEMAP_NUMPY2NRRD = {
+    'i1': 'int8',
+    'u1': 'uint8',
+    'i2': 'int16',
+    'u2': 'uint16',
+    'i4': 'int32',
+    'u4': 'uint32',
+    'i8': 'int64',
+    'u8': 'uint64',
+    'f4': 'float',
+    'f8': 'double',
+    'V': 'block'
+}
 
 def parse_nrrdvector(inp):
     """Parse a vector from a nrrd header, return a list."""
@@ -129,6 +144,7 @@ _NRRD_FIELD_PARSERS = {
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
+# The supported field values
 _NRRD_FIELD_ORDER = [
     'type',
     'dimension',
@@ -144,14 +160,8 @@ _NRRD_FIELD_ORDER = [
     'old min',
     'oldmax',
     'old max',
-    'lineskip',
-    'line skip',
-    'byteskip',
-    'byte skip',
     'content',
     'sample units',
-    'datafile',
-    'data file',
     'spacings',
     'thicknesses',
     'axis mins',
@@ -166,108 +176,122 @@ _NRRD_FIELD_ORDER = [
     'space origin',
     'measurement frame']
 
-class Nrrd:
-    """An all-python (and numpy) implementation for nrrd files.
-    See http://teem.sourceforge.net/nrrd/format.html for the specification."""
-    def __init__(self, filename):
-        self.fields = {}
-        self.data = numpy.zeros(0)
-        self._dtype = None
-        filename = filename
-        filehandle = open(filename,'rb')
+
+def _parse_fields(raw_fields):
+    """Parse the fields in the nrrd header"""
+    fields = {}
+    for field, value in raw_fields.iteritems():
+        if field not in _NRRD_FIELD_PARSERS:
+            raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
+        fields[field] = _NRRD_FIELD_PARSERS[field](value)
+    return fields
+
+def _determine_dtype(fields):
+    """Process the fields in the nrrd header"""
+    # Check whether the required fields are there
+    for field in _NRRD_REQUIRED_FIELDS:
+        if field not in fields:
+            raise NrrdError('Nrrd header misses required field: "%s".' % (field))
+    # Process the data type
+    numpy_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
+    if numpy.dtype(numpy_typestring).itemsize > 1:
+        if 'endian' not in fields:
+            raise NrrdError('Nrrd header misses required field: "endian".')
+        if fields['endian'] == 'big':
+            numpy_typestring = '>' + numpy_typestring
+        elif fields['endian'] == 'little':
+            numpy_typestring = '<' + numpy_typestring
+        
+    return numpy.dtype(numpy_typestring)
+
+def _read_data(fields, filehandle):
+    """Read the actual data into a numpy structure."""
+    data = numpy.zeros(0)
+    # Determine the data type from the fields
+    dtype = _determine_dtype(fields)
+    # determine byte skip, line skip, and data file (there are two ways to write them)
+    lineskip = fields.get('lineskip', fields.get('line skip', 0))
+    byteskip = fields.get('byteskip', fields.get('byteskip', 0))
+    datafile = fields.get("datafile", fields.get("data file", None))
+    datafilehandle = filehandle
+    if datafile is not None:
+        datafilehandle = open(datafile,'rb')
+    totalbytes = dtype.itemsize *\
+                    numpy.array(fields['sizes']).prod()
+    if fields['encoding'] == 'raw':
+        if byteskip == -1:
+            datafilehandle.seek(-totalbytes, 2)
+        else:
+            for _ in range(lineskip):
+                datafilehandle.readline()
+            datafilehandle.read(byteskip)
+        data = numpy.fromfile(datafilehandle, dtype)        
+    elif fields['encoding'] == 'gzip' or\
+         fields['encoding'] == 'gz':
+        gzipfile = gzip.GzipFile(fileobj=datafilehandle)
+        # Again, unfortunately, numpy.fromfile does not support
+        # reading from a gzip stream, so we'll do it like this.
+        # I have no idea what the performance implications are.
+        data = numpy.fromstring(gzipfile.read(), dtype)
+    elif fields['encoding'] == 'bzip2' or\
+         fields['encoding'] == 'bz2':
+        bz2file = bz2.BZ2File(fileobj=datafilehandle)
+        # Again, unfortunately, numpy.fromfile does not support
+        # reading from a gzip stream, so we'll do it like this.
+        # I have no idea what the performance implications are.
+        data = numpy.fromstring(bz2file.read(), dtype)
+    else:
+        raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
+    # dkh : eliminated need to reverse order of dimensions. nrrd's
+    # data layout is same as what numpy calls 'Fortran' order,
+    shape_tmp = list(fields['sizes'])
+    data = numpy.reshape(data, tuple(shape_tmp), order='F')
+    return data
+
+
+def read(filename):
+    """Read a nrrd file and return a tuple (data, options)."""
+    with open(filename,'rb') as filehandle:
         raw_headerlines = [line.strip() for line in
                           _nrrd_read_header_lines(filehandle)]
+        # Strip commented lines
         headerlines = [line for line in raw_headerlines if line[0] != '#']
-        self.version = headerlines[0]
-        self.raw_fields = dict((splitline for splitline in 
+        version = headerlines[0]
+        raw_fields = dict((splitline for splitline in 
                                 [line.split(': ', 1) for line in headerlines]
                                 if len(splitline)==2))
-        self.keyvalue = dict((splitline for splitline in 
+        keyvaluepairs = dict((splitline for splitline in 
                                 [line.split(':=', 1) for line in headerlines]
                                 if len(splitline)==2))
-        self._parse_fields()
-        self._process_fields()
-        self.read_data(filehandle)
-        filehandle.close()
-    def _parse_fields(self):
-        """Parse the fields in the nrrd header"""
-        self.fields = {}
-        for field, value in self.raw_fields.iteritems():
-            if field not in _NRRD_FIELD_PARSERS:
-                raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
-            self.fields[field] = _NRRD_FIELD_PARSERS[field](value)
-    def _process_fields(self):
-        """Process the fields in the nrrd header"""
-        # Check whether the required fields are there
-        for field in _NRRD_REQUIRED_FIELDS:
-            if field not in self.fields:
-                raise NrrdError('Nrrd header misses required field: "%s".' % (field))
-        # Process the data type
-        numpy_typestring = _NRRD_TYPE_MAPPING[self.raw_fields['type']]
-        if numpy.dtype(numpy_typestring).itemsize > 1:
-            if 'endian' not in self.fields:
-                raise NrrdError('Nrrd header misses required field: "endian".')
-            if self.fields['endian'] == 'big':
-                numpy_typestring = '>' + numpy_typestring
-            elif self.fields['endian'] == 'little':
-                numpy_typestring = '<' + numpy_typestring
-            
-        self._dtype = numpy.dtype(numpy_typestring)
+        options = _parse_fields(raw_fields)
+        options["keyvaluepairs"] = keyvaluepairs
+        data = _read_data(options, filehandle)
+        return (data, options)
 
-    def read_data(self, filehandle):
-        """Read the actual data into a numpy structure."""
-        # determine byte and line skip
-        lineskip = self.fields.get('lineskip', self.fields.get('line skip', 0))
-        byteskip = self.fields.get('byteskip', self.fields.get('byteskip', 0))
-        datafile = self.fields.get("datafile", self.fields.get("data file", None))
-        datafilehandle = filehandle
-        if datafile is not None:
-            datafilehandle = open(datafile,'rb')
-        totalbytes = self._dtype.itemsize *\
-                        numpy.array(self.fields['sizes']).prod()
-        if self.fields['encoding'] == 'raw':
-            if byteskip == -1:
-                datafilehandle.seek(-totalbytes, 2)
-            else:
-                for _ in range(lineskip):
-                    datafilehandle.readline()
-                datafilehandle.read(byteskip)
-            self.data = numpy.fromfile(datafilehandle, self._dtype)        
-        elif self.fields['encoding'] == 'gzip' or\
-             self.fields['encoding'] == 'gz':
-            gzipfile = gzip.GzipFile(fileobj=datafilehandle)
-            # Again, unfortunately, numpy.fromfile does not support
-            # reading from a gzip stream, so we'll do it like this.
-            # I have no idea what the performance implications are.
-            self.data = numpy.fromstring(gzipfile.read(), self._dtype)
-        elif self.fields['encoding'] == 'bzip2' or\
-             self.fields['encoding'] == 'bz2':
-            bz2file = bz2.BZ2File(fileobj=datafilehandle)
-            # Again, unfortunately, numpy.fromfile does not support
-            # reading from a gzip stream, so we'll do it like this.
-            # I have no idea what the performance implications are.
-            self.data = numpy.fromstring(bz2file.read(), self._dtype)
-        else:
-            raise NrrdError('Unsupported encoding: "%s"' % self.fields['encoding'])
-        # dkh : eliminated need to reverse order of dimensions. nrrd's
-        # data layout is same as what numpy calls 'Fortran' order,
-        shape_tmp = list(self.fields['sizes'])
-        self.data = numpy.reshape(self.data, tuple(shape_tmp), order='F')
-        
 def format_space_separated_list(fieldValue) :
     return ' '.join([str(x) for x in fieldValue])
+
 def format_nrrdvector(v) :
-    return '('+','.join([str(x) for x in v])+')'
+    return '(' + ','.join([str(x) for x in v]) + ')'
+
 def format_optional_nrrdvector(v):
-    if (v=='none') :
+    if (v == 'none') :
         return 'none'
     else :
         return format_nrrdvector(v)
+
 def format_str_or_scalar(x):
     if isinstance(x, str) :
         return x
     else :
         return repr(x)
+
+_NUMPY2NRRD_ENDIAN_MAP = {
+    '<': 'little',
+    'L': 'little',
+    '>': 'big',
+    'B': 'big'
+}
 
 _NRRD_FIELD_FORMATTERS = {
     'dimension': format_str_or_scalar,
@@ -307,78 +331,58 @@ _NRRD_FIELD_FORMATTERS = {
     'measurement frame': lambda fieldValue: ' '.join([format_optional_nrrdvector(x) for x in fieldValue]),
 }
 
-
-def write_nrrdfile(filename, fields, data) :
+def write(filename, data, options={}):
     """Write nrrd file into filename, with header determined from fields, and data given
     as numpy array. If fields does not contain type field, type will be determined from data ndarray"""
     # write header, assuming fields is dictionary as generated by _parse_fields
 
-    # if type not specified, determine it from type of ndarray
-    if 'type' not in fields :
-        for nrrdtype, numpytype in _NRRD_TYPE_MAPPING.iteritems():
-            if(numpy.dtype(numpytype) == data.dtype) :
-                fields['type'] = nrrdtype
-                print "Inferred type", nrrdtype, "from input ndarray"
-                break
-    
-    for field in _NRRD_REQUIRED_FIELDS:
-        if field not in fields:
-            raise NrrdError('Required field "%s" missing from input to write_nrrdfile.' % (field))
+    # Infer a number of fields from the ndarray and ignore values
+    # in the options dictionary.
+    options['type'] = _TYPEMAP_NUMPY2NRRD[data.dtype.str[1:]]
+    if data.dtype.itemsize > 1:
+        options['endian'] = _NUMPY2NRRD_ENDIAN_MAP[data.dtype.str[:1]]
+    options['dimension'] = data.ndim
+    options['sizes'] = list(data.shape)
 
-    # Format all fields (i.e. convert to strings)
-    formatted_fields = {}
-    for field, value in fields.iteritems() :
-        if field not in _NRRD_FIELD_UNPARSERS:
-            raise NrrdError('Unexpected field passed to write_nrrdfile : "%s".' % field)
-        if isinstance(value, str):
-            # only call formatter if value is not already string ...
-            # this makes format operation idempotent
-            formatted_fields[field] = value
-        else :
-            formatted_fields[field] = _NRRD_FIELD_UNPARSERS[field](value)
-
-    # I choose not to functionality implied by the following fields, so remove them
-    # from formatted_fields
-    undesired_fields = ['datafile', 'data file', 'lineskip', 'line skip', 'byteskip', 'byte skip']
-    for field in undesired_fields:
-        if formatted_fields.has_key(field):
-            uparsed_fields.pop(field)
-            print "note : removed unused field " + field
+    # The default encoding is 'gzip'
+    if 'encoding' not in options:
+        options['encoding'] = 'gzip'
     
-    outfilehandle = open(filename, 'wb')
-    outfilehandle.write('NRRD0004\n')
-    outfilehandle.write('# This NRRD file generated by dkh modified pynrrd\n')
-    outfilehandle.write('# Complete NRRD file format specification at:\n');
-    outfilehandle.write('# http://teem.sourceforge.net/nrrd/format.html\n');
+    with open(filename,'wb') as filehandle:
+        filehandle = open(filename, 'wb')
+        filehandle.write('NRRD0004\n')
+        filehandle.write('# This NRRD file was generated by pynrrd\n')
+        filehandle.write('# on ' + datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') + '(GMT).')
+        filehandle.write('# Complete NRRD file format specification at:\n');
+        filehandle.write('# http://teem.sourceforge.net/nrrd/format.html\n');
 
-    # write the fields in order, this ignores fields not in _NRRD_FIELD_ORDER
-    for field in _NRRD_FIELD_ORDER:
-        if formatted_fields.has_key(field):
-            outline = field + ': ' + formatted_fields[field] + '\n'
-            outfilehandle.write(outline)
-    outfilehandle.write('\n')
+        # Write the fields in order, this ignores fields not in _NRRD_FIELD_ORDER
+        for field in _NRRD_FIELD_ORDER:
+            if options.has_key(field):
+                outline = field + ': ' + _NRRD_FIELD_FORMATTERS[field](options[field]) + '\n'
+                filehandle.write(outline)
+        for (k,v) in options.get('keyvaluepairs',{}):
+            outline = k + ":=" + v
+            filehandle.write(outline)
 
-    # Check that data types of header and of data array match
-    if numpy.dtype(_NRRD_TYPE_MAPPING[fields['type']]) != data.dtype :
-        raise NrrdError('Data type mismatch between header field and numpy array')
-    # Check that sizes from header and data array match
-    if data.shape != tuple(fields['sizes']) :
-        raise NrrdError('Mismatch between header size and numpy array')
-    
-    # now write data directly
-    rawdata = data.tostring(order = 'F');
-    if formatted_fields['encoding'] == 'raw' :
-        outfilehandle.write(rawdata)
-    elif formatted_fields['encoding'] == 'gzip':
-        gzfileobj = gzip.GzipFile(fileobj = outfilehandle)
-        gzfileobj.write(rawdata)
-        gzfileobj.close()
-#    elif formatted_fields['encoding'] == 'bz2':
-#        bz2fileobj=bz2.BZ2File(fileobj = outfilehandle)
-#        bz2fileobj.write(rawdata)
-#        bz2fileobj.close()
-    else :
-        raise NrrdError('Unsupported encoding: "%s"' % formatted_fields['encoding'])
-    
-    outfilehandle.close()    
-    print "wrote %s" % (filename)
+        # Write the closing extra newline
+        filehandle.write('\n')
+        
+        # Now write data directly
+        rawdata = data.tostring(order = 'F');
+        if options['encoding'] == 'raw':
+            filehandle.write(rawdata)
+        elif options['encoding'] == 'gzip':
+            gzfileobj = gzip.GzipFile(fileobj = filehandle)
+            gzfileobj.write(rawdata)
+            gzfileobj.close()
+        elif options['encoding'] == 'bz2':
+            bz2fileobj = bz2.BZ2File(fileobj = filehandle)
+            bz2fileobj.write(rawdata)
+            bz2fileobj.close()
+        else:
+            raise NrrdError('Unsupported encoding: "%s"' % formatted_fields['encoding'])        
+
+
+
+
