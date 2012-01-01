@@ -187,7 +187,7 @@ def _parse_fields(raw_fields):
     return fields
 
 def _determine_dtype(fields):
-    """Process the fields in the nrrd header"""
+    """Determine the numpy dtype of the data."""
     # Check whether the required fields are there
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in fields:
