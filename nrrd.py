@@ -275,60 +275,60 @@ def read(filename):
         data = _read_data(options, filehandle)
         return (data, options)
 
-def format_space_separated_list(fieldValue) :
+def _format_space_separated_list(fieldValue) :
     return ' '.join([str(x) for x in fieldValue])
 
-def format_nrrdvector(v) :
+def _format_nrrdvector(v) :
     return '(' + ','.join([str(x) for x in v]) + ')'
 
-def format_optional_nrrdvector(v):
+def _format_optional_nrrdvector(v):
     if (v == 'none') :
         return 'none'
     else :
-        return format_nrrdvector(v)
+        return _format_nrrdvector(v)
 
-def format_str_or_scalar(x):
+def _format_str_or_scalar(x):
     if isinstance(x, str) :
         return x
     else :
         return repr(x)
 
 _NRRD_FIELD_FORMATTERS = {
-    'dimension': format_str_or_scalar,
-    'type': format_str_or_scalar,
-    'sizes': format_space_separated_list,
-    'endian': format_str_or_scalar,
-    'encoding': format_str_or_scalar,
-    'min': format_str_or_scalar,
-    'max': format_str_or_scalar,
-    'oldmin': format_str_or_scalar,
-    'old min': format_str_or_scalar,
-    'oldmax': format_str_or_scalar,
-    'old max': format_str_or_scalar,
-    'lineskip': format_str_or_scalar,
-    'line skip': format_str_or_scalar,
-    'byteskip': format_str_or_scalar,
-    'byte skip': format_str_or_scalar,
-    'content': format_str_or_scalar,
-    'sample units': format_str_or_scalar,
-    'datafile': format_str_or_scalar,
-    'data file': format_str_or_scalar,
-    'spacings': format_space_separated_list,
-    'thicknesses': format_space_separated_list,
-    'axis mins': format_space_separated_list,
-    'axismins': format_space_separated_list,
-    'axis maxs': format_space_separated_list,
-    'axismaxs': format_space_separated_list,
-    'centerings': format_space_separated_list,
-    'labels': format_space_separated_list,
-    'units': format_space_separated_list,
-    'kinds': format_space_separated_list,
-    'space': format_str_or_scalar,
-    'space dimension': format_str_or_scalar,
-    'space units': format_space_separated_list,
-    'space origin': format_nrrdvector,
-    'space directions': lambda fieldValue: ' '.join([format_optional_nrrdvector(x) for x in fieldValue]),
-    'measurement frame': lambda fieldValue: ' '.join([format_optional_nrrdvector(x) for x in fieldValue]),
+    'dimension': _format_str_or_scalar,
+    'type': _format_str_or_scalar,
+    'sizes': _format_space_separated_list,
+    'endian': _format_str_or_scalar,
+    'encoding': _format_str_or_scalar,
+    'min': _format_str_or_scalar,
+    'max': _format_str_or_scalar,
+    'oldmin': _format_str_or_scalar,
+    'old min': _format_str_or_scalar,
+    'oldmax': _format_str_or_scalar,
+    'old max': _format_str_or_scalar,
+    'lineskip': _format_str_or_scalar,
+    'line skip': _format_str_or_scalar,
+    'byteskip': _format_str_or_scalar,
+    'byte skip': _format_str_or_scalar,
+    'content': _format_str_or_scalar,
+    'sample units': _format_str_or_scalar,
+    'datafile': _format_str_or_scalar,
+    'data file': _format_str_or_scalar,
+    'spacings': _format_space_separated_list,
+    'thicknesses': _format_space_separated_list,
+    'axis mins': _format_space_separated_list,
+    'axismins': _format_space_separated_list,
+    'axis maxs': _format_space_separated_list,
+    'axismaxs': _format_space_separated_list,
+    'centerings': _format_space_separated_list,
+    'labels': _format_space_separated_list,
+    'units': _format_space_separated_list,
+    'kinds': _format_space_separated_list,
+    'space': _format_str_or_scalar,
+    'space dimension': _format_str_or_scalar,
+    'space units': _format_space_separated_list,
+    'space origin': _format_nrrdvector,
+    'space directions': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
+    'measurement frame': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
 }
 
 def write(filename, data, options={}):
