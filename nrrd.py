@@ -275,7 +275,7 @@ def read(filename):
         data = _read_data(options, filehandle)
         return (data, options)
 
-def _format_space_separated_list(fieldValue) :
+def _format_nrrd_list(fieldValue) :
     return ' '.join([str(x) for x in fieldValue])
 
 def _format_nrrdvector(v) :
@@ -287,45 +287,39 @@ def _format_optional_nrrdvector(v):
     else :
         return _format_nrrdvector(v)
 
-def _format_str_or_scalar(x):
-    if isinstance(x, str) :
-        return x
-    else :
-        return repr(x)
-
 _NRRD_FIELD_FORMATTERS = {
-    'dimension': _format_str_or_scalar,
-    'type': _format_str_or_scalar,
-    'sizes': _format_space_separated_list,
-    'endian': _format_str_or_scalar,
-    'encoding': _format_str_or_scalar,
-    'min': _format_str_or_scalar,
-    'max': _format_str_or_scalar,
-    'oldmin': _format_str_or_scalar,
-    'old min': _format_str_or_scalar,
-    'oldmax': _format_str_or_scalar,
-    'old max': _format_str_or_scalar,
-    'lineskip': _format_str_or_scalar,
-    'line skip': _format_str_or_scalar,
-    'byteskip': _format_str_or_scalar,
-    'byte skip': _format_str_or_scalar,
-    'content': _format_str_or_scalar,
-    'sample units': _format_str_or_scalar,
-    'datafile': _format_str_or_scalar,
-    'data file': _format_str_or_scalar,
-    'spacings': _format_space_separated_list,
-    'thicknesses': _format_space_separated_list,
-    'axis mins': _format_space_separated_list,
-    'axismins': _format_space_separated_list,
-    'axis maxs': _format_space_separated_list,
-    'axismaxs': _format_space_separated_list,
-    'centerings': _format_space_separated_list,
-    'labels': _format_space_separated_list,
-    'units': _format_space_separated_list,
-    'kinds': _format_space_separated_list,
-    'space': _format_str_or_scalar,
-    'space dimension': _format_str_or_scalar,
-    'space units': _format_space_separated_list,
+    'dimension': str,
+    'type': str,
+    'sizes': _format_nrrd_list,
+    'endian': str,
+    'encoding': str,
+    'min': str,
+    'max': str,
+    'oldmin': str,
+    'old min': str,
+    'oldmax': str,
+    'old max': str,
+    'lineskip': str,
+    'line skip': str,
+    'byteskip': str,
+    'byte skip': str,
+    'content': str,
+    'sample units': str,
+    'datafile': str,
+    'data file': str,
+    'spacings': _format_nrrd_list,
+    'thicknesses': _format_nrrd_list,
+    'axis mins': _format_nrrd_list,
+    'axismins': _format_nrrd_list,
+    'axis maxs': _format_nrrd_list,
+    'axismaxs': _format_nrrd_list,
+    'centerings': _format_nrrd_list,
+    'labels': _format_nrrd_list,
+    'units': _format_nrrd_list,
+    'kinds': _format_nrrd_list,
+    'space': str,
+    'space dimension': str,
+    'space units': _format_nrrd_list,
     'space origin': _format_nrrdvector,
     'space directions': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
     'measurement frame': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
