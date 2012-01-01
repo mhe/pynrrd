@@ -362,7 +362,7 @@ def write(filename, data, options={}):
                 outline = field + ': ' + _NRRD_FIELD_FORMATTERS[field](options[field]) + '\n'
                 filehandle.write(outline)
         for (k,v) in options.get('keyvaluepairs',{}):
-            outline = k + ":=" + v
+            outline = k + ':=' + v + '\n'
             filehandle.write(outline)
 
         # Write the closing extra newline
