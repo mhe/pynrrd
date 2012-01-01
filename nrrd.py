@@ -382,7 +382,3 @@ def write(filename, data, options={}):
             bz2fileobj.close()
         else:
             raise NrrdError('Unsupported encoding: "%s"' % formatted_fields['encoding'])        
-
-
-
-
