@@ -1,8 +1,8 @@
 pynrrd
 ===========
 
-pynrrd is a pure-Python module for reading data in [nrrd][1] files into
-numpy arrays.
+pynrrd is a pure-Python module for reading and writing [nrrd][1] files into and 
+from numpy arrays.
 
 [1]: http://teem.sourceforge.net/nrrd/
 
@@ -18,25 +18,42 @@ Installation
 
     python setup.py install
 
-Usage
------
+Example usage
+-------------
 
-    from nrrd import Nrrd
-    nrrdfile = Nrrd('mynrrdfile.nrrd')
-    # nrrdfile.data has the data as a numpy array
-    print nrrdfile.data.shape
+    import numpy as np
+	import nrrd
+
+	# some sample numpy data
+	data = np.zeros((5,4,3,2))
+	filename = 'testdata.nrrd'
+
+	# write to a nrrd file
+	nrrd.write(filename, data)
+
+	# read the data back from file
+	readdata, options = nrrd.read(filename)
+	print readdata.shape
+	print options
 
 Bugs and shortcomings
 ---------------------
 
-At the moment, the module only supports reading nrrd files. Writing support is
-planned. Most of the [nrrd format specification][3] is implemented. Exceptions
+Most of the [nrrd format specification][3] is implemented. Exceptions
 are: 
 
 -  files where encoding is 'txt', 'text', or 'ascii'
 -  files where "data file" is "LIST"
 
+Other shortcomings:
+
+- More documentation is desiriable, in particular for the options that
+  can be passed to the write function.
+- pynrrd is currently probably fairly forgiving in what it accepts for as
+  nrrd files and could be made stricter.
+
 [3]: http://teem.sourceforge.net/nrrd/format.html
+
 
 License
 -------
