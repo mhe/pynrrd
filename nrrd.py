@@ -89,6 +89,13 @@ _TYPEMAP_NUMPY2NRRD = {
     'V': 'block'
 }
 
+_NUMPY2NRRD_ENDIAN_MAP = {
+    '<': 'little',
+    'L': 'little',
+    '>': 'big',
+    'B': 'big'
+}
+
 def parse_nrrdvector(inp):
     """Parse a vector from a nrrd header, return a list."""
     assert inp[0] == '(', "Vector should be enclosed by parenthesis."
@@ -285,13 +292,6 @@ def format_str_or_scalar(x):
         return x
     else :
         return repr(x)
-
-_NUMPY2NRRD_ENDIAN_MAP = {
-    '<': 'little',
-    'L': 'little',
-    '>': 'big',
-    'B': 'big'
-}
 
 _NRRD_FIELD_FORMATTERS = {
     'dimension': format_str_or_scalar,
