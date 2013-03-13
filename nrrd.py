@@ -193,6 +193,7 @@ def _parse_fields(raw_fields):
         fields[field] = _NRRD_FIELD_PARSERS[field](value)
     return fields
 
+
 def _determine_dtype(fields):
     """Determine the numpy dtype of the data."""
     # Check whether the required fields are there
@@ -211,7 +212,8 @@ def _determine_dtype(fields):
 
     return np.dtype(np_typestring)
 
-def _read_data(fields, filehandle):
+
+def _read_data(fields, filehandle, filename):
     """Read the actual data into a numpy structure."""
     data = np.zeros(0)
     # Determine the data type from the fields
@@ -222,7 +224,11 @@ def _read_data(fields, filehandle):
     datafile = fields.get("datafile", fields.get("data file", None))
     datafilehandle = filehandle
     if datafile is not None:
-        datafilehandle = open(datafile,'rb')
+        # Allow prpoer loading even if called from different dir, assuming
+        # header & data files are located in same folder
+        datafilename = (filename[:filename.rfind('/')] +
+                        datafile[datafile.rfind('/'):])
+        datafilehandle = open(datafilename,'rb')
     totalbytes = dtype.itemsize *\
                     np.array(fields['sizes']).prod()
     if fields['encoding'] == 'raw':
@@ -271,14 +277,17 @@ def read(filename):
                                 if len(splitline)==2))
         options = _parse_fields(raw_fields)
         options["keyvaluepairs"] = keyvaluepairs
-        data = _read_data(options, filehandle)
+        data = _read_data(options, filehandle, filename)
         return (data, options)
+
 
 def _format_nrrd_list(fieldValue) :
     return ' '.join([str(x) for x in fieldValue])
 
+
 def _format_nrrdvector(v) :
     return '(' + ','.join([str(x) for x in v]) + ')'
+
 
 def _format_optional_nrrdvector(v):
     if (v == 'none') :
@@ -324,6 +333,24 @@ _NRRD_FIELD_FORMATTERS = {
     'measurement frame': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
 }
 
+
+def _write_data(data, filehandle, options):
+    # Now write data directly
+    rawdata = data.tostring(order = 'F')
+    if options['encoding'] == 'raw':
+        filehandle.write(rawdata)
+    elif options['encoding'] == 'gzip':
+        gzfileobj = gzip.GzipFile(fileobj = filehandle)
+        gzfileobj.write(rawdata)
+        gzfileobj.close()
+    elif options['encoding'] == 'bz2':
+        bz2fileobj = bz2.BZ2File(fileobj = filehandle)
+        bz2fileobj.write(rawdata)
+        bz2fileobj.close()
+    else:
+        raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
+
+
 def write(filename, data, separate_header=False, options={}):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
     inferred from from the data. Additional options can be passed in the
@@ -350,15 +377,12 @@ def write(filename, data, separate_header=False, options={}):
     if filename[-5:] == '.nhdr':
         separate_header = True
         datafilename = filename[:-4] + str('nrrd')
-        mode = 'wb'
     elif filename[-5:] == '.nrrd' and separate_header:
         datafilename = filename
         filename = filename[:-4] + str('nhdr')
-        mode = 'wb'
     else:
         # Write one file, appending in 2nd open
         datafilename = filename
-        mode = 'a+b'
 
     with open(filename,'wb') as filehandle:
         filehandle = open(filename, 'wb')
@@ -391,18 +415,9 @@ def write(filename, data, separate_header=False, options={}):
         # Write the closing extra newline
         filehandle.write('\n')
 
-    with open(datafilename, mode) as datafilehandle:
-        # Now write data directly
-        rawdata = data.tostring(order = 'F')
-        if options['encoding'] == 'raw':
-            datafilehandle.write(rawdata)
-        elif options['encoding'] == 'gzip':
-            gzfileobj = gzip.GzipFile(fileobj = datafilehandle)
-            gzfileobj.write(rawdata)
-            gzfileobj.close()
-        elif options['encoding'] == 'bz2':
-            bz2fileobj = bz2.BZ2File(fileobj = datafilehandle)
-            bz2fileobj.write(rawdata)
-            bz2fileobj.close()
-        else:
-            raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
+        if not separate_header:
+            _write_data(data, filehandle, options)
+
+    if separate_header:
+        with open(datafilename, 'wb') as datafilehandle:
+            _write_data(data, datafilehandle, options)
