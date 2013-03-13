@@ -9,7 +9,7 @@ Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
 
 """
 
-import numpy
+import numpy as np
 import gzip
 import bz2
 from datetime import datetime
@@ -32,8 +32,8 @@ def _nrrd_read_header_lines(nrrdfile):
     return headerlines
 
 _TYPEMAP_NRRD2NUMPY = {
-    'signed char': 'i1', 
-    'int8': 'i1', 
+    'signed char': 'i1',
+    'int8': 'i1',
     'int8_t': 'i1',
     'uchar': 'u1',
     'unsigned char': 'u1',
@@ -193,6 +193,7 @@ def _parse_fields(raw_fields):
         fields[field] = _NRRD_FIELD_PARSERS[field](value)
     return fields
 
+
 def _determine_dtype(fields):
     """Determine the numpy dtype of the data."""
     # Check whether the required fields are there
@@ -200,20 +201,21 @@ def _determine_dtype(fields):
         if field not in fields:
             raise NrrdError('Nrrd header misses required field: "%s".' % (field))
     # Process the data type
-    numpy_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
-    if numpy.dtype(numpy_typestring).itemsize > 1:
+    np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
+    if np.dtype(np_typestring).itemsize > 1:
         if 'endian' not in fields:
             raise NrrdError('Nrrd header misses required field: "endian".')
         if fields['endian'] == 'big':
-            numpy_typestring = '>' + numpy_typestring
+            np_typestring = '>' + np_typestring
         elif fields['endian'] == 'little':
-            numpy_typestring = '<' + numpy_typestring
-        
-    return numpy.dtype(numpy_typestring)
+            np_typestring = '<' + np_typestring
 
-def _read_data(fields, filehandle):
+    return np.dtype(np_typestring)
+
+
+def _read_data(fields, filehandle, filename):
     """Read the actual data into a numpy structure."""
-    data = numpy.zeros(0)
+    data = np.zeros(0)
     # Determine the data type from the fields
     dtype = _determine_dtype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
@@ -222,9 +224,13 @@ def _read_data(fields, filehandle):
     datafile = fields.get("datafile", fields.get("data file", None))
     datafilehandle = filehandle
     if datafile is not None:
-        datafilehandle = open(datafile,'rb')
+        # Allow prpoer loading even if called from different dir, assuming
+        # header & data files are located in same folder
+        datafilename = (filename[:filename.rfind('/')] +
+                        datafile[datafile.rfind('/'):])
+        datafilehandle = open(datafilename,'rb')
     totalbytes = dtype.itemsize *\
-                    numpy.array(fields['sizes']).prod()
+                    np.array(fields['sizes']).prod()
     if fields['encoding'] == 'raw':
         if byteskip == -1:
             datafilehandle.seek(-totalbytes, 2)
@@ -232,27 +238,27 @@ def _read_data(fields, filehandle):
             for _ in range(lineskip):
                 datafilehandle.readline()
             datafilehandle.read(byteskip)
-        data = numpy.fromfile(datafilehandle, dtype)        
+        data = np.fromfile(datafilehandle, dtype)
     elif fields['encoding'] == 'gzip' or\
          fields['encoding'] == 'gz':
         gzipfile = gzip.GzipFile(fileobj=datafilehandle)
-        # Again, unfortunately, numpy.fromfile does not support
+        # Again, unfortunately, np.fromfile does not support
         # reading from a gzip stream, so we'll do it like this.
         # I have no idea what the performance implications are.
-        data = numpy.fromstring(gzipfile.read(), dtype)
+        data = np.fromstring(gzipfile.read(), dtype)
     elif fields['encoding'] == 'bzip2' or\
          fields['encoding'] == 'bz2':
         bz2file = bz2.BZ2File(fileobj=datafilehandle)
-        # Again, unfortunately, numpy.fromfile does not support
+        # Again, unfortunately, np.fromfile does not support
         # reading from a gzip stream, so we'll do it like this.
         # I have no idea what the performance implications are.
-        data = numpy.fromstring(bz2file.read(), dtype)
+        data = np.fromstring(bz2file.read(), dtype)
     else:
         raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
     # dkh : eliminated need to reverse order of dimensions. nrrd's
     # data layout is same as what numpy calls 'Fortran' order,
     shape_tmp = list(fields['sizes'])
-    data = numpy.reshape(data, tuple(shape_tmp), order='F')
+    data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
 
 
@@ -263,23 +269,25 @@ def read(filename):
                           _nrrd_read_header_lines(filehandle)]
         # Strip commented lines
         headerlines = [line for line in raw_headerlines if line[0] != '#']
-        version = headerlines[0]
-        raw_fields = dict((splitline for splitline in 
+        raw_fields = dict((splitline for splitline in
                                 [line.split(': ', 1) for line in headerlines]
                                 if len(splitline)==2))
-        keyvaluepairs = dict((splitline for splitline in 
+        keyvaluepairs = dict((splitline for splitline in
                                 [line.split(':=', 1) for line in headerlines]
                                 if len(splitline)==2))
         options = _parse_fields(raw_fields)
         options["keyvaluepairs"] = keyvaluepairs
-        data = _read_data(options, filehandle)
+        data = _read_data(options, filehandle, filename)
         return (data, options)
+
 
 def _format_nrrd_list(fieldValue) :
     return ' '.join([str(x) for x in fieldValue])
 
+
 def _format_nrrdvector(v) :
     return '(' + ','.join([str(x) for x in v]) + ')'
+
 
 def _format_optional_nrrdvector(v):
     if (v == 'none') :
@@ -325,10 +333,34 @@ _NRRD_FIELD_FORMATTERS = {
     'measurement frame': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
 }
 
-def write(filename, data, options={}):
-    """Write the numpy data to a nrrd file. The nrrd header values to use are inferred from from the data. Additional options
-    can be passed in the options dictionary. See the read() function for the structure of this dictionary. """
 
+def _write_data(data, filehandle, options):
+    # Now write data directly
+    rawdata = data.tostring(order = 'F')
+    if options['encoding'] == 'raw':
+        filehandle.write(rawdata)
+    elif options['encoding'] == 'gzip':
+        gzfileobj = gzip.GzipFile(fileobj = filehandle)
+        gzfileobj.write(rawdata)
+        gzfileobj.close()
+    elif options['encoding'] == 'bz2':
+        bz2fileobj = bz2.BZ2File(fileobj = filehandle)
+        bz2fileobj.write(rawdata)
+        bz2fileobj.close()
+    else:
+        raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
+
+
+def write(filename, data, options={}, separate_header=False):
+    """Write the numpy data to a nrrd file. The nrrd header values to use are
+    inferred from from the data. Additional options can be passed in the
+    options dictionary. See the read() function for the structure of this
+    dictionary.
+
+    To set data samplings, use e.g. `options['spacings'] = [s1, s2, s3]` for
+    3d data with sampling deltas `s1`, `s2`, and `s3` in each dimension.
+
+    """
     # Infer a number of fields from the ndarray and ignore values
     # in the options dictionary.
     options['type'] = _TYPEMAP_NUMPY2NRRD[data.dtype.str[1:]]
@@ -340,38 +372,58 @@ def write(filename, data, options={}):
     # The default encoding is 'gzip'
     if 'encoding' not in options:
         options['encoding'] = 'gzip'
-    
+
+    # A bit of magic in handling options here.
+    # If *.nhdr filename provided, this overrides `separate_header=False`
+    # If *.nrrd filename provided AND separate_header=True, separate files
+    #   written.
+    # For all other cases, header & data written to same file.
+    if filename[-5:] == '.nhdr':
+        separate_header = True
+        datafilename = filename[:-4] + str('nrrd')
+    elif filename[-5:] == '.nrrd' and separate_header:
+        datafilename = filename
+        filename = filename[:-4] + str('nhdr')
+    else:
+        # Write header & data as one file
+        datafilename = filename
+
     with open(filename,'wb') as filehandle:
         filehandle = open(filename, 'wb')
         filehandle.write('NRRD0004\n')
         filehandle.write('# This NRRD file was generated by pynrrd\n')
-        filehandle.write('# on ' + datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') + '(GMT).\n')
+        filehandle.write('# on ' +
+                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') +
+                         '(GMT).\n')
         filehandle.write('# Complete NRRD file format specification at:\n');
         filehandle.write('# http://teem.sourceforge.net/nrrd/format.html\n');
 
         # Write the fields in order, this ignores fields not in _NRRD_FIELD_ORDER
         for field in _NRRD_FIELD_ORDER:
             if options.has_key(field):
-                outline = field + ': ' + _NRRD_FIELD_FORMATTERS[field](options[field]) + '\n'
+                outline = (field + ': ' +
+                           _NRRD_FIELD_FORMATTERS[field](options[field]) +
+                           '\n')
                 filehandle.write(outline)
         for (k,v) in options.get('keyvaluepairs',{}):
             outline = k + ':=' + v + '\n'
             filehandle.write(outline)
 
+        if separate_header:
+            # Write line skip & relative file location info to header
+            outline = ('data file: .' +
+                       datafilename[datafilename.rfind('/'):] + '\n')
+            filehandle.write(outline)
+            filehandle.write('line skip: 0')
+
         # Write the closing extra newline
         filehandle.write('\n')
-        
-        # Now write data directly
-        rawdata = data.tostring(order = 'F');
-        if options['encoding'] == 'raw':
-            filehandle.write(rawdata)
-        elif options['encoding'] == 'gzip':
-            gzfileobj = gzip.GzipFile(fileobj = filehandle)
-            gzfileobj.write(rawdata)
-            gzfileobj.close()
-        elif options['encoding'] == 'bz2':
-            bz2fileobj = bz2.BZ2File(fileobj = filehandle)
-            bz2fileobj.write(rawdata)
-            bz2fileobj.close()
-        else:
-            raise NrrdError('Unsupported encoding: "%s"' % formatted_fields['encoding'])        
+
+        # If a single file desired, write data
+        if not separate_header:
+            _write_data(data, filehandle, options)
+
+    # If separate header desired, write data to different file
+    if separate_header:
+        with open(datafilename, 'wb') as datafilehandle:
+            _write_data(data, datafilehandle, options)
