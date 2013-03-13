@@ -373,7 +373,11 @@ def write(filename, data, separate_header=False, options={}):
     if 'encoding' not in options:
         options['encoding'] = 'gzip'
 
-    # If *.nhdr filename provided, ensure separate_header=True & change name
+    # A bit of magic in handling options here.
+    # If *.nhdr filename provided, this overrides `separate_header=False`
+    # If *.nrrd filename provided AND separate_header=True, separate files
+    #   written.
+    # For all other cases, header & data written to same file.
     if filename[-5:] == '.nhdr':
         separate_header = True
         datafilename = filename[:-4] + str('nrrd')
@@ -381,7 +385,7 @@ def write(filename, data, separate_header=False, options={}):
         datafilename = filename
         filename = filename[:-4] + str('nhdr')
     else:
-        # Write one file, appending in 2nd open
+        # Write header & data as one file
         datafilename = filename
 
     with open(filename,'wb') as filehandle:
@@ -415,9 +419,11 @@ def write(filename, data, separate_header=False, options={}):
         # Write the closing extra newline
         filehandle.write('\n')
 
+        # If a single file desired, write data
         if not separate_header:
             _write_data(data, filehandle, options)
 
+    # If separate header desired, write data to different file
     if separate_header:
         with open(datafilename, 'wb') as datafilehandle:
             _write_data(data, datafilehandle, options)
