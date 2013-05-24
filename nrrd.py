@@ -12,6 +12,7 @@ Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
 import numpy as np
 import gzip
 import bz2
+import os.path
 from datetime import datetime
 
 class NrrdError(Exception):
@@ -224,10 +225,13 @@ def _read_data(fields, filehandle, filename):
     datafile = fields.get("datafile", fields.get("data file", None))
     datafilehandle = filehandle
     if datafile is not None:
-        # Allow prpoer loading even if called from different dir, assuming
-        # header & data files are located in same folder
-        datafilename = (filename[:filename.rfind('/')] +
-                        datafile[datafile.rfind('/'):])
+        # If the datafile path is absolute, don't muck with it. Otherwise
+        # treat the path as relative to the directory in which the detached
+        # header is in
+        if os.path.isabs(datafile):
+            datafilename = datafile
+        else:
+            datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename,'rb')
     totalbytes = dtype.itemsize *\
                     np.array(fields['sizes']).prod()
