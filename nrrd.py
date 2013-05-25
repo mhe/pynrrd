@@ -431,3 +431,7 @@ def write(filename, data, options={}, separate_header=False):
     if separate_header:
         with open(datafilename, 'wb') as datafilehandle:
             _write_data(data, datafilehandle, options)
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
