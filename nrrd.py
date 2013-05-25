@@ -185,16 +185,6 @@ _NRRD_FIELD_ORDER = [
     'measurement frame']
 
 
-def _parse_fields(raw_fields):
-    """Parse the fields in the nrrd header"""
-    fields = {}
-    for field, value in raw_fields.iteritems():
-        if field not in _NRRD_FIELD_PARSERS:
-            raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
-        fields[field] = _NRRD_FIELD_PARSERS[field](value)
-    return fields
-
-
 def _determine_dtype(fields):
     """Determine the numpy dtype of the data."""
     # Check whether the required fields are there
@@ -214,7 +204,7 @@ def _determine_dtype(fields):
     return np.dtype(np_typestring)
 
 
-def _read_data(fields, filehandle, filename):
+def read_data(fields, filehandle, filename=None):
     """Read the actual data into a numpy structure."""
     data = np.zeros(0)
     # Determine the data type from the fields
@@ -265,24 +255,80 @@ def _read_data(fields, filehandle, filename):
     data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
 
+def _validate_magic_line(line):
+    """For NRRD files, the first four characters are always "NRRD", and
+    remaining characters give information about the file format version
+    """
+    if not line.startswith('NRRD'):
+        raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
+    try:
+        if int(line[4:]) > 5:
+            raise NrrdError('NRRD file version too new for this library.')
+    except Value:
+        raise NrrdError('Invalid NRRD magic line: %s' % (line,))
+
+def read_header(nrrdfile):
+    """Parse the fields in the nrrd header
+
+    nrrdfile can be any object which supports the iterator protocol and
+    returns a string each time its next() method is called — file objects and
+    list objects are both suitable. If csvfile is a file object, it must be
+    opened with the ‘b’ flag on platforms where that makes a difference
+    (e.g. Windows)
+
+    >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
+    {'type': 'float', 'dimension': 3, 'keyvaluepairs': {}}
+    >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
+    {'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
+    """
+    it = iter(nrrdfile)
+    _validate_magic_line(it.next())
+
+    header = { 'keyvaluepairs': {} }
+    for line in it:
+        # Comments start with '#', no leading whitespace allowed
+        if line.startswith('#'):
+            continue
+        # Single blank line separates the header from the data
+        if line is '':
+            break
+
+        # Trailing whitespace ignored per the NRRD spec
+        line = line.rstrip()
+
+        # Handle the <key>:=<value> lines first since <value> may contain a
+        # ': ' which messes up the <field>: <desc> parsing
+        key_value = line.split(':=', 1)
+        if len(key_value) is 2:
+            key, value = key_value
+            # TODO: escape \\ and \n ??
+            # value.replace(r'\\\\', r'\\').replace(r'\n', '\n')
+            header['keyvaluepairs'][key] = value
+            continue
+
+        # Handle the "<field>: <desc>" lines.
+        field_desc = line.split(': ', 1)
+        if len(field_desc) is 2:
+            field, desc = field_desc
+            if field not in _NRRD_FIELD_PARSERS:
+                raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
+            if field in header.keys():
+                raise NrrdError('Duplicate header field: "%s"' % field)
+            header[field] = _NRRD_FIELD_PARSERS[field](desc)
+            continue
+
+        # Should not reach here
+        raise NrrdError('Invalid header line: "%s"' % line)
+            
+    return header
+
 
 def read(filename):
-    """Read a nrrd file and return a tuple (data, options)."""
+    """Read a nrrd file and return a tuple (data, header)."""
     with open(filename,'rb') as filehandle:
-        raw_headerlines = [line.strip() for line in
-                          _nrrd_read_header_lines(filehandle)]
-        # Strip commented lines
-        headerlines = [line for line in raw_headerlines if line[0] != '#']
-        raw_fields = dict((splitline for splitline in
-                                [line.split(': ', 1) for line in headerlines]
-                                if len(splitline)==2))
-        keyvaluepairs = dict((splitline for splitline in
-                                [line.split(':=', 1) for line in headerlines]
-                                if len(splitline)==2))
-        options = _parse_fields(raw_fields)
-        options["keyvaluepairs"] = keyvaluepairs
-        data = _read_data(options, filehandle, filename)
-        return (data, options)
+        header = read_header(filehandle)
+        data = read_data(header, filehandle, filename)
+        return (data, header)
 
 
 def _format_nrrd_list(fieldValue) :
