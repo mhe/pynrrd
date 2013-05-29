@@ -334,14 +334,14 @@ def read_header(nrrdfile):
             field = field.rstrip().lstrip()
             desc = desc.rstrip().lstrip()
             if field not in _NRRD_FIELD_PARSERS:
-                raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
+                raise NrrdError('Unexpected field in nrrd header: %s' % repr(field))
             if field in header.keys():
-                raise NrrdError('Duplicate header field: "%s"' % field)
+                raise NrrdError('Duplicate header field: %s' % repr(field))
             header[field] = _NRRD_FIELD_PARSERS[field](desc)
             continue
 
         # Should not reach here
-        raise NrrdError('Invalid header line: "%s"' % line)
+        raise NrrdError('Invalid header line: %s' % repr(line))
 
     # line reading was buffered; correct file pointer to just behind header:
     nrrdfile.seek(headerSize)
