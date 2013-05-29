@@ -275,7 +275,7 @@ def read_header(nrrdfile):
 
     nrrdfile can be any object which supports the iterator protocol and
     returns a string each time its next() method is called — file objects and
-    list objects are both suitable. If csvfile is a file object, it must be
+    list objects are both suitable. If nrrdfile is a file object, it must be
     opened with the ‘b’ flag on platforms where that makes a difference
     (e.g. Windows)
 
