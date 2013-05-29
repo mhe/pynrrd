@@ -12,7 +12,8 @@ Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
 import numpy as np
 import gzip
 import bz2
-import os.path
+import mmap
+import os
 from datetime import datetime
 
 class NrrdError(Exception):
@@ -201,8 +202,14 @@ def _determine_dtype(fields):
     return np.dtype(np_typestring)
 
 
-def read_data(fields, filehandle, filename=None):
-    """Read the actual data into a numpy structure."""
+def read_data(fields, filehandle, filename=None, seek_past_header=True):
+    """Read the NRRD data from a file object into a numpy structure.
+    
+    If seek_past_header is True, the '\n\n' header-data separator will be
+    found, otherwise it is assumed that the current fpos of the filehandle
+    object is pointing to the first byte after the '\n\n' line.
+    seek_past_headeronly only applies to attached headers. 
+    """
     data = np.zeros(0)
     # Determine the data type from the fields
     dtype = _determine_dtype(fields)
@@ -220,27 +227,43 @@ def read_data(fields, filehandle, filename=None):
         else:
             datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename,'rb')
-    numPixels=np.array(fields['sizes']).prod()
-    totalbytes = dtype.itemsize * numPixels
+    elif seek_past_header:
+        # Efficiently find the header-data seperator line no matter how big
+        # any header line is
+        datafilehandle.seek(0)
+        m = mmap.mmap(datafilehandle.fileno(), 0, 
+                      mmap.MAP_PRIVATE, mmap.PROT_READ)
+        seek_past_header_pos = m.find(b'\n\n')
+        if seek_past_header_pos == -1: 
+            raise NrrdError('Invalid NRRD: Missing header-data separator line')
+        datafilehandle.seek(seek_past_header_pos + 2)
+
+    numPixels = np.array(fields['sizes']).prod()
+    # Seek to start of data based on lineskip/byteskip. byteskip == -1 is
+    # only valid for raw encoding and overrides any lineskip
+    if fields['encoding'] == 'raw' and byteskip == -1:
+        datafilehandle.seek(-dtype.itemsize * numPixels, 2)
+    else:
+        for _ in range(lineskip):
+            datafilehandle.readline()
 
     if fields['encoding'] == 'raw':
-        if byteskip == -1: # This is valid only with raw encoding
-            datafilehandle.seek(-totalbytes, 2)
-        else:
-            for _ in range(lineskip):
-                datafilehandle.readline()
-            datafilehandle.read(byteskip)
+        datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
     elif fields['encoding'] == 'gzip' or\
          fields['encoding'] == 'gz':
         gzipfile = gzip.GzipFile(fileobj=datafilehandle)
+        # byteskip applies to the _decompressed byte stream
+        gzipfile.seek(byteskip, os.SEEK_CUR)
         # Again, unfortunately, np.fromfile does not support
         # reading from a gzip stream, so we'll do it like this.
         # I have no idea what the performance implications are.
         data = np.fromstring(gzipfile.read(), dtype)
     elif fields['encoding'] == 'bzip2' or\
          fields['encoding'] == 'bz2':
-        bz2file = bz2.BZ2File(fileobj=datafilehandle)
+        bz2file = bz2.BZ2File(datafilehandle)
+        # byteskip applies to the _decompressed byte stream
+        bz2file.seek(byteskip, os.SEEK_CUR)
         # Again, unfortunately, np.fromfile does not support
         # reading from a gzip stream, so we'll do it like this.
         # I have no idea what the performance implications are.
