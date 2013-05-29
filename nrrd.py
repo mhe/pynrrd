@@ -261,13 +261,15 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
         data = np.fromstring(gzipfile.read(), dtype)
     elif fields['encoding'] == 'bzip2' or\
          fields['encoding'] == 'bz2':
-        bz2file = bz2.BZ2File(datafilehandle)
+        decomp = bz2.BZ2Decompressor()
+        decompressed_data = b''
+        while True:
+            chunk = datafilehandle.read(65536)
+            if not chunk:
+                break
+            decompressed_data += decomp.decompress(chunk)
         # byteskip applies to the _decompressed byte stream
-        bz2file.seek(byteskip, os.SEEK_CUR)
-        # Again, unfortunately, np.fromfile does not support
-        # reading from a gzip stream, so we'll do it like this.
-        # I have no idea what the performance implications are.
-        data = np.fromstring(bz2file.read(), dtype)
+        data = np.fromstring(decompressed_data[byteskip:], dtype)
     else:
         raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
 
