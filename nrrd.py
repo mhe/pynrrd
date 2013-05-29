@@ -260,13 +260,23 @@ def read_data(fields, filehandle, filename=None):
 def _validate_magic_line(line):
     """For NRRD files, the first four characters are always "NRRD", and
     remaining characters give information about the file format version
+    
+    >>> _validate_magic_line('NRRD0005')
+    >>> _validate_magic_line('NRRD0006')
+    Traceback (most recent call last):
+        ...
+    NrrdError: NRRD file version too new for this library.
+    >>> _validate_magic_line('NRRD')
+    Traceback (most recent call last):
+        ...
+    NrrdError: Invalid NRRD magic line: NRRD
     """
     if not line.startswith('NRRD'):
         raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
     try:
         if int(line[4:]) > 5:
             raise NrrdError('NRRD file version too new for this library.')
-    except Value:
+    except ValueError:
         raise NrrdError('Invalid NRRD magic line: %s' % (line,))
     return len(line)
 
