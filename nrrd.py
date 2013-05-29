@@ -425,7 +425,7 @@ def _write_data(data, filehandle, options):
         raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
 
 
-def write(filename, data, options={}, separate_header=False):
+def write(filename, data, options={}, detached_header=False):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
     inferred from from the data. Additional options can be passed in the
     options dictionary. See the read() function for the structure of this
@@ -451,12 +451,12 @@ def write(filename, data, options={}, separate_header=False):
         options['encoding'] = 'gzip'
 
     # A bit of magic in handling options here.
-    # If *.nhdr filename provided, this overrides `separate_header=False`
-    # If *.nrrd filename provided AND separate_header=True, separate files
-    #   written.
+    # If *.nhdr filename provided, this overrides `detached_header=False`
+    # If *.nrrd filename provided AND detached_header=True, separate header
+    #   and data files written.
     # For all other cases, header & data written to same file.
     if filename[-5:] == '.nhdr':
-        separate_header = True
+        detached_header = True
         if 'data file' not in options:
             datafilename = filename[:-4] + str('raw')
             if options['encoding'] == 'gzip':
@@ -464,7 +464,7 @@ def write(filename, data, options={}, separate_header=False):
             options['data file'] = datafilename
         else:
             datafilename = options['data file']
-    elif filename[-5:] == '.nrrd' and separate_header:
+    elif filename[-5:] == '.nrrd' and detached_header:
         datafilename = filename
         filename = filename[:-4] + str('nhdr')
     else:
@@ -496,11 +496,11 @@ def write(filename, data, options={}, separate_header=False):
         filehandle.write(b'\n')
 
         # If a single file desired, write data
-        if not separate_header:
+        if not detached_header:
             _write_data(data, filehandle, options)
 
-    # If separate header desired, write data to different file
-    if separate_header:
+    # If detached header desired, write data to different file
+    if detached_header:
         with open(datafilename, 'wb') as datafilehandle:
             _write_data(data, datafilehandle, options)
 
