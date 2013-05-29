@@ -4,5 +4,6 @@
 *.raw
 dist/*
 build/*
+*.egg-info/*
 MANIFEST
 .idea/*
