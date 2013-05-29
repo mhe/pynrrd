@@ -209,7 +209,7 @@ def read_data(fields, filehandle, filename=None):
     # determine byte skip, line skip, and data file (there are two ways to write them)
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
     byteskip = fields.get('byteskip', fields.get('byte skip', 0))
-    datafile = fields.get("datafile", fields.get("data file", None))
+    datafile = fields.get('datafile', fields.get('data file', None))
     datafilehandle = filehandle
     if datafile is not None:
         # If the datafile path is absolute, don't muck with it. Otherwise
