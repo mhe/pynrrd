@@ -285,16 +285,16 @@ def read_header(nrrdfile):
     _validate_magic_line(it.next())
 
     header = { 'keyvaluepairs': {} }
-    for line in it:
+    for rline in it:
+        # Trailing whitespace ignored per the NRRD spec
+        line = rline.rstrip()
+
         # Comments start with '#', no leading whitespace allowed
         if line.startswith('#'):
             continue
         # Single blank line separates the header from the data
-        if line is '':
+        if line == '':
             break
-
-        # Trailing whitespace ignored per the NRRD spec
-        line = line.rstrip()
 
         # Handle the <key>:=<value> lines first since <value> may contain a
         # ': ' which messes up the <field>: <desc> parsing
