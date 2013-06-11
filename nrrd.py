@@ -266,6 +266,7 @@ def _validate_magic_line(line):
             raise NrrdError('NRRD file version too new for this library.')
     except Value:
         raise NrrdError('Invalid NRRD magic line: %s' % (line,))
+    return len(line)
 
 def read_header(nrrdfile):
     """Parse the fields in the nrrd header
@@ -281,13 +282,19 @@ def read_header(nrrdfile):
     >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
     {'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
     """
+    # Collect number of bytes in the file header (for seeking below)
+    headerSize = 0
+
     it = iter(nrrdfile)
-    _validate_magic_line(it.next())
+
+    headerSize += _validate_magic_line(it.next())
 
     header = { 'keyvaluepairs': {} }
-    for rline in it:
+    for raw_line in it:
+        headerSize += len(raw_line)
+
         # Trailing whitespace ignored per the NRRD spec
-        line = rline.rstrip()
+        line = raw_line.rstrip()
 
         # Comments start with '#', no leading whitespace allowed
         if line.startswith('#'):
@@ -319,7 +326,10 @@ def read_header(nrrdfile):
 
         # Should not reach here
         raise NrrdError('Invalid header line: "%s"' % line)
-            
+
+    # line reading was buffered; correct file pointer to just behind header:
+    nrrdfile.seek(headerSize)
+
     return header
 
 
