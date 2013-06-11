@@ -47,7 +47,7 @@ are:
 
 Other shortcomings:
 
-- More documentation is desiriable, in particular for the options that
+- More documentation is desirable, in particular for the options that
   can be passed to the write function.
 - pynrrd is currently probably fairly forgiving in what it accepts for as
   nrrd files and could be made stricter.
