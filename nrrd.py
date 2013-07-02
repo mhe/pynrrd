@@ -156,6 +156,7 @@ _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 _NRRD_FIELD_ORDER = [
     'type',
     'dimension',
+    'space dimension',
     'space',
     'sizes',
     'space directions',
@@ -179,7 +180,6 @@ _NRRD_FIELD_ORDER = [
     'centerings',
     'labels',
     'units',
-    'space dimension',
     'space units',
     'space origin',
     'measurement frame']
