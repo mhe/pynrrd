@@ -470,8 +470,7 @@ def write(filename, data, options={}, separate_header=False):
 
         if separate_header:
             # Write line skip & relative file location info to header
-            outline = ('data file: .' +
-                       datafilename[datafilename.rfind('/'):] + '\n')
+            outline = ('data file: ' + os.path.basename(datafilename) + '\n')
             filehandle.write(outline)
             filehandle.write('line skip: 0')
 
