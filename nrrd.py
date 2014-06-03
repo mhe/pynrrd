@@ -465,7 +465,7 @@ def write(filename, data, options={}, separate_header=False):
                            '\n')
                 filehandle.write(outline)
         for (k,v) in options.get('keyvaluepairs', {}).items():
-            outline = k + ':=' + v + '\n'
+            outline = str(k) + ':=' + str(v) + '\n'
             filehandle.write(outline)
 
         if separate_header:
