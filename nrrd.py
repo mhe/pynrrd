@@ -426,6 +426,9 @@ def write(filename, data, options={}, separate_header=False):
     options['type'] = _TYPEMAP_NUMPY2NRRD[data.dtype.str[1:]]
     if data.dtype.itemsize > 1:
         options['endian'] = _NUMPY2NRRD_ENDIAN_MAP[data.dtype.str[:1]]
+    # if 'space' is specified 'space dimension' can not. See http://teem.sourceforge.net/nrrd/format.html#space
+    if 'space' in options.keys():
+        del options['space dimension']
     options['dimension'] = data.ndim
     options['sizes'] = list(data.shape)
 
@@ -465,7 +468,7 @@ def write(filename, data, options={}, separate_header=False):
                            '\n')
                 filehandle.write(outline)
         for (k,v) in options.get('keyvaluepairs', {}).items():
-            outline = k + ':=' + v + '\n'
+            outline = str(k) + ':=' + str(v) + '\n'
             filehandle.write(outline)
 
         if separate_header:
