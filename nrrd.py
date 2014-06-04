@@ -427,7 +427,7 @@ def write(filename, data, options={}, separate_header=False):
     if data.dtype.itemsize > 1:
         options['endian'] = _NUMPY2NRRD_ENDIAN_MAP[data.dtype.str[:1]]
     # if 'space' is specified 'space dimension' can not. See http://teem.sourceforge.net/nrrd/format.html#space
-    if 'space' in options.keys():
+    if 'space' in options.keys() and 'space dimension' in options.keys():
         del options['space dimension']
     options['dimension'] = data.ndim
     options['sizes'] = list(data.shape)
