@@ -443,7 +443,13 @@ def write(filename, data, options={}, separate_header=False):
     # For all other cases, header & data written to same file.
     if filename[-5:] == '.nhdr':
         separate_header = True
-        datafilename = filename[:-4] + str('nrrd')
+        if 'data file' not in options:
+            datafilename = filename[:-4] + str('raw')
+            if options['encoding'] == 'gzip':
+                datafilename += '.gz'
+            options['data file'] = datafilename
+        else:
+            datafilename = options['data file']
     elif filename[-5:] == '.nrrd' and separate_header:
         datafilename = filename
         filename = filename[:-4] + str('nhdr')
