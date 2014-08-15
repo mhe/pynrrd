@@ -411,7 +411,7 @@ def _write_data(data, filehandle, options):
         raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
 
 
-def write(filename, data, options={}, separate_header=False):
+def write(filename, data, options={},   separate_header=False, save_data_in_raw_extension=False):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
     inferred from from the data. Additional options can be passed in the
     options dictionary. See the read() function for the structure of this
@@ -420,7 +420,12 @@ def write(filename, data, options={}, separate_header=False):
     To set data samplings, use e.g. `options['spacings'] = [s1, s2, s3]` for
     3d data with sampling deltas `s1`, `s2`, and `s3` in each dimension.
 
+    save_data_in_raw : Boolean 
+        If set to true, the data file will have a .raw extension, with the 
+        appropriate extension for the proper encoding appended after. Only used 
+        along with an nhdr extension.
     """
+    
     # Infer a number of fields from the ndarray and ignore values
     # in the options dictionary.
     options['type'] = _TYPEMAP_NUMPY2NRRD[data.dtype.str[1:]]
@@ -443,7 +448,15 @@ def write(filename, data, options={}, separate_header=False):
     # For all other cases, header & data written to same file.
     if filename[-5:] == '.nhdr':
         separate_header = True
-        datafilename = filename[:-4] + str('nrrd')
+        if save_data_in_raw_extension is True:
+            if options['encoding'] == 'raw' :
+                datafilename = filename[:-4] + str('raw')
+            elif options['encoding'] == 'gzip':
+                datafilename = filename[:-4] + str('raw.gz')
+            elif options['encoding'] == 'bz2':
+                datafilename = filename[:-4] + str('raw.bz2')
+        else:
+            datafilename = filename[:-4] + str('nrrd')
     elif filename[-5:] == '.nrrd' and separate_header:
         datafilename = filename
         filename = filename[:-4] + str('nhdr')
