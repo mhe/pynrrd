@@ -182,7 +182,8 @@ _NRRD_FIELD_ORDER = [
     'units',
     'space units',
     'space origin',
-    'measurement frame']
+    'measurement frame',
+    'data file']
 
 
 def _determine_dtype(fields):
