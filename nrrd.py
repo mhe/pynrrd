@@ -479,12 +479,6 @@ def write(filename, data, options={}, separate_header=False):
             outline = (str(k) + ':=' + str(v) + '\n').encode('ascii')
             filehandle.write(outline)
 
-        if separate_header:
-            # Write line skip & relative file location info to header
-            outline = ('data file: ' + os.path.basename(datafilename) + '\n').encode('ascii')
-            filehandle.write(outline)
-            filehandle.write(b'line skip: 0')
-
         # Write the closing extra newline
         filehandle.write(b'\n')
 
