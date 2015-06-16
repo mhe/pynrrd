@@ -348,14 +348,20 @@ def read(filename):
         data = read_data(header, filehandle, filename)
         return (data, header)
 
+#This will help prevent loss of precision
+#IEEE754-1985 standard says that 17 decimal digits is enough in all cases. 
+def _convert_to_reproducible_floatingpoint( x ):
+    if type(x) == float:
+        value = '{:.17f}'.format(x).rstrip('0') # Remove trailing zeros
+    else:
+        value = str(x)
+    return value
 
 def _format_nrrd_list(fieldValue) :
-    return ' '.join([str(x) for x in fieldValue])
-
+    return ' '.join([_convert_to_reproducible_floatingpoint(x) for x in fieldValue])
 
 def _format_nrrdvector(v) :
-    return '(' + ','.join([str(x) for x in v]) + ')'
-
+    return '(' + ','.join([_convert_to_reproducible_floatingpoint(x) for x in v]) + ')'
 
 def _format_optional_nrrdvector(v):
     if (v == 'none') :
