@@ -224,8 +224,9 @@ def read_data(fields, filehandle, filename=None):
         else:
             datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename,'rb')
-    totalbytes = dtype.itemsize *\
-                    np.array(fields['sizes']).prod()
+    numPixels=np.array(fields['sizes']).prod()
+    totalbytes = dtype.itemsize * numPixels
+
     if fields['encoding'] == 'raw':
         if byteskip == -1:
             datafilehandle.seek(-totalbytes, 2)
@@ -253,6 +254,8 @@ def read_data(fields, filehandle, filename=None):
     # dkh : eliminated need to reverse order of dimensions. nrrd's
     # data layout is same as what numpy calls 'Fortran' order,
     shape_tmp = list(fields['sizes'])
+    if numPixels != data.size:
+        raise NrrdError('ERROR: {0}-{1}={2}'.format(numPixels,data.size,numPixels-data.size))
     data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
 
