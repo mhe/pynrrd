@@ -322,6 +322,9 @@ def read_header(nrrdfile):
         field_desc = line.split(': ', 1)
         if len(field_desc) is 2:
             field, desc = field_desc
+            ## preceeding and suffixing white space should be ignored.
+            field = field.rstrip().lstrip()
+            desc = desc.rstrip().lstrip()
             if field not in _NRRD_FIELD_PARSERS:
                 raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
             if field in header.keys():
