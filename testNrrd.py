@@ -120,9 +120,14 @@ DWIConvert \
 """
 # SECOND
 import nibabel as nib
+'''
 nifti_file='/scratch/testFSL.nii.gz'
 fbvec='/scratch/testFSL.bvec'
 fbval='/scratch/testFSL.bval'
+'''
+nifti_file='/scratch/pynrrd/TEST_2/1_dwiConvert/testFSL.nii.gz'
+fbvec='/scratch/pynrrd/TEST_2/1_dwiConvert/testFSL.bvec'
+fbval='/scratch/pynrrd/TEST_2/1_dwiConvert/testFSL.bval'
 
 import nibabel as nib
 img = nib.load(nifti_file)
@@ -137,9 +142,10 @@ print type(nifti_bvecs)
 
 #THIRD use nrrd.py + new header parser to read data
 
-#ds='/Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/PhilipsAchieva2.nrrd'
-ds='/Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd'
-myNrrd,myOptions,nrrd_bvecs,nrrd_bvals = ReadNAMICDWIFromNrrd(ds)
+#ds='/Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd'
+#ds='/scratch/NAMICExternalProjects/release/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd'
+ds='/Shared/johnsonhj/HDNI/20150319_DWIProcessing/Results/FMRI_HD_024/0506/10595/Outputs/CorrectedDWI_in_T2Space.nrrd'
+nrrd_data,myOptions,nrrd_bvecs,nrrd_bvals = ReadNAMICDWIFromNrrd(ds)
 
 print type(nrrd_bvecs)
 print type(nrrd_bvals)
@@ -151,25 +157,63 @@ print np.subtract(nifti_bvals,nrrd_bvals)
 ## Ali
 # Write an algorithm purely in python to average similar gradients together
 #
-# starting_num_bvecs = len(nrrd_bvecs)
-# processed_list = [ False ] * starting_num_bvecs
-# remove_list = [ False ] * starting_num_bvecs
-# for i in range(0,starting_num_bvecs):
-#     processed_list[i] = True
-#     for j in range(i,starting_num_bvecs):
-#       if processed_list[j] == False:
-#         if( angle_between(nrrd_bvecs[i], nrrd_bvecs[j] ) < 3_degrees 
-#             && abs(nrrd_bvals[i] - nrrd_bvals[j] ) < 1 ):
-#                nrrd_bvecs[i] = average(nrrd_bvecs[i], nrrd_bvecs[j] )
-#                nrrd_bvals[i] = average(nrrd_bvals[i], nrrd_vals[j] )            
-#                processed_list[j] = True
-#                remove_list[j] =True
-#
-# # http://docs.scipy.org/doc/numpy/reference/generated/numpy.delete.html
-# for index in remove_list:
-#    if remove_list[index] == True:
-#         np.delete( bvecs, index, 0 )
-#         np.delete( bvals, index, 0 )
-#         np.delete( nrrd_data, (:,:,:,index), 0)
+print("Number of components before averaging: {0}".format(len(nrrd_bvecs)))
 
-      
+def unit_vector(vector):
+  """ Returns the unit vector of the vector.  """
+  v_norm = np.linalg.norm(vector)
+  if v_norm == 0:
+    return vector
+  else:
+    return vector / v_norm
+
+def angle_between(v1, v2):
+  """ Returns the angle in radians between vectors 'v1' and 'v2' """
+  v1_u = unit_vector(v1)
+  v2_u = unit_vector(v2)
+  angle = np.arccos(np.dot(v1_u, v2_u))
+  if np.isnan(angle):
+    if (v1_u == v2_u).all():
+      return 0.0
+    else:
+      return np.pi
+  return angle
+
+def angle_degrees(v1,v2):
+  ang_rad=angle_between(v1,v2)
+  return ang_rad*180/np.pi
+
+def average(v1,v2):
+  return np.mean( np.array([ v1, v2 ]), axis=0 )
+
+starting_num_bvecs = len(nrrd_bvecs)
+processed_list = [ False ] * starting_num_bvecs
+remove_list = [ False ] * starting_num_bvecs
+for i in range(0,starting_num_bvecs):
+   processed_list[i] = True
+   for j in range(i,starting_num_bvecs):
+     if processed_list[j] == False:
+       if( angle_degrees(nrrd_bvecs[i], nrrd_bvecs[j] ) < 3
+           and abs(nrrd_bvals[i] - nrrd_bvals[j] ) < 1 ):
+              nrrd_bvecs[i] = average(nrrd_bvecs[i], nrrd_bvecs[j] )
+              nrrd_bvals[i] = average(nrrd_bvals[i], nrrd_bvals[j] )
+              processed_list[j] = True
+              remove_list[j] = True
+
+# http://docs.scipy.org/doc/numpy/reference/generated/numpy.delete.html
+remove_indices = []
+for index in range(0,len(remove_list)):
+  if remove_list[index]:
+     remove_indices.append(index)
+
+print("4th dimension of nrrd_data before averaging: {0}".format(len(nrrd_data[:,:,:,1])))
+
+print("removal indices: {0}".format(remove_indices))
+nrrd_bvecs = np.delete( nrrd_bvecs, remove_indices, 0 )
+nrrd_bvals = np.delete( nrrd_bvals, remove_indices, 0 )
+nrrd_data = np.delete( nrrd_data, remove_indices, 0)
+
+print("Number of components after averaging: {0}".format(len(nrrd_bvecs)))
+print("4th dimension of nrrd_data after averaging: {0}".format(len(nrrd_data[:,:,:,1])))
+print nrrd_bvecs
+print nrrd_bvals
