@@ -86,15 +86,24 @@ class nrrdDWIHeader:
 
 def ReadNAMICDWIFromNrrd(filename):
     nrrd_dwi_data,nrrd_dwi_header=nrrd.read(filename)
+    #print("my options: {0}".format(nrrd_dwi_header))
     nibabelDataModelDWI=nrrdDWIHeader(nrrd_dwi_header)
     nrrd_dwi_bvec=nibabelDataModelDWI.gradientVectors
     nrrd_dwi_bval=nibabelDataModelDWI.gradientBValues
     return (nrrd_dwi_data, nrrd_dwi_header, nrrd_dwi_bvec, nrrd_dwi_bval)
 
 def WriteNAMICDWIToNrrd(filename, data, options, bvec, bval):
-    # Not yet filled in
-    pass
-
+    numGradients = len(bvec)
+    for index in range(0,numGradients):
+      keyvec=u'DWMRI_gradient_'+str(index).zfill(4)
+      valvec=u''.join(str(i)+'  ' for i in bvec[index]).rstrip()
+      options['keyvaluepairs'][keyvec]=valvec
+    norm=np.linalg.norm(bvec[1])
+    global_BValue=bval[1]*norm
+    keybval=u'DWMRI_b-value'
+    options['keyvaluepairs'][keybval]=format(global_BValue,'.2f')
+    #print("my options: {0}".format(options))
+    nrrd.write(filename,data,options)
 
 
 #######################
@@ -114,13 +123,14 @@ def WriteNAMICDWIToNrrd(filename, data, options, bvec, bval):
 """
 echo "Making some nifti formatted data"
 DWIConvert \
-   --inputVolume /Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd  \
+   #--inputVolume /Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd  \
+   --inputVolume /Shared/johnsonhj/HDNI/20150319_DWIProcessing/Results/FMRI_HD_024/0506/10595/Outputs/CorrectedDWI_in_T2Space.nrrd
    --conversionMode NrrdToFSL \
    --outputVolume testFSL.nii.gz
 """
 # SECOND
 import nibabel as nib
-'''
+
 nifti_file='/scratch/testFSL.nii.gz'
 fbvec='/scratch/testFSL.bvec'
 fbval='/scratch/testFSL.bval'
@@ -128,6 +138,7 @@ fbval='/scratch/testFSL.bval'
 nifti_file='/scratch/pynrrd/TEST_2/1_dwiConvert/testFSL.nii.gz'
 fbvec='/scratch/pynrrd/TEST_2/1_dwiConvert/testFSL.bvec'
 fbval='/scratch/pynrrd/TEST_2/1_dwiConvert/testFSL.bval'
+'''
 
 import nibabel as nib
 img = nib.load(nifti_file)
@@ -154,7 +165,6 @@ print np.subtract(nifti_bvecs,nrrd_bvecs)
 print np.subtract(nifti_bvals,nrrd_bvals)
 
 # FINAL
-## Ali
 # Write an algorithm purely in python to average similar gradients together
 #
 print("Number of components before averaging: {0}".format(len(nrrd_bvecs)))
@@ -215,5 +225,10 @@ nrrd_data = np.delete( nrrd_data, remove_indices, 0)
 
 print("Number of components after averaging: {0}".format(len(nrrd_bvecs)))
 print("4th dimension of nrrd_data after averaging: {0}".format(len(nrrd_data[:,:,:,1])))
-print nrrd_bvecs
-print nrrd_bvals
+print("Output gradient vectors after averaging: {0}".format(nrrd_bvecs))
+print("Output b values after averaging: {0}".format(nrrd_bvals))
+
+#filename='/scratch/pynrrd/TEST_2/averagedNrrdFile.nrrd'
+filename='/scratch/averagedNrrdFile.nrrd'
+WriteNAMICDWIToNrrd(filename,nrrd_data,myOptions,nrrd_bvecs,nrrd_bvals)
+print("Output nrrd file is written to the disk.")
