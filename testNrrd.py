@@ -139,16 +139,16 @@ def WriteNAMICDWIToNrrd(filename, data, bvecs, bvals, options=None):
     keyvaluePairDict[u'modality']=u'DWIMRI'
     maxBvalue = max(bvals)
     keybval=u'DWMRI_b-value'
-    keyvaluePairDict[keybval]=format(maxBvalue,'.4f')
+    keyvaluePairDict[keybval]=maxBvalue
 
     numGradients = len(bvecs)
     for index in range(0,numGradients):
         this_scale = sqrt(bvals[index] / maxBvalue)
         this_vec = [ x * this_scale for x in bvecs[index]]
-        valvec=u''.join(str(i)+' ' for i in this_vec).rstrip()
+        print bvecs[index],this_vec
 
         keyvec=u'DWMRI_gradient_{:04d}'.format(index)
-        keyvaluePairDict[keyvec]=valvec
+        keyvaluePairDict[keyvec]=this_vec
     options['keyvaluepairs']=keyvaluePairDict
     options['encoding']='gzip' # Always use gzip compression for DWI data
     nrrd.write(filename,data,options)
@@ -157,7 +157,7 @@ def WriteNAMICDWIToNrrd(filename, data, bvecs, bvals, options=None):
 def unit_vector(vector):
   """ Returns the unit vector of the vector.  """
   v_norm = np.linalg.norm(vector)
-  if v_norm == 0:
+  if v_norm < 1e-4: ## allow for small tolerance
     return vector
   else:
     return vector / v_norm
@@ -243,7 +243,7 @@ if __name__ == '__main__':
   arg1='--inputVolume'+' '+str(DWISCAN)
   arg2='--conversionMode NrrdToFSL'
   arg3='--outputVolume'+' '+os.path.join(OUTPUTDIR,'testFSL.nii.gz')
-  subprocess.call([os.path.join(PROGRAM_PATH,'DWIConvert'), arg1, arg2, arg3])
+  #subprocess.call([os.path.join(PROGRAM_PATH,'DWIConvert'), arg1, arg2, arg3])
 
   # SECOND
   nifti_file=os.path.join(OUTPUTDIR,'testFSL.nii.gz')
