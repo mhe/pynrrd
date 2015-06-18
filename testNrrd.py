@@ -123,8 +123,8 @@ def WriteNAMICDWIToNrrd(filename, data, options, bvec, bval):
 """
 echo "Making some nifti formatted data"
 DWIConvert \
-   #--inputVolume /Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd  \
-   --inputVolume /Shared/johnsonhj/HDNI/20150319_DWIProcessing/Results/FMRI_HD_024/0506/10595/Outputs/CorrectedDWI_in_T2Space.nrrd
+   --inputVolume /Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd  \
+   #--inputVolume /Shared/johnsonhj/HDNI/20150319_DWIProcessing/Results/FMRI_HD_024/0506/10595/Outputs/CorrectedDWI_in_T2Space.nrrd \
    --conversionMode NrrdToFSL \
    --outputVolume testFSL.nii.gz
 """
@@ -153,9 +153,9 @@ print type(nifti_bvecs)
 
 #THIRD use nrrd.py + new header parser to read data
 
-#ds='/Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd'
+ds='/Users/johnsonhj/src/NEP-11/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd'
 #ds='/scratch/NAMICExternalProjects/release/BRAINSTools-build/ExternalData/TestData/DWI_TestData_OUTPUTS/SiemensVerio.nrrd'
-ds='/Shared/johnsonhj/HDNI/20150319_DWIProcessing/Results/FMRI_HD_024/0506/10595/Outputs/CorrectedDWI_in_T2Space.nrrd'
+#ds='/Shared/johnsonhj/HDNI/20150319_DWIProcessing/Results/FMRI_HD_024/0506/10595/Outputs/CorrectedDWI_in_T2Space.nrrd'
 nrrd_data,myOptions,nrrd_bvecs,nrrd_bvals = ReadNAMICDWIFromNrrd(ds)
 
 print type(nrrd_bvecs)
