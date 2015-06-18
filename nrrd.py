@@ -487,7 +487,8 @@ def write(filename, data, options={}, separate_header=False):
                            _NRRD_FIELD_FORMATTERS[field](options[field]) +
                            '\n').encode('ascii')
                 filehandle.write(outline)
-        for (k,v) in options.get('keyvaluepairs', {}).items():
+        d = options.get('keyvaluepairs', {})
+        for (k,v) in sorted(d.items(), key=lambda t: t[0]):
             outline = (str(k) + ':=' + str(v) + '\n').encode('ascii')
             filehandle.write(outline)
 
