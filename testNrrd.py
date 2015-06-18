@@ -136,7 +136,7 @@ def WriteNAMICDWIToNrrd(filename, data, bvecs, bvals, options=None):
         if k.startswith('DWMRI_'):
             keyvaluePairDict.pop(k, None)
 
-    keyvaluePairDict[u'modality']=u'DWIMRI'
+    keyvaluePairDict[u'modality']=u'DWMRI'
     maxBvalue = max(bvals)
     keybval=u'DWMRI_b-value'
     keyvaluePairDict[keybval]=maxBvalue
@@ -148,7 +148,9 @@ def WriteNAMICDWIToNrrd(filename, data, bvecs, bvals, options=None):
         print bvecs[index],this_vec
 
         keyvec=u'DWMRI_gradient_{:04d}'.format(index)
-        keyvaluePairDict[keyvec]=this_vec
+        # convert gradient vector value to string (only for consistency with input)
+        vec_string= lambda this_vec: u''.join(nrrd._convert_to_reproducible_floatingpoint(x)+'  ' for x in this_vec).rstrip()
+        keyvaluePairDict[keyvec]=vec_string(this_vec)
     options['keyvaluepairs']=keyvaluePairDict
     options['encoding']='gzip' # Always use gzip compression for DWI data
     nrrd.write(filename,data,options)
