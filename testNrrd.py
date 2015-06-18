@@ -23,6 +23,9 @@ __author__ = 'johnsonhj'
 
 import nrrd
 import numpy as np
+from math import sqrt
+from collections import OrderedDict
+
 class nrrdDWIHeader:
     """A helper class for manipulating header information
     from a nrrd DWI data set into a nibabel compliant
@@ -113,19 +116,97 @@ def ReadNAMICDWIFromNrrd(filename):
     nrrd_dwi_bval=nibabelDataModelDWI.gradientBValues
     return (nrrd_dwi_data, nrrd_dwi_header, nrrd_dwi_bvec, nrrd_dwi_bval)
 
-def WriteNAMICDWIToNrrd(filename, data, options, bvec, bval):
-    numGradients = len(bvec)
-    for index in range(0,numGradients):
-      keyvec=u'DWMRI_gradient_'+str(index).zfill(4)
-      valvec=u''.join(str(i)+'  ' for i in bvec[index]).rstrip()
-      options['keyvaluepairs'][keyvec]=valvec
-    norm=np.linalg.norm(bvec[1])
-    global_BValue=bval[1]*norm
+def WriteNAMICDWIToNrrd(filename, data, bvecs, bvals, options=None):
+    """
+    :param filename: The filename to write to disk
+    :param data: The numpy 4d file to be written
+    :param bvecs: The bvecs values to be written
+    :param bvals: The bvals to be written
+    :param options: Optional parameters to be written to the nrrd header
+    :return:
+    """
+    keyvaluePairDict=OrderedDict()
+    if options is not None:
+        keyvaluePairDict=OrderedDict( options.get( 'keyvaluepairs',OrderedDict() ))
+
+    ## First remove all existing bval/bvec fields from dictionary
+    keyvaluePairDict.pop('modality',None)
+
+    for k,v in keyvaluePairDict.iteritems():
+        if k.startswith('DWMRI_'):
+            keyvaluePairDict.pop(k, None)
+
+    keyvaluePairDict[u'modality']=u'DWIMRI'
+    maxBvalue = max(bvals)
     keybval=u'DWMRI_b-value'
-    options['keyvaluepairs'][keybval]=format(global_BValue,'.2f')
-    #print("my options: {0}".format(options))
+    keyvaluePairDict[keybval]=format(maxBvalue,'.4f')
+
+    numGradients = len(bvecs)
+    for index in range(0,numGradients):
+        this_scale = sqrt(bvals[index] / maxBvalue)
+        this_vec = [ x * this_scale for x in bvecs[index]]
+        valvec=u''.join(str(i)+' ' for i in this_vec).rstrip()
+
+        keyvec=u'DWMRI_gradient_{:04d}'.format(index)
+        keyvaluePairDict[keyvec]=valvec
+    options['keyvaluepairs']=keyvaluePairDict
+    options['encoding']='gzip' # Always use gzip compression for DWI data
     nrrd.write(filename,data,options)
 
+
+def unit_vector(vector):
+  """ Returns the unit vector of the vector.  """
+  v_norm = np.linalg.norm(vector)
+  if v_norm == 0:
+    return vector
+  else:
+    return vector / v_norm
+
+def angle_between(v1, v2):
+  """ Returns the angle in radians between vectors 'v1' and 'v2' """
+  v1_u = unit_vector(v1)
+  v2_u = unit_vector(v2)
+  angle = np.arccos(np.dot(v1_u, v2_u))
+  if np.isnan(angle):
+    if (v1_u == v2_u).all():
+      return 0.0
+    else:
+      return np.pi
+  return angle
+
+def angle_degrees(v1,v2):
+  ang_rad=angle_between(v1,v2)
+  return ang_rad*180/np.pi
+
+def average(v1,v2):
+  return np.mean( np.array([ v1, v2 ]), axis=0 )
+
+def AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals):
+    starting_num_bvecs = len(nrrd_bvecs)
+    processed_list = [ False ] * starting_num_bvecs
+    remove_list = [ False ] * starting_num_bvecs
+    for i in range(0,starting_num_bvecs):
+       processed_list[i] = True
+       for j in range(i,starting_num_bvecs):
+         if processed_list[j] == False:
+           if( angle_degrees(nrrd_bvecs[i], nrrd_bvecs[j] ) < 3
+               and abs(nrrd_bvals[i] - nrrd_bvals[j] ) < 1 ):
+                  nrrd_bvecs[i] = average(nrrd_bvecs[i], nrrd_bvecs[j] )
+                  nrrd_bvals[i] = average(nrrd_bvals[i], nrrd_bvals[j] )
+                  processed_list[j] = True
+                  remove_list[j] = True
+
+
+    # http://docs.scipy.org/doc/numpy/reference/generated/numpy.delete.html
+    remove_indices = []
+    for index in range(0,len(remove_list)):
+      if remove_list[index]:
+         remove_indices.append(index)
+
+    nrrd_bvecs = np.delete( nrrd_bvecs, remove_indices, 0 )
+    nrrd_bvals = np.delete( nrrd_bvals, remove_indices, 0 )
+    nrrd_data = np.delete( nrrd_data, remove_indices, 0)
+    return nrrd_data, nrrd_bvecs, nrrd_bvals
 
 #######################
 #######################
@@ -192,67 +273,11 @@ if __name__ == '__main__':
   #
   print("Number of components before averaging: {0}".format(len(nrrd_bvecs)))
 
-  def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
-    v_norm = np.linalg.norm(vector)
-    if v_norm == 0:
-      return vector
-    else:
-      return vector / v_norm
-
-  def angle_between(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2' """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    angle = np.arccos(np.dot(v1_u, v2_u))
-    if np.isnan(angle):
-      if (v1_u == v2_u).all():
-        return 0.0
-      else:
-        return np.pi
-    return angle
-
-  def angle_degrees(v1,v2):
-    ang_rad=angle_between(v1,v2)
-    return ang_rad*180/np.pi
-
-  def average(v1,v2):
-    return np.mean( np.array([ v1, v2 ]), axis=0 )
-
-  starting_num_bvecs = len(nrrd_bvecs)
-  processed_list = [ False ] * starting_num_bvecs
-  remove_list = [ False ] * starting_num_bvecs
-  for i in range(0,starting_num_bvecs):
-     processed_list[i] = True
-     for j in range(i,starting_num_bvecs):
-       if processed_list[j] == False:
-         if( angle_degrees(nrrd_bvecs[i], nrrd_bvecs[j] ) < 3
-             and abs(nrrd_bvals[i] - nrrd_bvals[j] ) < 1 ):
-                nrrd_bvecs[i] = average(nrrd_bvecs[i], nrrd_bvecs[j] )
-                nrrd_bvals[i] = average(nrrd_bvals[i], nrrd_bvals[j] )
-                processed_list[j] = True
-                remove_list[j] = True
-
-  # http://docs.scipy.org/doc/numpy/reference/generated/numpy.delete.html
-  remove_indices = []
-  for index in range(0,len(remove_list)):
-    if remove_list[index]:
-       remove_indices.append(index)
+  nrrd_data,nrrd_bvecs,nrrd_bvals=AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals)
 
   print("4th dimension of nrrd_data before averaging: {0}".format(len(nrrd_data[:,:,:,1])))
-
-  print("removal indices: {0}".format(remove_indices))
-  nrrd_bvecs = np.delete( nrrd_bvecs, remove_indices, 0 )
-  nrrd_bvals = np.delete( nrrd_bvals, remove_indices, 0 )
-  nrrd_data = np.delete( nrrd_data, remove_indices, 0)
-
-  print("Number of components after averaging: {0}".format(len(nrrd_bvecs)))
-  print("4th dimension of nrrd_data after averaging: {0}".format(len(nrrd_data[:,:,:,1])))
-  print("Output gradient vectors after averaging: {0}".format(nrrd_bvecs))
-  print("Output b values after averaging: {0}".format(nrrd_bvals))
-
-  filename=os.path.join(OUTPUTDIR,'averagedNrrdFile.nrrd')
-  WriteNAMICDWIToNrrd(filename,nrrd_data,myOptions,nrrd_bvecs,nrrd_bvals)
-  print("Output nrrd file is written to the disk.")
+  outputNrrdFilename=os.path.join(OUTPUTDIR,'averagedNrrdFile.nrrd')
+  WriteNAMICDWIToNrrd(outputNrrdFilename,nrrd_data,nrrd_bvecs,nrrd_bvals,myOptions)
+  print("Output nrrd file is written to the disk: {0}.".format(outputNrrdFilename))
 
   sys.exit(0)
