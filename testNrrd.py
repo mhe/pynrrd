@@ -273,11 +273,12 @@ if __name__ == '__main__':
   # FINAL
   # Write an algorithm purely in python to average similar gradients together
   #
-  print("Number of components before averaging: {0}".format(len(nrrd_bvecs)))
+  print("Number of components BEFORE averaging: {0}".format(len(nrrd_bvecs)))
 
   nrrd_data,nrrd_bvecs,nrrd_bvals=AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals)
 
-  print("4th dimension of nrrd_data before averaging: {0}".format(len(nrrd_data[:,:,:,1])))
+  print("Number of components AFTER averaging: {0}".format(len(nrrd_bvecs)))
+  #print("4th dimension of nrrd_data after averaging: {0}".format(len(nrrd_data[:,:,:,1])))
   outputNrrdFilename=os.path.join(OUTPUTDIR,'averagedNrrdFile.nrrd')
   WriteNAMICDWIToNrrd(outputNrrdFilename,nrrd_data,nrrd_bvecs,nrrd_bvals,myOptions)
   print("Output nrrd file is written to the disk: {0}.".format(outputNrrdFilename))
