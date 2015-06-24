@@ -222,7 +222,7 @@ def read_data(fields, filehandle, filename=None):
     dtype = _determine_dtype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
-    byteskip = fields.get('byteskip', fields.get('byteskip', 0))
+    byteskip = fields.get('byteskip', fields.get('byte skip', 0))
     datafile = fields.get("datafile", fields.get("data file", None))
     datafilehandle = filehandle
     if datafile is not None:
@@ -238,7 +238,7 @@ def read_data(fields, filehandle, filename=None):
     totalbytes = dtype.itemsize * numPixels
 
     if fields['encoding'] == 'raw':
-        if byteskip == -1:
+        if byteskip == -1: # This is valid only with raw encoding
             datafilehandle.seek(-totalbytes, 2)
         else:
             for _ in range(lineskip):
@@ -261,11 +261,13 @@ def read_data(fields, filehandle, filename=None):
         data = np.fromstring(bz2file.read(), dtype)
     else:
         raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
+
+    if numPixels != data.size:
+       raise NrrdError('ERROR: {0}-{1}={2}'.format(numPixels,data.size,numPixels-data.size))
+
     # dkh : eliminated need to reverse order of dimensions. nrrd's
     # data layout is same as what numpy calls 'Fortran' order,
     shape_tmp = list(fields['sizes'])
-    if numPixels != data.size:
-        raise NrrdError('ERROR: {0}-{1}={2}'.format(numPixels,data.size,numPixels-data.size))
     data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
 
