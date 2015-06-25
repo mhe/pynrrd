@@ -19,7 +19,7 @@ Options:
   --NEP_build_path PROGRAM_PATH         Path to last NEP build for DWIConvert
 """
 
-__author__ = 'johnsonhj'
+__author__ = 'johnsonhj,aghayoor'
 
 import nrrd
 import numpy as np
@@ -35,6 +35,7 @@ class nrrdDWIHeader:
         self.global_BValue=None                 #Matches NRRD File
         self.gradientUnormalizedVectors=[None] #Matches NRRD File
 
+        self.gradientIndex=-1
         self.gradientBValues=[None]             #Computed
         self.gradientVectors=[None]             #Computed
         self._ConvertNrrdToNibabelDWIDataModel(pynrrdDataModel)
@@ -54,7 +55,7 @@ class nrrdDWIHeader:
         for test_index in range(0,numdwidims):
             if centerings[test_index] not in ['cell']:
                 gradient_index=test_index
-        return gradient_index
+        self.gradientIndex = gradient_index
 
     def _ExtractGlobalBValue(self, pyNrrdKVUnknownMetaData):
         globalBValueString=pyNrrdKVUnknownMetaData.get(u'DWMRI_b-value','0').lstrip().rstrip()
@@ -63,8 +64,8 @@ class nrrdDWIHeader:
     def _ExtractUnormalizedBValues(self,pyNrrdKVUnknownMetaData,pynrrdDataModel):
         """Unnormalized data values from the nrrd files, where the
         magnitude is reflective of the scale relative to the global_BValue"""
-        gradient_index = self._getGradientStorageIndex(pynrrdDataModel)
-        numGradients = pynrrdDataModel[u'sizes'][gradient_index]
+        self._getGradientStorageIndex(pynrrdDataModel)
+        numGradients = pynrrdDataModel[u'sizes'][self.gradientIndex]
         self.gradientUnormalizedVectors= np.array( [ [ None, None, None ] for x in range(0,numGradients) ] )
         gvec_Fields=pyNrrdKVUnknownMetaData.copy() #Clone so we can remove items
         for k,v in gvec_Fields.iteritems():
@@ -114,7 +115,8 @@ def ReadNAMICDWIFromNrrd(filename):
     nibabelDataModelDWI=nrrdDWIHeader(nrrd_dwi_header)
     nrrd_dwi_bvec=nibabelDataModelDWI.gradientVectors
     nrrd_dwi_bval=nibabelDataModelDWI.gradientBValues
-    return (nrrd_dwi_data, nrrd_dwi_header, nrrd_dwi_bvec, nrrd_dwi_bval)
+    gradient_index=nibabelDataModelDWI.gradientIndex
+    return (nrrd_dwi_data, nrrd_dwi_header, nrrd_dwi_bvec, nrrd_dwi_bval, gradient_index)
 
 def WriteNAMICDWIToNrrd(filename, data, bvecs, bvals, options=None):
     """
@@ -183,7 +185,7 @@ def angle_degrees(v1,v2):
 def average(v1,v2):
   return np.mean( np.array([ v1, v2 ]), axis=0 )
 
-def AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals):
+def AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals,gradient_index):
     starting_num_bvecs = len(nrrd_bvecs)
     processed_list = [ False ] * starting_num_bvecs
     remove_list = [ False ] * starting_num_bvecs
@@ -207,7 +209,8 @@ def AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals):
 
     nrrd_bvecs = np.delete( nrrd_bvecs, remove_indices, 0 )
     nrrd_bvals = np.delete( nrrd_bvals, remove_indices, 0 )
-    nrrd_data = np.delete( nrrd_data, remove_indices, 0)
+    if(gradient_index == -1): gradient_index = 0
+    nrrd_data = np.delete( nrrd_data, remove_indices, gradient_index)
     return nrrd_data, nrrd_bvecs, nrrd_bvals
 
 #######################
@@ -245,7 +248,7 @@ if __name__ == '__main__':
   arg1='--inputVolume'+' '+str(DWISCAN)
   arg2='--conversionMode NrrdToFSL'
   arg3='--outputVolume'+' '+os.path.join(OUTPUTDIR,'testFSL.nii.gz')
-  #subprocess.call([os.path.join(PROGRAM_PATH,'DWIConvert'), arg1, arg2, arg3])
+  subprocess.call([os.path.join(PROGRAM_PATH,'DWIConvert'), arg1, arg2, arg3])
 
   # SECOND
   nifti_file=os.path.join(OUTPUTDIR,'testFSL.nii.gz')
@@ -262,7 +265,7 @@ if __name__ == '__main__':
   print type(nifti_bvecs)
 
   #THIRD use nrrd.py + new header parser to read data
-  nrrd_data,myOptions,nrrd_bvecs,nrrd_bvals = ReadNAMICDWIFromNrrd(DWISCAN)
+  nrrd_data,myOptions,nrrd_bvecs,nrrd_bvals, gradient_index = ReadNAMICDWIFromNrrd(DWISCAN)
 
   print type(nrrd_bvecs)
   print type(nrrd_bvals)
@@ -275,7 +278,7 @@ if __name__ == '__main__':
   #
   print("Number of components BEFORE averaging: {0}".format(len(nrrd_bvecs)))
 
-  nrrd_data,nrrd_bvecs,nrrd_bvals=AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals)
+  nrrd_data,nrrd_bvecs,nrrd_bvals=AverageLikeGradients(nrrd_data,nrrd_bvecs,nrrd_bvals,gradient_index)
 
   print("Number of components AFTER averaging: {0}".format(len(nrrd_bvecs)))
   #print("4th dimension of nrrd_data after averaging: {0}".format(len(nrrd_data[:,:,:,1])))
