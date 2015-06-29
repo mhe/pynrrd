@@ -28,20 +28,6 @@ def _convert_to_reproducible_floatingpoint( x ):
         value = str(x)
     return value
 
-def _nrrd_read_header_lines(nrrdfile):
-    """Read header lines from a .nrrd/.nhdr file."""
-    line = nrrdfile.readline().decode('ascii')
-    if line[:-2] != 'NRRD000':
-        raise NrrdError('Missing magic "NRRD" word, is this an NRRD file?')
-    if line[-2] > '5':
-        raise NrrdError('NRRD file version too new for this library.')
-    headerlines = []
-    while line != '\n' and line != '':
-        headerlines.append(line)
-        line = nrrdfile.readline().decode('ascii')
-
-    return headerlines
-
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
     'int8': 'i1',
