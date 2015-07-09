@@ -98,7 +98,7 @@ class nrrdDWIHeader:
             if norm < 1e-2:
                 self.gradientVectors[index] = gv * 0.0
                 self.gradientBValues[index] = 0.0
-            elif ( abs( 1.0-norm ) > 1e-4 ): #Avoid B0 and need greater than 1e-4 from 1. for rescaling
+            elif ( abs( 1.0-norm ) > 1e-2 ): #Avoid B0 and need greater than 1e-2 from 1. for rescaling
                 self.gradientVectors[index] = gv/norm
                 self.gradientBValues[index] = self.global_BValue/norm
 
