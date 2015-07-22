@@ -19,18 +19,14 @@ class NrrdError(Exception):
     """Exceptions for Nrrd class."""
     pass
 
-def _nrrd_read_header_lines(nrrdfile):
-    """Read header lines from a .nrrd/.nhdr file."""
-    line = nrrdfile.readline().decode('ascii')
-    if line[:-2] != 'NRRD000':
-        raise NrrdError('Missing magic "NRRD" word, is this an NRRD file?')
-    if line[-2] > '5':
-        raise NrrdError('NRRD file version too new for this library.')
-    headerlines = []
-    while line != '\n' and line != '':
-        headerlines.append(line)
-        line = nrrdfile.readline().decode('ascii')
-    return headerlines
+#This will help prevent loss of precision
+#IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
+def _convert_to_reproducible_floatingpoint( x ):
+    if type(x) == float:
+        value = '{:.16f}'.format(x).rstrip('0').rstrip('.') # Remove trailing zeros, and dot if at end
+    else:
+        value = str(x)
+    return value
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
@@ -101,7 +97,7 @@ def parse_nrrdvector(inp):
     """Parse a vector from a nrrd header, return a list."""
     assert inp[0] == '(', "Vector should be enclosed by parenthesis."
     assert inp[-1] == ')', "Vector should be enclosed by parenthesis."
-    return [float(x) for x in inp[1:-1].split(',')]
+    return [_convert_to_reproducible_floatingpoint(x) for x in inp[1:-1].split(',')]
 
 def parse_optional_nrrdvector(inp):
     """Parse a vector from a nrrd header that can also be none."""
@@ -113,7 +109,7 @@ def parse_optional_nrrdvector(inp):
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
-    'sizes': lambda fieldValue: [int(x) for x in fieldValue.split(' ')],
+    'sizes': lambda fieldValue: [int(x) for x in fieldValue.split()],
     'endian': str,
     'encoding': str,
     'min': float,
@@ -130,24 +126,24 @@ _NRRD_FIELD_PARSERS = {
     'sample units': str,
     'datafile': str,
     'data file': str,
-    'spacings': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'thicknesses': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axis mins': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axismins': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axis maxs': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axismaxs': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'labels': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'units': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
+    'spacings': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'thicknesses': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axis mins': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axismins': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axis maxs': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axismaxs': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'space': str,
     'space dimension': int,
-    'space units': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
+    'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'space origin': parse_nrrdvector,
     'space directions': lambda fieldValue:
-                        [parse_optional_nrrdvector(x) for x in fieldValue.split(' ')],
+                        [parse_optional_nrrdvector(x) for x in fieldValue.split()],
     'measurement frame': lambda fieldValue:
-                        [parse_nrrdvector(x) for x in fieldValue.split(' ')],
+                        [parse_nrrdvector(x) for x in fieldValue.split()],
 }
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
@@ -212,7 +208,7 @@ def read_data(fields, filehandle, filename=None):
     dtype = _determine_dtype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
-    byteskip = fields.get('byteskip', fields.get('byteskip', 0))
+    byteskip = fields.get('byteskip', fields.get('byte skip', 0))
     datafile = fields.get("datafile", fields.get("data file", None))
     datafilehandle = filehandle
     if datafile is not None:
@@ -224,10 +220,11 @@ def read_data(fields, filehandle, filename=None):
         else:
             datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename,'rb')
-    totalbytes = dtype.itemsize *\
-                    np.array(fields['sizes']).prod()
+    numPixels=np.array(fields['sizes']).prod()
+    totalbytes = dtype.itemsize * numPixels
+
     if fields['encoding'] == 'raw':
-        if byteskip == -1:
+        if byteskip == -1: # This is valid only with raw encoding
             datafilehandle.seek(-totalbytes, 2)
         else:
             for _ in range(lineskip):
@@ -250,6 +247,10 @@ def read_data(fields, filehandle, filename=None):
         data = np.fromstring(bz2file.read(), dtype)
     else:
         raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
+
+    if numPixels != data.size:
+       raise NrrdError('ERROR: {0}-{1}={2}'.format(numPixels,data.size,numPixels-data.size))
+
     # dkh : eliminated need to reverse order of dimensions. nrrd's
     # data layout is same as what numpy calls 'Fortran' order,
     shape_tmp = list(fields['sizes'])
@@ -319,6 +320,9 @@ def read_header(nrrdfile):
         field_desc = line.split(': ', 1)
         if len(field_desc) is 2:
             field, desc = field_desc
+            ## preceeding and suffixing white space should be ignored.
+            field = field.rstrip().lstrip()
+            desc = desc.rstrip().lstrip()
             if field not in _NRRD_FIELD_PARSERS:
                 raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
             if field in header.keys():
@@ -344,12 +348,10 @@ def read(filename):
 
 
 def _format_nrrd_list(fieldValue) :
-    return ' '.join([str(x) for x in fieldValue])
-
+    return ' '.join([_convert_to_reproducible_floatingpoint(x) for x in fieldValue])
 
 def _format_nrrdvector(v) :
-    return '(' + ','.join([str(x) for x in v]) + ')'
-
+    return '(' + ','.join([_convert_to_reproducible_floatingpoint(x) for x in v]) + ')'
 
 def _format_optional_nrrdvector(v):
     if (v == 'none') :
@@ -460,7 +462,7 @@ def write(filename, data, options={}, separate_header=False):
         datafilename = filename
 
     with open(filename,'wb') as filehandle:
-        filehandle.write(b'NRRD0004\n')
+        filehandle.write(b'NRRD0005\n')
         filehandle.write(b'# This NRRD file was generated by pynrrd\n')
         filehandle.write(b'# on ' +
                          datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S').encode('ascii') +
@@ -475,7 +477,8 @@ def write(filename, data, options={}, separate_header=False):
                            _NRRD_FIELD_FORMATTERS[field](options[field]) +
                            '\n').encode('ascii')
                 filehandle.write(outline)
-        for (k,v) in options.get('keyvaluepairs', {}).items():
+        d = options.get('keyvaluepairs', {})
+        for (k,v) in sorted(d.items(), key=lambda t: t[0]):
             outline = (str(k) + ':=' + str(v) + '\n').encode('ascii')
             filehandle.write(outline)
 
