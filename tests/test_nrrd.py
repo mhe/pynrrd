@@ -1,6 +1,11 @@
+import sys
+import os
+
+# Look on level up for nrrd.py
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import nrrd
 import unittest
-import os
 from os.path import dirname, join, basename
 
 DATA_DIR_PATH  = os.path.dirname(__file__) 
