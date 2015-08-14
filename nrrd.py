@@ -273,6 +273,9 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
     else:
         raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
 
+    if datafilehandle:
+        datafilehandle.close()
+
     if numPixels != data.size:
        raise NrrdError('ERROR: {0}-{1}={2}'.format(numPixels,data.size,numPixels-data.size))
 
