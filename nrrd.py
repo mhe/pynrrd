@@ -315,9 +315,9 @@ def read_header(nrrdfile):
     (e.g. Windows)
 
     >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
-    {'type': 'float', 'dimension': 3, 'keyvaluepairs': {}}
+    {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
     >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
-    {'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
+    {u'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
     """
     # Collect number of bytes in the file header (for seeking below)
     headerSize = 0
@@ -326,7 +326,7 @@ def read_header(nrrdfile):
 
     headerSize += _validate_magic_line(next(it).decode('ascii'))
 
-    header = { 'keyvaluepairs': {} }
+    header = { u'keyvaluepairs': {} }
     for raw_line in it:
         headerSize += len(raw_line)
         raw_line = raw_line.decode('ascii')
@@ -348,7 +348,7 @@ def read_header(nrrdfile):
             key, value = key_value
             # TODO: escape \\ and \n ??
             # value.replace(r'\\\\', r'\\').replace(r'\n', '\n')
-            header['keyvaluepairs'][key] = value
+            header[u'keyvaluepairs'][key] = value
             continue
 
         # Handle the "<field>: <desc>" lines.
