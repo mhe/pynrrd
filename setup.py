@@ -6,4 +6,5 @@ setup(name='pynrrd',
       author_email='maarten@bitpuzzle.com',
       url='http://github.com/mhe/pynrrd',
       py_modules=['nrrd'],
+      install_requires=['numpy'],
       )

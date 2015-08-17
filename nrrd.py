@@ -12,7 +12,8 @@ Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
 import numpy as np
 import gzip
 import bz2
-import os.path
+import mmap
+import os
 from datetime import datetime
 
 class NrrdError(Exception):
@@ -201,15 +202,21 @@ def _determine_dtype(fields):
     return np.dtype(np_typestring)
 
 
-def read_data(fields, filehandle, filename=None):
-    """Read the actual data into a numpy structure."""
+def read_data(fields, filehandle, filename=None, seek_past_header=True):
+    """Read the NRRD data from a file object into a numpy structure.
+    
+    If seek_past_header is True, the '\n\n' header-data separator will be
+    found, otherwise it is assumed that the current fpos of the filehandle
+    object is pointing to the first byte after the '\n\n' line.
+    seek_past_headeronly only applies to attached headers. 
+    """
     data = np.zeros(0)
     # Determine the data type from the fields
     dtype = _determine_dtype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
     byteskip = fields.get('byteskip', fields.get('byte skip', 0))
-    datafile = fields.get("datafile", fields.get("data file", None))
+    datafile = fields.get('datafile', fields.get('data file', None))
     datafilehandle = filehandle
     if datafile is not None:
         # If the datafile path is absolute, don't muck with it. Otherwise
@@ -220,33 +227,54 @@ def read_data(fields, filehandle, filename=None):
         else:
             datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename,'rb')
-    numPixels=np.array(fields['sizes']).prod()
-    totalbytes = dtype.itemsize * numPixels
+    elif seek_past_header:
+        # Efficiently find the header-data seperator line no matter how big
+        # any header line is
+        datafilehandle.seek(0)
+        m = mmap.mmap(datafilehandle.fileno(), 0, 
+                      mmap.MAP_PRIVATE, mmap.PROT_READ)
+        seek_past_header_pos = m.find(b'\n\n')
+        if seek_past_header_pos == -1: 
+            raise NrrdError('Invalid NRRD: Missing header-data separator line')
+        datafilehandle.seek(seek_past_header_pos + 2)
+
+    numPixels = np.array(fields['sizes']).prod()
+    # Seek to start of data based on lineskip/byteskip. byteskip == -1 is
+    # only valid for raw encoding and overrides any lineskip
+    if fields['encoding'] == 'raw' and byteskip == -1:
+        datafilehandle.seek(-dtype.itemsize * numPixels, 2)
+    else:
+        for _ in range(lineskip):
+            datafilehandle.readline()
 
     if fields['encoding'] == 'raw':
-        if byteskip == -1: # This is valid only with raw encoding
-            datafilehandle.seek(-totalbytes, 2)
-        else:
-            for _ in range(lineskip):
-                datafilehandle.readline()
-            datafilehandle.read(byteskip)
+        datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
     elif fields['encoding'] == 'gzip' or\
          fields['encoding'] == 'gz':
         gzipfile = gzip.GzipFile(fileobj=datafilehandle)
+        # byteskip applies to the _decompressed byte stream
+        gzipfile.seek(byteskip, os.SEEK_CUR)
         # Again, unfortunately, np.fromfile does not support
         # reading from a gzip stream, so we'll do it like this.
         # I have no idea what the performance implications are.
         data = np.fromstring(gzipfile.read(), dtype)
     elif fields['encoding'] == 'bzip2' or\
          fields['encoding'] == 'bz2':
-        bz2file = bz2.BZ2File(fileobj=datafilehandle)
-        # Again, unfortunately, np.fromfile does not support
-        # reading from a gzip stream, so we'll do it like this.
-        # I have no idea what the performance implications are.
-        data = np.fromstring(bz2file.read(), dtype)
+        decomp = bz2.BZ2Decompressor()
+        decompressed_data = b''
+        while True:
+            chunk = datafilehandle.read(65536)
+            if not chunk:
+                break
+            decompressed_data += decomp.decompress(chunk)
+        # byteskip applies to the _decompressed byte stream
+        data = np.fromstring(decompressed_data[byteskip:], dtype)
     else:
         raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
+
+    if datafilehandle:
+        datafilehandle.close()
 
     if numPixels != data.size:
        raise NrrdError('ERROR: {0}-{1}={2}'.format(numPixels,data.size,numPixels-data.size))
@@ -260,13 +288,23 @@ def read_data(fields, filehandle, filename=None):
 def _validate_magic_line(line):
     """For NRRD files, the first four characters are always "NRRD", and
     remaining characters give information about the file format version
+    
+    >>> _validate_magic_line('NRRD0005')
+    >>> _validate_magic_line('NRRD0006')
+    Traceback (most recent call last):
+        ...
+    NrrdError: NRRD file version too new for this library.
+    >>> _validate_magic_line('NRRD')
+    Traceback (most recent call last):
+        ...
+    NrrdError: Invalid NRRD magic line: NRRD
     """
     if not line.startswith('NRRD'):
         raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
     try:
         if int(line[4:]) > 5:
             raise NrrdError('NRRD file version too new for this library.')
-    except Value:
+    except ValueError:
         raise NrrdError('Invalid NRRD magic line: %s' % (line,))
     return len(line)
 
@@ -275,14 +313,14 @@ def read_header(nrrdfile):
 
     nrrdfile can be any object which supports the iterator protocol and
     returns a string each time its next() method is called — file objects and
-    list objects are both suitable. If csvfile is a file object, it must be
+    list objects are both suitable. If nrrdfile is a file object, it must be
     opened with the ‘b’ flag on platforms where that makes a difference
     (e.g. Windows)
 
     >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
-    {'type': 'float', 'dimension': 3, 'keyvaluepairs': {}}
+    {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
     >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
-    {'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
+    {u'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
     """
     # Collect number of bytes in the file header (for seeking below)
     headerSize = 0
@@ -291,7 +329,7 @@ def read_header(nrrdfile):
 
     headerSize += _validate_magic_line(next(it).decode('ascii'))
 
-    header = { 'keyvaluepairs': {} }
+    header = { u'keyvaluepairs': {} }
     for raw_line in it:
         headerSize += len(raw_line)
         raw_line = raw_line.decode('ascii')
@@ -313,7 +351,7 @@ def read_header(nrrdfile):
             key, value = key_value
             # TODO: escape \\ and \n ??
             # value.replace(r'\\\\', r'\\').replace(r'\n', '\n')
-            header['keyvaluepairs'][key] = value
+            header[u'keyvaluepairs'][key] = value
             continue
 
         # Handle the "<field>: <desc>" lines.
@@ -324,14 +362,14 @@ def read_header(nrrdfile):
             field = field.rstrip().lstrip()
             desc = desc.rstrip().lstrip()
             if field not in _NRRD_FIELD_PARSERS:
-                raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
+                raise NrrdError('Unexpected field in nrrd header: %s' % repr(field))
             if field in header.keys():
-                raise NrrdError('Duplicate header field: "%s"' % field)
+                raise NrrdError('Duplicate header field: %s' % repr(field))
             header[field] = _NRRD_FIELD_PARSERS[field](desc)
             continue
 
         # Should not reach here
-        raise NrrdError('Invalid header line: "%s"' % line)
+        raise NrrdError('Invalid header line: %s' % repr(line))
 
     # line reading was buffered; correct file pointer to just behind header:
     nrrdfile.seek(headerSize)
@@ -415,7 +453,7 @@ def _write_data(data, filehandle, options):
         raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
 
 
-def write(filename, data, options={}, separate_header=False):
+def write(filename, data, options={}, detached_header=False):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
     inferred from from the data. Additional options can be passed in the
     options dictionary. See the read() function for the structure of this
@@ -441,12 +479,12 @@ def write(filename, data, options={}, separate_header=False):
         options['encoding'] = 'gzip'
 
     # A bit of magic in handling options here.
-    # If *.nhdr filename provided, this overrides `separate_header=False`
-    # If *.nrrd filename provided AND separate_header=True, separate files
-    #   written.
+    # If *.nhdr filename provided, this overrides `detached_header=False`
+    # If *.nrrd filename provided AND detached_header=True, separate header
+    #   and data files written.
     # For all other cases, header & data written to same file.
     if filename[-5:] == '.nhdr':
-        separate_header = True
+        detached_header = True
         if 'data file' not in options:
             datafilename = filename[:-4] + str('raw')
             if options['encoding'] == 'gzip':
@@ -454,7 +492,7 @@ def write(filename, data, options={}, separate_header=False):
             options['data file'] = datafilename
         else:
             datafilename = options['data file']
-    elif filename[-5:] == '.nrrd' and separate_header:
+    elif filename[-5:] == '.nrrd' and detached_header:
         datafilename = filename
         filename = filename[:-4] + str('nhdr')
     else:
@@ -486,11 +524,11 @@ def write(filename, data, options={}, separate_header=False):
         filehandle.write(b'\n')
 
         # If a single file desired, write data
-        if not separate_header:
+        if not detached_header:
             _write_data(data, filehandle, options)
 
-    # If separate header desired, write data to different file
-    if separate_header:
+    # If detached header desired, write data to different file
+    if detached_header:
         with open(datafilename, 'wb') as datafilehandle:
             _write_data(data, datafilehandle, options)
 
