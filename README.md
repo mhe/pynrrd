@@ -1,5 +1,5 @@
 pynrrd
-===========
+======
 
 pynrrd is a pure-Python module for reading and writing [nrrd][1] files into and 
 from numpy arrays.
@@ -35,6 +35,13 @@ Example usage
     readdata, options = nrrd.read(filename)
     print readdata.shape
     print options
+
+Tests
+-----
+
+To run the tests:
+
+    python tests/test_nrrd.py
 
 Bugs and shortcomings
 ---------------------
