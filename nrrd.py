@@ -231,8 +231,12 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
         # Efficiently find the header-data seperator line no matter how big
         # any header line is
         datafilehandle.seek(0)
-        m = mmap.mmap(datafilehandle.fileno(), 0, 
+        if os.name == "nt":
+            m = mmap.mmap(datafilehandle.fileno(), 0)
+        else:
+            m = mmap.mmap(datafilehandle.fileno(), 0, 
                       mmap.MAP_PRIVATE, mmap.PROT_READ)
+
         seek_past_header_pos = m.find(b'\n\n')
         if seek_past_header_pos == -1: 
             raise NrrdError('Invalid NRRD: Missing header-data separator line')
