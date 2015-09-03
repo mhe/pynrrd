@@ -232,7 +232,7 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
         # any header line is
         datafilehandle.seek(0)
         if os.name == "nt":
-            m = mmap.mmap(datafilehandle.fileno(), 0)
+            m = mmap.mmap(datafilehandle.fileno(), 0, access=mmap.ACCESS_READ)
         else:
             m = mmap.mmap(datafilehandle.fileno(), 0, 
                       mmap.MAP_PRIVATE, mmap.PROT_READ)
