@@ -379,10 +379,19 @@ def read_header(nrrdfile):
 
 def read(filename):
     """Read a nrrd file and return a tuple (data, header)."""
-    with open(filename,'rb') as filehandle:
-        header = read_header(filehandle)
-        data = read_data(header, filehandle, filename)
-        return (data, header)
+    ext = os.path.splitext(filename)[1]
+
+    if ext != '.nrrd':
+        raise Exception('The file specified is not a .nrrd file !')
+
+    try:
+        with open(filename,'rb') as filehandle:
+            header = read_header(filehandle)
+            data = read_data(header, filehandle, filename)
+            return (data, header)
+
+    except EnvironmentError:
+        print 'Could not read the specified file'
 
 
 def _format_nrrd_list(fieldValue) :
