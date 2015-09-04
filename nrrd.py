@@ -20,6 +20,7 @@ class NrrdError(Exception):
     """Exceptions for Nrrd class."""
     pass
 
+
 #This will help prevent loss of precision
 #IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
 def _convert_to_reproducible_floatingpoint( x ):
@@ -379,17 +380,16 @@ def read_header(nrrdfile):
 
 def read(filename):
     """Read a nrrd file and return a tuple (data, header)."""
+    
     ext = os.path.splitext(filename)[1]
 
     if ext != '.nrrd':
-        raise Exception('The file specified is not a .nrrd file !')
-
+        raise NrrdError('The file specified is not a .nrrd file!')
     try:
         with open(filename,'rb') as filehandle:
             header = read_header(filehandle)
             data = read_data(header, filehandle, filename)
             return (data, header)
-
     except EnvironmentError:
         print 'Could not read the specified file'
 
