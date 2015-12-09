@@ -1,5 +1,6 @@
+[![Build Status](https://travis-ci.org/mhe/pynrrd.svg?branch=master)](https://travis-ci.org/mhe/pynrrd)
 pynrrd
-===========
+======
 
 pynrrd is a pure-Python module for reading and writing [nrrd][1] files into and 
 from numpy arrays.
@@ -22,19 +23,26 @@ Example usage
 -------------
 
     import numpy as np
-	import nrrd
+    import nrrd
 
-	# some sample numpy data
-	data = np.zeros((5,4,3,2))
-	filename = 'testdata.nrrd'
+    # some sample numpy data
+    data = np.zeros((5,4,3,2))
+    filename = 'testdata.nrrd'
 
-	# write to a nrrd file
-	nrrd.write(filename, data)
+    # write to a nrrd file
+    nrrd.write(filename, data)
 
-	# read the data back from file
-	readdata, options = nrrd.read(filename)
-	print readdata.shape
-	print options
+    # read the data back from file
+    readdata, options = nrrd.read(filename)
+    print readdata.shape
+    print options
+
+Tests
+-----
+
+To run the tests:
+
+    python tests/test_nrrd.py
 
 Bugs and shortcomings
 ---------------------

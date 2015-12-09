@@ -12,25 +12,22 @@ Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
 import numpy as np
 import gzip
 import bz2
-import os.path
+import mmap
+import os
 from datetime import datetime
 
 class NrrdError(Exception):
     """Exceptions for Nrrd class."""
     pass
 
-def _nrrd_read_header_lines(nrrdfile):
-    """Read header lines from a .nrrd/.nhdr file."""
-    line = nrrdfile.readline()
-    if line[:-2] != 'NRRD000':
-        raise NrrdError('Missing magic "NRRD" word, is this an NRRD file?')
-    if line[-2] > '5':
-        raise NrrdError('NRRD file version too new for this library.')
-    headerlines = []
-    while line != '\n' and line != '':
-        headerlines.append(line)
-        line = nrrdfile.readline()
-    return headerlines
+#This will help prevent loss of precision
+#IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
+def _convert_to_reproducible_floatingpoint( x ):
+    if type(x) == float:
+        value = '{:.16f}'.format(x).rstrip('0').rstrip('.') # Remove trailing zeros, and dot if at end
+    else:
+        value = str(x)
+    return value
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
@@ -101,7 +98,7 @@ def parse_nrrdvector(inp):
     """Parse a vector from a nrrd header, return a list."""
     assert inp[0] == '(', "Vector should be enclosed by parenthesis."
     assert inp[-1] == ')', "Vector should be enclosed by parenthesis."
-    return [float(x) for x in inp[1:-1].split(',')]
+    return [_convert_to_reproducible_floatingpoint(x) for x in inp[1:-1].split(',')]
 
 def parse_optional_nrrdvector(inp):
     """Parse a vector from a nrrd header that can also be none."""
@@ -113,7 +110,7 @@ def parse_optional_nrrdvector(inp):
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
-    'sizes': lambda fieldValue: [int(x) for x in fieldValue.split(' ')],
+    'sizes': lambda fieldValue: [int(x) for x in fieldValue.split()],
     'endian': str,
     'encoding': str,
     'min': float,
@@ -130,24 +127,24 @@ _NRRD_FIELD_PARSERS = {
     'sample units': str,
     'datafile': str,
     'data file': str,
-    'spacings': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'thicknesses': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axis mins': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axismins': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axis maxs': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'axismaxs': lambda fieldValue: [float(x) for x in fieldValue.split(' ')],
-    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'labels': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'units': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
-    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
+    'spacings': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'thicknesses': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axis mins': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axismins': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axis maxs': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'axismaxs': lambda fieldValue: [_convert_to_reproducible_floatingpoint(x) for x in fieldValue.split()],
+    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'space': str,
     'space dimension': int,
-    'space units': lambda fieldValue: [str(x) for x in fieldValue.split(' ')],
+    'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'space origin': parse_nrrdvector,
     'space directions': lambda fieldValue:
-                        [parse_optional_nrrdvector(x) for x in fieldValue.split(' ')],
+                        [parse_optional_nrrdvector(x) for x in fieldValue.split()],
     'measurement frame': lambda fieldValue:
-                        [parse_nrrdvector(x) for x in fieldValue.split(' ')],
+                        [parse_nrrdvector(x) for x in fieldValue.split()],
 }
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
@@ -182,7 +179,8 @@ _NRRD_FIELD_ORDER = [
     'units',
     'space units',
     'space origin',
-    'measurement frame']
+    'measurement frame',
+    'data file']
 
 
 def _determine_dtype(fields):
@@ -204,15 +202,21 @@ def _determine_dtype(fields):
     return np.dtype(np_typestring)
 
 
-def read_data(fields, filehandle, filename=None):
-    """Read the actual data into a numpy structure."""
+def read_data(fields, filehandle, filename=None, seek_past_header=True):
+    """Read the NRRD data from a file object into a numpy structure.
+    
+    If seek_past_header is True, the '\n\n' header-data separator will be
+    found, otherwise it is assumed that the current fpos of the filehandle
+    object is pointing to the first byte after the '\n\n' line.
+    seek_past_headeronly only applies to attached headers. 
+    """
     data = np.zeros(0)
     # Determine the data type from the fields
     dtype = _determine_dtype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
-    byteskip = fields.get('byteskip', fields.get('byteskip', 0))
-    datafile = fields.get("datafile", fields.get("data file", None))
+    byteskip = fields.get('byteskip', fields.get('byte skip', 0))
+    datafile = fields.get('datafile', fields.get('data file', None))
     datafilehandle = filehandle
     if datafile is not None:
         # If the datafile path is absolute, don't muck with it. Otherwise
@@ -223,32 +227,62 @@ def read_data(fields, filehandle, filename=None):
         else:
             datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename,'rb')
-    totalbytes = dtype.itemsize *\
-                    np.array(fields['sizes']).prod()
-    if fields['encoding'] == 'raw':
-        if byteskip == -1:
-            datafilehandle.seek(-totalbytes, 2)
+    elif seek_past_header:
+        # Efficiently find the header-data seperator line no matter how big
+        # any header line is
+        datafilehandle.seek(0)
+        if os.name == "nt":
+            m = mmap.mmap(datafilehandle.fileno(), 0, access=mmap.ACCESS_READ)
         else:
-            for _ in range(lineskip):
-                datafilehandle.readline()
-            datafilehandle.read(byteskip)
+            m = mmap.mmap(datafilehandle.fileno(), 0, 
+                      mmap.MAP_PRIVATE, mmap.PROT_READ)
+
+        seek_past_header_pos = m.find(b'\n\n')
+        if seek_past_header_pos == -1: 
+            raise NrrdError('Invalid NRRD: Missing header-data separator line')
+        datafilehandle.seek(seek_past_header_pos + 2)
+
+    numPixels = np.array(fields['sizes']).prod()
+    # Seek to start of data based on lineskip/byteskip. byteskip == -1 is
+    # only valid for raw encoding and overrides any lineskip
+    if fields['encoding'] == 'raw' and byteskip == -1:
+        datafilehandle.seek(-dtype.itemsize * numPixels, 2)
+    else:
+        for _ in range(lineskip):
+            datafilehandle.readline()
+
+    if fields['encoding'] == 'raw':
+        datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
     elif fields['encoding'] == 'gzip' or\
          fields['encoding'] == 'gz':
         gzipfile = gzip.GzipFile(fileobj=datafilehandle)
+        # byteskip applies to the _decompressed byte stream
+        gzipfile.seek(byteskip, os.SEEK_CUR)
         # Again, unfortunately, np.fromfile does not support
         # reading from a gzip stream, so we'll do it like this.
         # I have no idea what the performance implications are.
         data = np.fromstring(gzipfile.read(), dtype)
     elif fields['encoding'] == 'bzip2' or\
          fields['encoding'] == 'bz2':
-        bz2file = bz2.BZ2File(fileobj=datafilehandle)
-        # Again, unfortunately, np.fromfile does not support
-        # reading from a gzip stream, so we'll do it like this.
-        # I have no idea what the performance implications are.
-        data = np.fromstring(bz2file.read(), dtype)
+        decomp = bz2.BZ2Decompressor()
+        decompressed_data = b''
+        while True:
+            chunk = datafilehandle.read(65536)
+            if not chunk:
+                break
+            decompressed_data += decomp.decompress(chunk)
+        # byteskip applies to the _decompressed byte stream
+        data = np.fromstring(decompressed_data[byteskip:], dtype)
     else:
         raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
+
+    if datafilehandle:
+        datafilehandle.close()
+
+    if numPixels != data.size:
+       raise NrrdError('ERROR: {0}-{1}={2}'.format(numPixels,data.size,numPixels-data.size))
+
     # dkh : eliminated need to reverse order of dimensions. nrrd's
     # data layout is same as what numpy calls 'Fortran' order,
     shape_tmp = list(fields['sizes'])
@@ -258,13 +292,23 @@ def read_data(fields, filehandle, filename=None):
 def _validate_magic_line(line):
     """For NRRD files, the first four characters are always "NRRD", and
     remaining characters give information about the file format version
+    
+    >>> _validate_magic_line('NRRD0005')
+    >>> _validate_magic_line('NRRD0006')
+    Traceback (most recent call last):
+        ...
+    NrrdError: NRRD file version too new for this library.
+    >>> _validate_magic_line('NRRD')
+    Traceback (most recent call last):
+        ...
+    NrrdError: Invalid NRRD magic line: NRRD
     """
     if not line.startswith('NRRD'):
         raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
     try:
         if int(line[4:]) > 5:
             raise NrrdError('NRRD file version too new for this library.')
-    except Value:
+    except ValueError:
         raise NrrdError('Invalid NRRD magic line: %s' % (line,))
     return len(line)
 
@@ -273,25 +317,26 @@ def read_header(nrrdfile):
 
     nrrdfile can be any object which supports the iterator protocol and
     returns a string each time its next() method is called — file objects and
-    list objects are both suitable. If csvfile is a file object, it must be
+    list objects are both suitable. If nrrdfile is a file object, it must be
     opened with the ‘b’ flag on platforms where that makes a difference
     (e.g. Windows)
 
     >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
-    {'type': 'float', 'dimension': 3, 'keyvaluepairs': {}}
+    {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
     >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
-    {'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
+    {u'keyvaluepairs': {'my extra info': 'my : colon-separated : values'}}
     """
     # Collect number of bytes in the file header (for seeking below)
     headerSize = 0
 
     it = iter(nrrdfile)
 
-    headerSize += _validate_magic_line(it.next())
+    headerSize += _validate_magic_line(next(it).decode('ascii'))
 
-    header = { 'keyvaluepairs': {} }
+    header = { u'keyvaluepairs': {} }
     for raw_line in it:
         headerSize += len(raw_line)
+        raw_line = raw_line.decode('ascii')
 
         # Trailing whitespace ignored per the NRRD spec
         line = raw_line.rstrip()
@@ -310,22 +355,25 @@ def read_header(nrrdfile):
             key, value = key_value
             # TODO: escape \\ and \n ??
             # value.replace(r'\\\\', r'\\').replace(r'\n', '\n')
-            header['keyvaluepairs'][key] = value
+            header[u'keyvaluepairs'][key] = value
             continue
 
         # Handle the "<field>: <desc>" lines.
         field_desc = line.split(': ', 1)
         if len(field_desc) is 2:
             field, desc = field_desc
+            ## preceeding and suffixing white space should be ignored.
+            field = field.rstrip().lstrip()
+            desc = desc.rstrip().lstrip()
             if field not in _NRRD_FIELD_PARSERS:
-                raise NrrdError('Unexpected field in nrrd header: "%s".' % field)
+                raise NrrdError('Unexpected field in nrrd header: %s' % repr(field))
             if field in header.keys():
-                raise NrrdError('Duplicate header field: "%s"' % field)
+                raise NrrdError('Duplicate header field: %s' % repr(field))
             header[field] = _NRRD_FIELD_PARSERS[field](desc)
             continue
 
         # Should not reach here
-        raise NrrdError('Invalid header line: "%s"' % line)
+        raise NrrdError('Invalid header line: %s' % repr(line))
 
     # line reading was buffered; correct file pointer to just behind header:
     nrrdfile.seek(headerSize)
@@ -342,12 +390,10 @@ def read(filename):
 
 
 def _format_nrrd_list(fieldValue) :
-    return ' '.join([str(x) for x in fieldValue])
-
+    return ' '.join([_convert_to_reproducible_floatingpoint(x) for x in fieldValue])
 
 def _format_nrrdvector(v) :
-    return '(' + ','.join([str(x) for x in v]) + ')'
-
+    return '(' + ','.join([_convert_to_reproducible_floatingpoint(x) for x in v]) + ')'
 
 def _format_optional_nrrdvector(v):
     if (v == 'none') :
@@ -411,7 +457,7 @@ def _write_data(data, filehandle, options):
         raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
 
 
-def write(filename, data, options={}, separate_header=False):
+def write(filename, data, options={}, detached_header=False):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
     inferred from from the data. Additional options can be passed in the
     options dictionary. See the read() function for the structure of this
@@ -437,14 +483,20 @@ def write(filename, data, options={}, separate_header=False):
         options['encoding'] = 'gzip'
 
     # A bit of magic in handling options here.
-    # If *.nhdr filename provided, this overrides `separate_header=False`
-    # If *.nrrd filename provided AND separate_header=True, separate files
-    #   written.
+    # If *.nhdr filename provided, this overrides `detached_header=False`
+    # If *.nrrd filename provided AND detached_header=True, separate header
+    #   and data files written.
     # For all other cases, header & data written to same file.
     if filename[-5:] == '.nhdr':
-        separate_header = True
-        datafilename = filename[:-4] + str('nrrd')
-    elif filename[-5:] == '.nrrd' and separate_header:
+        detached_header = True
+        if 'data file' not in options:
+            datafilename = filename[:-4] + str('raw')
+            if options['encoding'] == 'gzip':
+                datafilename += '.gz'
+            options['data file'] = datafilename
+        else:
+            datafilename = options['data file']
+    elif filename[-5:] == '.nrrd' and detached_header:
         datafilename = filename
         filename = filename[:-4] + str('nhdr')
     else:
@@ -452,40 +504,35 @@ def write(filename, data, options={}, separate_header=False):
         datafilename = filename
 
     with open(filename,'wb') as filehandle:
-        filehandle.write('NRRD0004\n')
-        filehandle.write('# This NRRD file was generated by pynrrd\n')
-        filehandle.write('# on ' +
-                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') +
-                         '(GMT).\n')
-        filehandle.write('# Complete NRRD file format specification at:\n');
-        filehandle.write('# http://teem.sourceforge.net/nrrd/format.html\n');
+        filehandle.write(b'NRRD0005\n')
+        filehandle.write(b'# This NRRD file was generated by pynrrd\n')
+        filehandle.write(b'# on ' +
+                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S').encode('ascii') +
+                         b'(GMT).\n')
+        filehandle.write(b'# Complete NRRD file format specification at:\n');
+        filehandle.write(b'# http://teem.sourceforge.net/nrrd/format.html\n');
 
         # Write the fields in order, this ignores fields not in _NRRD_FIELD_ORDER
         for field in _NRRD_FIELD_ORDER:
-            if options.has_key(field):
+            if field in options:
                 outline = (field + ': ' +
                            _NRRD_FIELD_FORMATTERS[field](options[field]) +
-                           '\n')
+                           '\n').encode('ascii')
                 filehandle.write(outline)
-        for (k,v) in options.get('keyvaluepairs', {}).items():
-            outline = str(k) + ':=' + str(v) + '\n'
+        d = options.get('keyvaluepairs', {})
+        for (k,v) in sorted(d.items(), key=lambda t: t[0]):
+            outline = (str(k) + ':=' + str(v) + '\n').encode('ascii')
             filehandle.write(outline)
-
-        if separate_header:
-            # Write line skip & relative file location info to header
-            outline = ('data file: ' + os.path.basename(datafilename) + '\n')
-            filehandle.write(outline)
-            filehandle.write('line skip: 0')
 
         # Write the closing extra newline
-        filehandle.write('\n')
+        filehandle.write(b'\n')
 
         # If a single file desired, write data
-        if not separate_header:
+        if not detached_header:
             _write_data(data, filehandle, options)
 
-    # If separate header desired, write data to different file
-    if separate_header:
+    # If detached header desired, write data to different file
+    if detached_header:
         with open(datafilename, 'wb') as datafilehandle:
             _write_data(data, datafilehandle, options)
 

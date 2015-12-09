@@ -1,7 +1,6 @@
 *.pyc
-*.nrrd
-*.nhdr
-*.raw
 dist/*
 build/*
+*.egg-info/*
 MANIFEST
+.idea/*
