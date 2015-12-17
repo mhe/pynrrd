@@ -5,7 +5,7 @@ nrrd.py
 An all-python (and numpy) implementation for reading and writing nrrd files.
 See http://teem.sourceforge.net/nrrd/format.html for the specification.
 
-Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
+Copyright (c) 2011-2015 Maarten Everts and others. See LICENSE and AUTHORS.
 
 """
 
@@ -208,7 +208,7 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
     If seek_past_header is True, the '\n\n' header-data separator will be
     found, otherwise it is assumed that the current fpos of the filehandle
     object is pointing to the first byte after the '\n\n' line.
-    seek_past_headeronly only applies to attached headers. 
+    seek_past_headeronly only applies to attached headers.
     """
     data = np.zeros(0)
     # Determine the data type from the fields
@@ -234,11 +234,11 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
         if os.name == "nt":
             m = mmap.mmap(datafilehandle.fileno(), 0, access=mmap.ACCESS_READ)
         else:
-            m = mmap.mmap(datafilehandle.fileno(), 0, 
+            m = mmap.mmap(datafilehandle.fileno(), 0,
                       mmap.MAP_PRIVATE, mmap.PROT_READ)
 
         seek_past_header_pos = m.find(b'\n\n')
-        if seek_past_header_pos == -1: 
+        if seek_past_header_pos == -1:
             raise NrrdError('Invalid NRRD: Missing header-data separator line')
         datafilehandle.seek(seek_past_header_pos + 2)
 
@@ -472,7 +472,8 @@ def write(filename, data, options={}, detached_header=False):
     options['type'] = _TYPEMAP_NUMPY2NRRD[data.dtype.str[1:]]
     if data.dtype.itemsize > 1:
         options['endian'] = _NUMPY2NRRD_ENDIAN_MAP[data.dtype.str[:1]]
-    # if 'space' is specified 'space dimension' can not. See http://teem.sourceforge.net/nrrd/format.html#space
+    # if 'space' is specified 'space dimension' can not. See
+    # http://teem.sourceforge.net/nrrd/format.html#space
     if 'space' in options.keys() and 'space dimension' in options.keys():
         del options['space dimension']
     options['dimension'] = data.ndim
@@ -512,7 +513,8 @@ def write(filename, data, options={}, detached_header=False):
         filehandle.write(b'# Complete NRRD file format specification at:\n');
         filehandle.write(b'# http://teem.sourceforge.net/nrrd/format.html\n');
 
-        # Write the fields in order, this ignores fields not in _NRRD_FIELD_ORDER
+        # Write the fields in order, this ignores fields not in
+        # _NRRD_FIELD_ORDER
         for field in _NRRD_FIELD_ORDER:
             if field in options:
                 outline = (field + ': ' +
