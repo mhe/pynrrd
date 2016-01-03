@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='pynrrd',
-      version='0.2.0',
+      version='0.2.1',
       description='Pure python module for reading and writing nrrd files.',
       long_description='Pure python module for reading and writing nrrd files. See the github page for more information.',
       author='Maarten Everts',
