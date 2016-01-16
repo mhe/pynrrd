@@ -5,16 +5,23 @@ nrrd.py
 An all-python (and numpy) implementation for reading and writing nrrd files.
 See http://teem.sourceforge.net/nrrd/format.html for the specification.
 
-Copyright (c) 2011 Maarten Everts and David Hammond. See LICENSE.
+Copyright (c) 2011-2015 Maarten Everts and others. See LICENSE and AUTHORS.
 
 """
 
 import numpy as np
-import gzip
+import zlib
 import bz2
 import mmap
 import os
 from datetime import datetime
+
+# Reading and writing gzipped data directly gives problems when the uncompressed
+# data is larger than 4GB (2^32). Therefore we'll read and write the data in
+# chunks. How this affects speed and/or memory usage is something to be analyzed
+# further. The following two values define the size of the chunks.
+_READ_CHUNKSIZE = 2**20
+_WRITE_CHUNKSIZE = 2**20
 
 class NrrdError(Exception):
     """Exceptions for Nrrd class."""
@@ -208,7 +215,7 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
     If seek_past_header is True, the '\n\n' header-data separator will be
     found, otherwise it is assumed that the current fpos of the filehandle
     object is pointing to the first byte after the '\n\n' line.
-    seek_past_headeronly only applies to attached headers. 
+    seek_past_headeronly only applies to attached headers.
     """
     data = np.zeros(0)
     # Determine the data type from the fields
@@ -234,11 +241,11 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
         if os.name == "nt":
             m = mmap.mmap(datafilehandle.fileno(), 0, access=mmap.ACCESS_READ)
         else:
-            m = mmap.mmap(datafilehandle.fileno(), 0, 
+            m = mmap.mmap(datafilehandle.fileno(), 0,
                       mmap.MAP_PRIVATE, mmap.PROT_READ)
 
         seek_past_header_pos = m.find(b'\n\n')
-        if seek_past_header_pos == -1: 
+        if seek_past_header_pos == -1:
             raise NrrdError('Invalid NRRD: Missing header-data separator line')
         datafilehandle.seek(seek_past_header_pos + 2)
 
@@ -254,28 +261,25 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
     if fields['encoding'] == 'raw':
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
-    elif fields['encoding'] == 'gzip' or\
-         fields['encoding'] == 'gz':
-        gzipfile = gzip.GzipFile(fileobj=datafilehandle)
-        # byteskip applies to the _decompressed byte stream
-        gzipfile.seek(byteskip, os.SEEK_CUR)
-        # Again, unfortunately, np.fromfile does not support
-        # reading from a gzip stream, so we'll do it like this.
-        # I have no idea what the performance implications are.
-        data = np.fromstring(gzipfile.read(), dtype)
-    elif fields['encoding'] == 'bzip2' or\
-         fields['encoding'] == 'bz2':
-        decomp = bz2.BZ2Decompressor()
+    else:
+        # Probably the data is compressed then
+        if fields['encoding'] == 'gzip' or\
+             fields['encoding'] == 'gz':
+            decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
+        elif fields['encoding'] == 'bzip2' or\
+             fields['encoding'] == 'bz2':
+            decompobj = bz2.BZ2Decompressor()
+        else:
+            raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
+
         decompressed_data = b''
         while True:
-            chunk = datafilehandle.read(65536)
+            chunk = datafilehandle.read(_READ_CHUNKSIZE)
             if not chunk:
                 break
-            decompressed_data += decomp.decompress(chunk)
-        # byteskip applies to the _decompressed byte stream
+            decompressed_data += decompobj.decompress(chunk)
+        # byteskip applies to the _decompressed_ byte stream
         data = np.fromstring(decompressed_data[byteskip:], dtype)
-    else:
-        raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
 
     if datafilehandle:
         datafilehandle.close()
@@ -445,17 +449,24 @@ def _write_data(data, filehandle, options):
     rawdata = data.tostring(order = 'F')
     if options['encoding'] == 'raw':
         filehandle.write(rawdata)
-    elif options['encoding'] == 'gzip':
-        gzfileobj = gzip.GzipFile(fileobj = filehandle)
-        gzfileobj.write(rawdata)
-        gzfileobj.close()
-    elif options['encoding'] == 'bz2':
-        bz2fileobj = bz2.BZ2File(fileobj = filehandle)
-        bz2fileobj.write(rawdata)
-        bz2fileobj.close()
     else:
-        raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
+        if options['encoding'] == 'gzip':
+            comp_obj = zlib.compressobj(9, zlib.DEFLATED, zlib.MAX_WBITS | 16)
+        elif options['encoding'] == 'bzip2':
+            comp_obj = bz2.BZ2Compressor()
+        else:
+            raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
 
+        # write data in chunks
+        start_index = 0
+        while start_index < len(rawdata):
+            end_index = start_index + _WRITE_CHUNKSIZE
+            if end_index > len(rawdata):
+                end_index = len(rawdata)
+            filehandle.write(comp_obj.compress(rawdata[start_index:end_index]))
+            start_index = end_index
+        filehandle.write(comp_obj.flush())
+        filehandle.flush()
 
 def write(filename, data, options={}, detached_header=False):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
@@ -472,7 +483,8 @@ def write(filename, data, options={}, detached_header=False):
     options['type'] = _TYPEMAP_NUMPY2NRRD[data.dtype.str[1:]]
     if data.dtype.itemsize > 1:
         options['endian'] = _NUMPY2NRRD_ENDIAN_MAP[data.dtype.str[:1]]
-    # if 'space' is specified 'space dimension' can not. See http://teem.sourceforge.net/nrrd/format.html#space
+    # if 'space' is specified 'space dimension' can not. See
+    # http://teem.sourceforge.net/nrrd/format.html#space
     if 'space' in options.keys() and 'space dimension' in options.keys():
         del options['space dimension']
     options['dimension'] = data.ndim
@@ -512,7 +524,8 @@ def write(filename, data, options={}, detached_header=False):
         filehandle.write(b'# Complete NRRD file format specification at:\n');
         filehandle.write(b'# http://teem.sourceforge.net/nrrd/format.html\n');
 
-        # Write the fields in order, this ignores fields not in _NRRD_FIELD_ORDER
+        # Write the fields in order, this ignores fields not in
+        # _NRRD_FIELD_ORDER
         for field in _NRRD_FIELD_ORDER:
             if field in options:
                 outline = (field + ': ' +

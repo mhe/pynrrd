@@ -1,5 +1,6 @@
 import sys
 import os
+import tempfile
 
 # Look on level up for nrrd.py
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -79,6 +80,31 @@ class TestReadingFunctions(unittest.TestCase):
         data, header = nrrd.read(GZ_LINESKIP_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
+
+
+class TestWritingFunctions(unittest.TestCase):
+    def setUp(self):
+        self.temp_write_dir = tempfile.mkdtemp("nrrdtest")
+        self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH)
+        with open(RAW_DATA_FILE_PATH, 'rb') as f:
+            self.expected_data = f.read()
+
+    def write_and_read_back_with_encoding(self, encoding):
+        output_filename = os.path.join(self.temp_write_dir, "testfile_%s.nrrd" % encoding)
+        nrrd.write(output_filename, self.data_input, {u'encoding':encoding})
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], encoding)
+
+    def test_write_raw(self):
+        self.write_and_read_back_with_encoding(u'raw')
+
+    def test_write_gz(self):
+        self.write_and_read_back_with_encoding(u'gzip')
+
+    def test_write_bz2(self):
+        self.write_and_read_back_with_encoding(u'bzip2')
 
 if __name__ == '__main__':
     unittest.main()
