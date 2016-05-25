@@ -99,9 +99,10 @@ class nrrdDWIHeader:
             if norm < 1e-2:
                 self.gradientVectors[index] = gv * 0.0
                 self.gradientBValues[index] = 0.0
-            elif ( abs( 1.0-norm ) > 1e-2 ): #Avoid B0 and need greater than 1e-2 from 1. for rescaling
+            elif ( abs( 1.0-norm ) > 1e-4 ): # Avoid rescaling if norm is almost one
                 self.gradientVectors[index] = gv/norm
-                self.gradientBValues[index] = self.global_BValue/norm
+                b_i = self.global_BValue * (norm**2) # norm = sqrt(b_i/b_max)
+                self.gradientBValues[index] = float("{0:.1f}".format(b_i))
 
     def _ConvertNrrdToNibabelDWIDataModel(self, pynrrdDataModel):
         pyNrrdKVUnknownMetaData=pynrrdDataModel['keyvaluepairs']
@@ -147,7 +148,7 @@ def WriteNAMICDWIToNrrd(filename, data, bvecs, bvals, options=None):
     for index in range(0,numGradients):
         this_scale = sqrt(bvals[index] / maxBvalue)
         this_vec = [ x * this_scale for x in bvecs[index]]
-        print bvecs[index],this_vec
+        #print bvecs[index],this_vec
 
         keyvec=u'DWMRI_gradient_{:04d}'.format(index)
         # convert gradient vector value to string (only for consistency with input)
