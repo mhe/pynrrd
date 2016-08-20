@@ -8,7 +8,7 @@ See http://teem.sourceforge.net/nrrd/format.html for the specification.
 
 __author__ = 'johnsonhj,aghayoor'
 
-import nrrd
+from . import nrrd
 import numpy as np
 from math import sqrt
 from collections import OrderedDict
