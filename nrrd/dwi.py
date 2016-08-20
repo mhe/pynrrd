@@ -1,5 +1,5 @@
 """
-dwi_nrrd.py
+dwi.py
 
 A python implementation that provides important elements for using DWI imaging data in nrrd format.
 See http://teem.sourceforge.net/nrrd/format.html for the specification.

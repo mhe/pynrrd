@@ -3,8 +3,11 @@
 # \Author: Ali Ghayoor
 
 ####
-# This bash scripts runs the test_dwi_nrrd.py program on all DWI nrrd formatted files that are used for testing in BRAINSTools.
-# test_dwi_nrrd.py is a program that is designed to test the functionality of "dwi_nrrd" in dealing with DWI meta data.
+# This bash scripts runs the test_dwi.py program on all DWI nrrd formatted files
+# that are used for testing in BRAINSTools.
+#
+# test_dwi.py is a program that is designed to test the functionality of the
+# "dwi" submodule in dealing with DWI meta data.
 ####
 
 # Set your local build directory for BRAINSTools
@@ -28,5 +31,5 @@ do
   if [ ! -e ${outputDir} ]; then
     mkdir ${outputDir}
   fi
-  python test_dwi_nrrd.py --inputDWIScan ${testDWI} --program_path ${DWIConvert_EXE_DIR} --outputDir ${outputDir}
+  python test_dwi.py --inputDWIScan ${testDWI} --program_path ${DWIConvert_EXE_DIR} --outputDir ${outputDir}
 done
