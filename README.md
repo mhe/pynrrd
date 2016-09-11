@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/mhe/pynrrd.svg?branch=master)](https://travis-ci.org/mhe/pynrrd)
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.62065.svg)](http://dx.doi.org/10.5281/zenodo.62065)
+
 pynrrd
 ======
 
