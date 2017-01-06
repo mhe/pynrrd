@@ -12,7 +12,6 @@ Copyright (c) 2011-2015 Maarten Everts and others. See LICENSE and AUTHORS.
 import numpy as np
 import zlib
 import bz2
-import mmap
 import os
 from datetime import datetime
 
@@ -209,13 +208,12 @@ def _determine_dtype(fields):
     return np.dtype(np_typestring)
 
 
-def read_data(fields, filehandle, filename=None, seek_past_header=True):
+def read_data(fields, filehandle, filename=None):
     """Read the NRRD data from a file object into a numpy structure.
-    
-    If seek_past_header is True, the '\n\n' header-data separator will be
-    found, otherwise it is assumed that the current fpos of the filehandle
-    object is pointing to the first byte after the '\n\n' line.
-    seek_past_headeronly only applies to attached headers.
+
+    File handle is is assumed to point to the first byte of the data. That is,
+    in case of an attached header, assumed to point to the first byte after the
+    '\n\n' line.
     """
     data = np.zeros(0)
     # Determine the data type from the fields
@@ -234,20 +232,6 @@ def read_data(fields, filehandle, filename=None, seek_past_header=True):
         else:
             datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename,'rb')
-    elif seek_past_header:
-        # Efficiently find the header-data seperator line no matter how big
-        # any header line is
-        datafilehandle.seek(0)
-        if os.name == "nt":
-            m = mmap.mmap(datafilehandle.fileno(), 0, access=mmap.ACCESS_READ)
-        else:
-            m = mmap.mmap(datafilehandle.fileno(), 0,
-                      mmap.MAP_PRIVATE, mmap.PROT_READ)
-
-        seek_past_header_pos = m.find(b'\n\n')
-        if seek_past_header_pos == -1:
-            raise NrrdError('Invalid NRRD: Missing header-data separator line')
-        datafilehandle.seek(seek_past_header_pos + 2)
 
     numPixels = np.array(fields['sizes']).prod()
     # Seek to start of data based on lineskip/byteskip. byteskip == -1 is
