@@ -376,6 +376,7 @@ def read(filename):
     """Read a nrrd file and return a tuple (data, header)."""
     with open(filename, 'rb') as filehandle:
         header = read_header(filehandle)
+    with open(filename,'rb') as filehandle:
         data = read_data(header, filehandle, filename)
         return (data, header)
 
