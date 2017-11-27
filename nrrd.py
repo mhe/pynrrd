@@ -387,7 +387,7 @@ def _format_nrrdvector(vector):
     return '(' + ','.join([_to_reproducible_float(x) for x in vector]) + ')'
 
 def _format_optional_nrrdvector(vector):
-    if vector == 'none':
+    if vector is None:
         return 'none'
     else:
         return _format_nrrdvector(vector)
