@@ -38,10 +38,6 @@ class TestReadingFunctions(unittest.TestCase):
             header = nrrd.read_header(f)
         self.assertEqual(self.expected_header, header)
 
-    def test_read_header_only_filename(self):
-        header = nrrd.read_header(RAW_NRRD_FILE_PATH)
-        self.assertEqual(self.expected_header, header)
-
     def test_read_detached_header_only(self):
         header = None
         expected_header = self.expected_header
@@ -51,25 +47,14 @@ class TestReadingFunctions(unittest.TestCase):
         self.assertEqual(self.expected_header, header)
 
     def test_read_detached_header_only_filename(self):
-        expected_header = self.expected_header
-        expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
-        header = nrrd.read_header(RAW_NHDR_FILE_PATH)
-        self.assertEqual(self.expected_header, header)
-
-    def test_read_header_and_data(self):
-        data = None
-        header = None
-        with open(RAW_DATA_FILE_PATH, 'rb') as f:
-            data, header = nrrd.read(f)
-        self.assertEqual(self.expected_header, header)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertRaisesRegex(nrrd.NrrdError, 'Missing magic "NRRD" word. Is this an NRRD file\?', nrrd.read_header,
+                               RAW_NHDR_FILE_PATH)
 
     def test_read_header_and_data_filename(self):
         data, header = nrrd.read(RAW_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
 
-    # TODO Add one more test for detached headers...
     def test_read_detached_header_and_data(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
@@ -98,6 +83,15 @@ class TestReadingFunctions(unittest.TestCase):
         data, header = nrrd.read(GZ_LINESKIP_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
+
+    def test_read_raw_header(self):
+        expected_header = {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
+        header = nrrd.read_header(("NRRD0005", "type: float", "dimension: 3"))
+        self.assertEqual(expected_header, header)
+
+        expected_header = {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
+        header = nrrd.read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
+        self.assertEqual(expected_header, header)
 
 
 class TestWritingFunctions(unittest.TestCase):
