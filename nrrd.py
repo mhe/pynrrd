@@ -28,8 +28,8 @@ class NrrdError(Exception):
 
 #This will help prevent loss of precision
 #IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
-def _to_reproducible_float( x ):
-    if type(x) == float:
+def _to_reproducible_float(x):
+    if isinstance(x, float):
         # Remove trailing zeros, and dot if at end
         value = '{:.16f}'.format(x).rstrip('0').rstrip('.')
     else:
