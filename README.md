@@ -19,32 +19,34 @@ The module's only dependency is [numpy][2].
 Installation
 ------------
 
-#### Install via pip and GitHub (recommended)
+### Install via pip and GitHub (recommended)
     pip install git+https://github.com/mhe/pynrrd.git
     
-#### Install via pip and PyPi repository
+### Install via pip and PyPi repository
     pip install pynrrd
     
-#### Install from source
+### Install from source
     python setup.py install
 
 Example usage
 -------------
 
-    import numpy as np
-    import nrrd
+```python
+import numpy as np
+import nrrd
 
-    # some sample numpy data
-    data = np.zeros((5,4,3,2))
-    filename = 'testdata.nrrd'
+# some sample numpy data
+data = np.zeros((5,4,3,2))
+filename = 'testdata.nrrd'
 
-    # write to a nrrd file
-    nrrd.write(filename, data)
+# write to a nrrd file
+nrrd.write(filename, data)
 
-    # read the data back from file
-    readdata, options = nrrd.read(filename)
-    print readdata.shape
-    print options
+# read the data back from file
+readdata, options = nrrd.read(filename)
+print readdata.shape
+print options
+```
 
 Tests
 -----
