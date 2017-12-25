@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 import tempfile
 
 # Look on level up for nrrd.py
@@ -7,18 +7,17 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import nrrd
 import unittest
-from os.path import dirname, join, basename
 
-DATA_DIR_PATH  = os.path.dirname(__file__) 
+DATA_DIR_PATH = os.path.dirname(__file__)
 RAW_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30.nrrd')
 RAW_NHDR_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30.nhdr')
 RAW_DATA_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30.raw')
-GZ_NRRD_FILE_PATH  = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz.nrrd')
-BZ2_NRRD_FILE_PATH  = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_bz2.nrrd')
-GZ_LINESKIP_NRRD_FILE_PATH  = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz_lineskip.nrrd')
+GZ_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz.nrrd')
+BZ2_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_bz2.nrrd')
+GZ_LINESKIP_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz_lineskip.nrrd')
+
 
 class TestReadingFunctions(unittest.TestCase):
-
     def setUp(self):
         self.expected_header = {u'dimension': 3,
                                 u'encoding': 'raw',
@@ -47,7 +46,11 @@ class TestReadingFunctions(unittest.TestCase):
             header = nrrd.read_header(f)
         self.assertEqual(self.expected_header, header)
 
-    def test_read_header_and_data(self):
+    def test_read_detached_header_only_filename(self):
+        with self.assertRaisesRegexp(nrrd.NrrdError, 'Missing magic "NRRD" word. Is this an NRRD file\?'):
+            nrrd.read_header(RAW_NHDR_FILE_PATH)
+
+    def test_read_header_and_data_filename(self):
         data, header = nrrd.read(RAW_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
@@ -81,6 +84,15 @@ class TestReadingFunctions(unittest.TestCase):
         self.assertEqual(self.expected_header, header)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
 
+    def test_read_raw_header(self):
+        expected_header = {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
+        header = nrrd.read_header(("NRRD0005", "type: float", "dimension: 3"))
+        self.assertEqual(expected_header, header)
+
+        expected_header = {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
+        header = nrrd.read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
+        self.assertEqual(expected_header, header)
+
 
 class TestWritingFunctions(unittest.TestCase):
     def setUp(self):
@@ -91,7 +103,7 @@ class TestWritingFunctions(unittest.TestCase):
 
     def write_and_read_back_with_encoding(self, encoding):
         output_filename = os.path.join(self.temp_write_dir, "testfile_%s.nrrd" % encoding)
-        nrrd.write(output_filename, self.data_input, {u'encoding':encoding})
+        nrrd.write(output_filename, self.data_input, {u'encoding': encoding})
         # Read back the same file
         data, header = nrrd.read(output_filename)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
@@ -105,6 +117,7 @@ class TestWritingFunctions(unittest.TestCase):
 
     def test_write_bz2(self):
         self.write_and_read_back_with_encoding(u'bzip2')
+
 
 if __name__ == '__main__':
     unittest.main()

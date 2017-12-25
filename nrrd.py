@@ -320,13 +320,20 @@ def read_header(nrrdfile):
     header_size = 0
 
     it = iter(nrrdfile)
+    magic_line = next(it)
 
-    header_size += _validate_magic_line(next(it).decode('ascii', 'ignore'))
+    need_decode = False
+    if hasattr(magic_line, 'decode'):
+        need_decode = True
+        magic_line = magic_line.decode('ascii', 'ignore')
+
+    header_size += _validate_magic_line(magic_line)
 
     header = {u'keyvaluepairs': {}}
     for raw_line in it:
         header_size += len(raw_line)
-        raw_line = raw_line.decode('ascii', 'ignore')
+        if need_decode:
+            raw_line = raw_line.decode('ascii', 'ignore')
 
         # Trailing whitespace ignored per the NRRD spec
         line = raw_line.rstrip()
