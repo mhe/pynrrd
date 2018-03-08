@@ -48,9 +48,9 @@ class TestReadingFunctions(unittest.TestCase):
 
     def test_read_detached_header_only_filename(self):
         try:
-            assertRaisesRegex = self.assertRaisesRegex
+            assertRaisesRegex = self.assertRaisesRegex  # Python 3
         except AttributeError:
-            assertRaisesRegex = self.assertRaisesRegexp
+            assertRaisesRegex = self.assertRaisesRegexp  # Python 2
         with assertRaisesRegex(nrrd.NrrdError, 'Missing magic "NRRD" word. Is this an NRRD file\?'):
             nrrd.read_header(RAW_NHDR_FILE_PATH)
 
