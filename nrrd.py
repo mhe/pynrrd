@@ -264,7 +264,7 @@ def read_data(fields, filehandle, filename=None):
                 break
             decompressed_data += decompobj.decompress(chunk)
         # byteskip applies to the _decompressed_ byte stream
-        data = np.fromstring(decompressed_data[byteskip:], dtype)
+        data = np.frombuffer(decompressed_data[byteskip:], dtype)
 
     if datafilehandle:
         datafilehandle.close()

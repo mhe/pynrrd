@@ -47,7 +47,7 @@ class TestReadingFunctions(unittest.TestCase):
         self.assertEqual(self.expected_header, header)
 
     def test_read_detached_header_only_filename(self):
-        with self.assertRaisesRegexp(nrrd.NrrdError, 'Missing magic "NRRD" word. Is this an NRRD file\?'):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Missing magic "NRRD" word. Is this an NRRD file\?'):
             nrrd.read_header(RAW_NHDR_FILE_PATH)
 
     def test_read_header_and_data_filename(self):
