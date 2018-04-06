@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+
 import numpy as np
 
 # Look on level up for nrrd.py
@@ -17,23 +18,18 @@ GZ_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz.nrrd')
 BZ2_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_bz2.nrrd')
 GZ_LINESKIP_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz_lineskip.nrrd')
 
-
 # Fix issue with assertRaisesRegex only available in Python 3 while
 # assertRaisesRegexp is available in Python 2 (and deprecated in Python 3)
 if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
     unittest.TestCase.assertRaisesRegex = getattr(unittest.TestCase, 'assertRaisesRegexp')
 
 
-# class CustomTestCase(unittest.TestCase):
-#     def npAssertAlmostEqual(self, first, second, rtol=1e-06, atol=1e-08):
-#         np.testing.assert_allclose(first, second, rtol=rtol, atol=atol)
-
 class TestFieldParsing(unittest.TestCase):
     def setUp(self):
         pass
 
     def assert_equal_with_datatype(self, desired, actual):
-        self.assertEqual(desired.dtype, type(actual[0]))
+        self.assertEqual(desired.dtype, np.array(actual[0]).dtype)
         np.testing.assert_equal(desired, actual)
 
     def test_parse_vector(self):
@@ -63,20 +59,80 @@ class TestFieldParsing(unittest.TestCase):
         self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=float), [100.47655, 220.32])
         self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=int), [100, 220])
 
+    def test_parse_optional_vector(self):
+        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+            nrrd.parse_optional_vector('100, 200, 300)')
 
+        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+            nrrd.parse_optional_vector('(100, 200, 300')
 
-        # Testing vector parsing
-        # print(nrrd.parse_vector('(100, 200, 300)'))
-        # print(nrrd.parse_vector('(100, 200, 300.00001)'))
-        # print(nrrd.parse_vector('(100.5, 200.1, 300)'))
-        # print(nrrd.parse_vector('(100.20, 200, 300)'))
-        # print(nrrd.parse_vector('(100, 200.20, 300)'))
-        #
-        # print('')
-        # print(nrrd.parse_vector('(100, 200, 300)', dtype=float))
-        # print(nrrd.parse_vector('(100, 200, 300)', dtype=int))
-        # print(nrrd.parse_vector('(100, 200, 300.00001)', dtype=int))
-        # print(nrrd.parse_vector('(100.5, 200.1, 300)', dtype=int))
+        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+            nrrd.parse_optional_vector('100, 200, 300')
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)'), [100, 200, 300])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)', dtype=float),
+                                        [100., 200., 300.])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)', dtype=int), [100, 200, 300])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.50, 200, 300)'), [100.50, 200., 300.])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200.50, 300)', dtype=float),
+                                        [100., 200.50, 300.])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300.50)', dtype=int),
+                                        [100, 200, 300])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32, 300.50)'),
+                                        [100.47655, 220.32, 300.50])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32, 300.50)', dtype=float),
+                                        [100.47655, 220.32, 300.50])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32, 300.50)', dtype=int),
+                                        [100, 220, 300])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32)'),
+                                        [100.47655, 220.32])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32)', dtype=float),
+                                        [100.47655, 220.32])
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32)', dtype=int), [100, 220])
+
+        self.assertEqual(nrrd.parse_optional_vector('none'), None)
+
+    def test_parse_matrix(self):
+        self.assert_equal_with_datatype(
+            nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(
+            nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
+                              dtype=float),
+            [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(
+            nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
+                              dtype=int), [[1, 0, 0], [0, 1, 0], [0, 0, 4]])
+
+        self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)'),
+                                        [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=float),
+                                        [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
+        self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=int),
+                                        [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+    def test_parse_optional_matrix(self):
+        self.assert_equal_with_datatype(nrrd.parse_optional_matrix(
+            '(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_matrix('(1,0,0) (0,1,0) (0,0,1)'),
+                                        [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_matrix(
+            'none (1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[np.NaN, np.NaN, np.NaN], [1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0],
+             [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_matrix(
+            '(1.4726600000000003,-0,0) none (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[1.4726600000000003, 0, 0], [np.NaN, np.NaN, np.NaN], [0, 1.4726600000000003, 0],
+             [0, 0, 4.7619115092114601]])
 
         # Test parse_matrix function
         # print(nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'))
@@ -88,6 +144,7 @@ class TestFieldParsing(unittest.TestCase):
         # print(nrrd.parse_number_list('25 0 30 100 24 34'))
 
         # print(nrrd.parse_number_auto_dtype('25'))
+
 
 class TestReadingFunctions(unittest.TestCase):
     def setUp(self):
@@ -119,10 +176,6 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
 
     def test_read_detached_header_only_filename(self):
-        # try:
-        #     assertRaisesRegex = self.assertRaisesRegex  # Python 3
-        # except AttributeError:
-        #     assertRaisesRegex = self.assertRaisesRegexp  # Python 2
         with self.assertRaisesRegex(nrrd.NrrdError, 'Missing magic "NRRD" word. Is this an NRRD file\?'):
             nrrd.read_header(RAW_NHDR_FILE_PATH)
 
