@@ -143,7 +143,6 @@ class TestFieldParsing(unittest.TestCase):
             [[1.4726600000000003, 0, 0], [np.NaN, np.NaN, np.NaN], [0, 1.4726600000000003, 0],
              [0, 0, 4.7619115092114601]])
 
-
     def test_parse_number_list(self):
         self.assert_equal_with_datatype(nrrd.parse_number_list('1 2 3 4'), [1, 2, 3, 4])
         self.assert_equal_with_datatype(nrrd.parse_number_list('1 2 3 4', dtype=float), [1., 2., 3., 4.])
@@ -154,7 +153,9 @@ class TestFieldParsing(unittest.TestCase):
         with self.assertRaisesRegex(nrrd.NrrdError, "dtype should be None for automatic type detection, float or int"):
             nrrd.parse_number_list('1 2 3 4', dtype=np.uint8)
 
-        # print(nrrd.parse_number_auto_dtype('25'))
+    def test_parse_number_auto_dtype(self):
+        self.assertEqual(nrrd.parse_number_auto_dtype('25'), 25)
+        self.assertEqual(nrrd.parse_number_auto_dtype('25.125'), 25.125)
 
 
 class TestReadingFunctions(unittest.TestCase):
