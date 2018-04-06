@@ -9,9 +9,9 @@ Copyright (c) 2011-2017 Maarten Everts and others. See LICENSE and AUTHORS.
 
 """
 
-import zlib
 import bz2
 import os
+import zlib
 from datetime import datetime
 
 import numpy as np
@@ -106,25 +106,107 @@ _NUMPY2NRRD_ENDIAN_MAP = {
 }
 
 
-def parse_nrrdvector(inp):
+def parse_vector(input, dtype=None):
     """Parse a vector from a nrrd header, return a list."""
-    assert inp[0] == '(', "Vector should be enclosed by parentheses."
-    assert inp[-1] == ')', "Vector should be enclosed by parentheses."
-    return [float(x) for x in inp[1:-1].split(',')]
+    # TODO Document this better
+    assert input[0] == '(', "Vector should be enclosed by parentheses."
+    assert input[-1] == ')', "Vector should be enclosed by parentheses."
+
+    # Always convert to float and then truncate to integer if desired
+    # The reason why is parsing a floating point string to int will fail (i.e. int('25.1') will fail)
+    vector = np.array([float(x) for x in input[1:-1].split(',')])
+
+    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
+    # Truncate to integer if dtype is int also
+    if dtype is None:
+        vector_trunc = vector.astype(int)
+
+        if np.all((vector - vector_trunc) == 0):
+            vector = vector_trunc
+    elif dtype == int:
+        vector = vector.astype(int)
+
+    return vector
 
 
-def parse_optional_nrrdvector(inp):
-    """Parse a vector from a nrrd header that can also be none."""
-    if inp == "none":
-        return inp
+def parse_optional_vector(input, dtype=None):
+    if input == 'none':
+        return None
     else:
-        return parse_nrrdvector(inp)
+        return parse_vector(input, dtype)
+
+
+def parse_matrix(input, dtype=None):
+    """Parse a vector from a nrrd header, return a list."""
+
+    # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
+    matrix = np.vstack([parse_vector(x, dtype=float) for x in input.split()])
+
+    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
+    # Truncate to integer if dtype is int also
+    if dtype is None:
+        matrix_trunc = matrix.astype(int)
+
+        if np.all((matrix - matrix_trunc) == 0):
+            matrix = matrix_trunc
+    elif dtype == int:
+        matrix = matrix.astype(int)
+
+    return matrix
+
+
+def parse_optional_matrix(input):
+    # Split input by spaces to get each row and convert into a vector. The row can be 'none', in which case it will
+    # return None
+    matrix = [parse_optional_vector(x, dtype=float) for x in input.split()]
+
+    # Get the size of each row vector, 0 if None
+    sizes = np.array([0 if x is None else len(x) for x in matrix])
+
+    # Get sizes of each row vector removing duplicate sizes
+    # Since each row vector should be same size, the unique sizes should return one value for the row size or it may
+    # return a second one (0) if there are None vectors
+    unique_sizes = np.unique(sizes)
+
+    assert len(unique_sizes) == 1 or (len(unique_sizes) == 2 and unique_sizes.min() == 0), \
+        "Matrix should have same number of elements in each row"
+
+    # Create a vector row of NaN's that matches same size of remaining vector rows
+    # Stack the vector rows together to create matrix
+    nan_row = np.full((unique_sizes.max()), np.nan)
+    matrix = np.vstack([nan_row if x is None else x for x in matrix])
+
+    return matrix
+
+
+def parse_number_list(input, dtype=None):
+    # Always convert to float and then perform truncation to integer if necessary
+    number_list = np.array([float(x) for x in input.split()])
+
+    if dtype is None:
+        number_list_trunc = number_list.astype(int)
+
+        if np.all((number_list - number_list_trunc) == 0):
+            number_list = number_list_trunc
+    elif dtype == int:
+        number_list = number_list.astype(int)
+
+    return number_list
+
+
+def parse_number_auto_dtype(input):
+    value = float(input)
+
+    if value.is_integer():
+        value = int(value)
+
+    return value
 
 
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
-    'sizes': lambda fieldValue: [int(x) for x in fieldValue.split()],
+    'sizes': lambda fieldValue: parse_number_list(fieldValue, dtype=int),
     'endian': str,
     'encoding': str,
     'min': float,
@@ -141,12 +223,12 @@ _NRRD_FIELD_PARSERS = {
     'sample units': str,
     'datafile': str,
     'data file': str,
-    'spacings': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'thicknesses': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axis mins': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axismins': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axis maxs': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axismaxs': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
+    'spacings': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'thicknesses': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axis mins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axismins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axis maxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axismaxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
     'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
@@ -154,11 +236,9 @@ _NRRD_FIELD_PARSERS = {
     'space': str,
     'space dimension': int,
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space origin': parse_nrrdvector,
-    'space directions': lambda fieldValue:
-    [parse_optional_nrrdvector(x) for x in fieldValue.split()],
-    'measurement frame': lambda fieldValue:
-    [parse_nrrdvector(x) for x in fieldValue.split()],
+    'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
+    'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
+    'measurement frame': lambda fieldValue: parse_matrix(fieldValue, dtype=int),
 }
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
