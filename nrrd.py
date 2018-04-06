@@ -15,19 +15,22 @@ import os
 from datetime import datetime
 
 import numpy as np
+
 # Reading and writing gzipped data directly gives problems when the uncompressed
 # data is larger than 4GB (2^32). Therefore we'll read and write the data in
 # chunks. How this affects speed and/or memory usage is something to be analyzed
 # further. The following two values define the size of the chunks.
-_READ_CHUNKSIZE = 2**20
-_WRITE_CHUNKSIZE = 2**20
+_READ_CHUNKSIZE = 2 ** 20
+_WRITE_CHUNKSIZE = 2 ** 20
+
 
 class NrrdError(Exception):
     """Exceptions for Nrrd class."""
     pass
 
-#This will help prevent loss of precision
-#IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
+
+# This will help prevent loss of precision
+# IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
 def _to_reproducible_float(x):
     if isinstance(x, float):
         # Remove trailing zeros, and dot if at end
@@ -35,6 +38,7 @@ def _to_reproducible_float(x):
     else:
         value = str(x)
     return value
+
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
@@ -101,11 +105,13 @@ _NUMPY2NRRD_ENDIAN_MAP = {
     'B': 'big'
 }
 
+
 def parse_nrrdvector(inp):
     """Parse a vector from a nrrd header, return a list."""
-    assert inp[0] == '(', "Vector should be enclosed by parenthesis."
-    assert inp[-1] == ')', "Vector should be enclosed by parenthesis."
-    return [_to_reproducible_float(x) for x in inp[1:-1].split(',')]
+    assert inp[0] == '(', "Vector should be enclosed by parentheses."
+    assert inp[-1] == ')', "Vector should be enclosed by parentheses."
+    return [float(x) for x in inp[1:-1].split(',')]
+
 
 def parse_optional_nrrdvector(inp):
     """Parse a vector from a nrrd header that can also be none."""
@@ -113,6 +119,7 @@ def parse_optional_nrrdvector(inp):
         return inp
     else:
         return parse_nrrdvector(inp)
+
 
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
@@ -149,9 +156,9 @@ _NRRD_FIELD_PARSERS = {
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'space origin': parse_nrrdvector,
     'space directions': lambda fieldValue:
-                        [parse_optional_nrrdvector(x) for x in fieldValue.split()],
+    [parse_optional_nrrdvector(x) for x in fieldValue.split()],
     'measurement frame': lambda fieldValue:
-                         [parse_nrrdvector(x) for x in fieldValue.split()],
+    [parse_nrrdvector(x) for x in fieldValue.split()],
 }
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
@@ -248,11 +255,11 @@ def read_data(fields, filehandle, filename=None):
         data = np.fromfile(datafilehandle, dtype)
     else:
         # Probably the data is compressed then
-        if fields['encoding'] == 'gzip' or\
-             fields['encoding'] == 'gz':
+        if fields['encoding'] == 'gzip' or \
+                fields['encoding'] == 'gz':
             decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
-        elif fields['encoding'] == 'bzip2' or\
-             fields['encoding'] == 'bz2':
+        elif fields['encoding'] == 'bzip2' or \
+                fields['encoding'] == 'bz2':
             decompobj = bz2.BZ2Decompressor()
         else:
             raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
@@ -278,6 +285,7 @@ def read_data(fields, filehandle, filename=None):
     data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
 
+
 def _validate_magic_line(line):
     """For NRRD files, the first four characters are always "NRRD", and
     remaining characters give information about the file format version
@@ -301,6 +309,7 @@ def _validate_magic_line(line):
     except ValueError:
         raise NrrdError('Invalid NRRD magic line: %s' % (line,))
     return len(line)
+
 
 def read_header(nrrdfile):
     """Parse the fields in the nrrd header
@@ -390,14 +399,17 @@ def read(filename):
 def _format_nrrd_list(field_value):
     return ' '.join([_to_reproducible_float(x) for x in field_value])
 
+
 def _format_nrrdvector(vector):
     return '(' + ','.join([_to_reproducible_float(x) for x in vector]) + ')'
+
 
 def _format_optional_nrrdvector(vector):
     if vector is None:
         return 'none'
     else:
         return _format_nrrdvector(vector)
+
 
 _NRRD_FIELD_FORMATTERS = {
     'dimension': str,
@@ -461,6 +473,7 @@ def _write_data(data, filehandle, options):
             start_index = end_index
         filehandle.write(comp_obj.flush())
         filehandle.flush()
+
 
 def write(filename, data, options={}, detached_header=False):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
@@ -543,6 +556,8 @@ def write(filename, data, options={}, detached_header=False):
         with open(datafilename, 'wb') as datafilehandle:
             _write_data(data, datafilehandle, options)
 
+
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()
