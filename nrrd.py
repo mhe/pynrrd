@@ -143,7 +143,14 @@ def parse_matrix(input, dtype=None):
     """Parse a vector from a nrrd header, return a list."""
 
     # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
-    matrix = np.vstack([parse_vector(x, dtype=float) for x in input.split()])
+    matrix = [parse_vector(x, dtype=float) for x in input.split()]
+
+    # Get the size of each row vector and then remove duplicate sizes
+    # There should be exactly one value in the matrix because all row sizes need to be the same
+    if len(np.unique([len(x) for x in matrix])) != 1:
+        raise NrrdError('Matrix should have same number of elements in each row')
+
+    matrix = np.vstack(matrix)
 
     # If using automatic datatype detection, then start by converting to float and determining if the number is whole
     # Truncate to integer if dtype is int also
@@ -173,8 +180,8 @@ def parse_optional_matrix(input):
     # return a second one (0) if there are None vectors
     unique_sizes = np.unique(sizes)
 
-    assert len(unique_sizes) == 1 or (len(unique_sizes) == 2 and unique_sizes.min() == 0), \
-        'Matrix should have same number of elements in each row'
+    if len(unique_sizes) != 1 and (len(unique_sizes) != 2 or unique_sizes.min() != 0):
+        raise NrrdError('Matrix should have same number of elements in each row')
 
     # Create a vector row of NaN's that matches same size of remaining vector rows
     # Stack the vector rows together to create matrix

@@ -122,6 +122,9 @@ class TestFieldParsing(unittest.TestCase):
         self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=int),
                                         [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Matrix should have same number of elements in each row'):
+            nrrd.parse_matrix('(1,0,0,0) (0,1,0) (0,0,1)')
+
         with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=np.uint8)
 
@@ -142,6 +145,12 @@ class TestFieldParsing(unittest.TestCase):
             '(1.4726600000000003,-0,0) none (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
             [[1.4726600000000003, 0, 0], [np.NaN, np.NaN, np.NaN], [0, 1.4726600000000003, 0],
              [0, 0, 4.7619115092114601]])
+
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Matrix should have same number of elements in each row'):
+            nrrd.parse_optional_matrix('(1,0,0,0) (0,1,0) (0,0,1)')
+
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Matrix should have same number of elements in each row'):
+            nrrd.parse_optional_matrix('none (1,0,0,0) (0,1,0) (0,0,1)')
 
     def test_parse_number_list(self):
         self.assert_equal_with_datatype(nrrd.parse_number_list('1 2 3 4'), [1, 2, 3, 4])
