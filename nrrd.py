@@ -29,14 +29,149 @@ class NrrdError(Exception):
     pass
 
 
-# This will help prevent loss of precision
-# IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
-def _to_reproducible_float(x):
+def parse_vector(x, dtype=None):
+    """Parse a vector from a nrrd header, return a list."""
+    # TODO Document this better
+
+    if x[0] != '(' or x[-1] != ')':
+        raise NrrdError('Vector should be enclosed by parentheses.')
+
+    # Always convert to float and then truncate to integer if desired
+    # The reason why is parsing a floating point string to int will fail (i.e. int('25.1') will fail)
+    vector = np.array([float(x) for x in x[1:-1].split(',')])
+
+    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
+    # Truncate to integer if dtype is int also
+    if dtype is None:
+        vector_trunc = vector.astype(int)
+
+        if np.all((vector - vector_trunc) == 0):
+            vector = vector_trunc
+    elif dtype == int:
+        vector = vector.astype(int)
+    elif dtype != float:
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
+
+    return vector
+
+
+def parse_optional_vector(x, dtype=None):
+    if x == 'none':
+        return None
+    else:
+        return parse_vector(x, dtype)
+
+
+def parse_matrix(x, dtype=None):
+    """Parse a vector from a nrrd header, return a list."""
+
+    # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
+    matrix = [parse_vector(x, dtype=float) for x in x.split()]
+
+    # Get the size of each row vector and then remove duplicate sizes
+    # There should be exactly one value in the matrix because all row sizes need to be the same
+    if len(np.unique([len(x) for x in matrix])) != 1:
+        raise NrrdError('Matrix should have same number of elements in each row')
+
+    matrix = np.vstack(matrix)
+
+    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
+    # Truncate to integer if dtype is int also
+    if dtype is None:
+        matrix_trunc = matrix.astype(int)
+
+        if np.all((matrix - matrix_trunc) == 0):
+            matrix = matrix_trunc
+    elif dtype == int:
+        matrix = matrix.astype(int)
+    elif dtype != float:
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
+
+    return matrix
+
+
+def parse_optional_matrix(x):
+    # Split input by spaces to get each row and convert into a vector. The row can be 'none', in which case it will
+    # return None
+    matrix = [parse_optional_vector(x, dtype=float) for x in x.split()]
+
+    # Get the size of each row vector, 0 if None
+    sizes = np.array([0 if x is None else len(x) for x in matrix])
+
+    # Get sizes of each row vector removing duplicate sizes
+    # Since each row vector should be same size, the unique sizes should return one value for the row size or it may
+    # return a second one (0) if there are None vectors
+    unique_sizes = np.unique(sizes)
+
+    if len(unique_sizes) != 1 and (len(unique_sizes) != 2 or unique_sizes.min() != 0):
+        raise NrrdError('Matrix should have same number of elements in each row')
+
+    # Create a vector row of NaN's that matches same size of remaining vector rows
+    # Stack the vector rows together to create matrix
+    nan_row = np.full((unique_sizes.max()), np.nan)
+    matrix = np.vstack([nan_row if x is None else x for x in matrix])
+
+    return matrix
+
+
+def parse_number_list(x, dtype=None):
+    # Always convert to float and then perform truncation to integer if necessary
+    number_list = np.array([float(x) for x in x.split()])
+
+    if dtype is None:
+        number_list_trunc = number_list.astype(int)
+
+        if np.all((number_list - number_list_trunc) == 0):
+            number_list = number_list_trunc
+    elif dtype == int:
+        number_list = number_list.astype(int)
+    elif dtype != float:
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
+
+    return number_list
+
+
+def parse_number_auto_dtype(x):
+    value = float(x)
+
+    if value.is_integer():
+        value = int(value)
+
+    return value
+
+
+def format_vector(x):
+    return '(' + ','.join([format_number(y) for y in x]) + ')'
+
+
+def format_optional_vector(x):
+    if x is None:
+        return 'none'
+    else:
+        return format_vector(x)
+
+
+def format_matrix(x):
+    return ' '.join([format_vector(y) for y in x])
+
+
+def format_optional_matrix(x):
+    return ' '.join([format_optional_vector(y) for y in x])
+
+
+def format_number_list(x):
+    return ' '.join([format_number(y) for y in x])
+
+
+def format_number(x):
     if isinstance(x, float):
+        # This will help prevent loss of precision
+        # IEEE754-1985 standard says that 16 decimal digits is enough in all cases.
         # Remove trailing zeros, and dot if at end
         value = '{:.16f}'.format(x).rstrip('0').rstrip('.')
     else:
         value = str(x)
+
     return value
 
 
@@ -105,118 +240,6 @@ _NUMPY2NRRD_ENDIAN_MAP = {
     'B': 'big'
 }
 
-
-def parse_vector(input, dtype=None):
-    """Parse a vector from a nrrd header, return a list."""
-    # TODO Document this better
-
-    if input[0] != '(' or input[-1] != ')':
-        raise NrrdError('Vector should be enclosed by parentheses.')
-
-    # Always convert to float and then truncate to integer if desired
-    # The reason why is parsing a floating point string to int will fail (i.e. int('25.1') will fail)
-    vector = np.array([float(x) for x in input[1:-1].split(',')])
-
-    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
-    # Truncate to integer if dtype is int also
-    if dtype is None:
-        vector_trunc = vector.astype(int)
-
-        if np.all((vector - vector_trunc) == 0):
-            vector = vector_trunc
-    elif dtype == int:
-        vector = vector.astype(int)
-    elif dtype != float:
-        raise NrrdError('dtype should be None for automatic type detection, float or int')
-
-    return vector
-
-
-def parse_optional_vector(input, dtype=None):
-    if input == 'none':
-        return None
-    else:
-        return parse_vector(input, dtype)
-
-
-def parse_matrix(input, dtype=None):
-    """Parse a vector from a nrrd header, return a list."""
-
-    # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
-    matrix = [parse_vector(x, dtype=float) for x in input.split()]
-
-    # Get the size of each row vector and then remove duplicate sizes
-    # There should be exactly one value in the matrix because all row sizes need to be the same
-    if len(np.unique([len(x) for x in matrix])) != 1:
-        raise NrrdError('Matrix should have same number of elements in each row')
-
-    matrix = np.vstack(matrix)
-
-    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
-    # Truncate to integer if dtype is int also
-    if dtype is None:
-        matrix_trunc = matrix.astype(int)
-
-        if np.all((matrix - matrix_trunc) == 0):
-            matrix = matrix_trunc
-    elif dtype == int:
-        matrix = matrix.astype(int)
-    elif dtype != float:
-        raise NrrdError('dtype should be None for automatic type detection, float or int')
-
-    return matrix
-
-
-def parse_optional_matrix(input):
-    # Split input by spaces to get each row and convert into a vector. The row can be 'none', in which case it will
-    # return None
-    matrix = [parse_optional_vector(x, dtype=float) for x in input.split()]
-
-    # Get the size of each row vector, 0 if None
-    sizes = np.array([0 if x is None else len(x) for x in matrix])
-
-    # Get sizes of each row vector removing duplicate sizes
-    # Since each row vector should be same size, the unique sizes should return one value for the row size or it may
-    # return a second one (0) if there are None vectors
-    unique_sizes = np.unique(sizes)
-
-    if len(unique_sizes) != 1 and (len(unique_sizes) != 2 or unique_sizes.min() != 0):
-        raise NrrdError('Matrix should have same number of elements in each row')
-
-    # Create a vector row of NaN's that matches same size of remaining vector rows
-    # Stack the vector rows together to create matrix
-    nan_row = np.full((unique_sizes.max()), np.nan)
-    matrix = np.vstack([nan_row if x is None else x for x in matrix])
-
-    return matrix
-
-
-def parse_number_list(input, dtype=None):
-    # Always convert to float and then perform truncation to integer if necessary
-    number_list = np.array([float(x) for x in input.split()])
-
-    if dtype is None:
-        number_list_trunc = number_list.astype(int)
-
-        if np.all((number_list - number_list_trunc) == 0):
-            number_list = number_list_trunc
-    elif dtype == int:
-        number_list = number_list.astype(int)
-    elif dtype != float:
-        raise NrrdError('dtype should be None for automatic type detection, float or int')
-
-    return number_list
-
-
-def parse_number_auto_dtype(input):
-    value = float(input)
-
-    if value.is_integer():
-        value = int(value)
-
-    return value
-
-
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
@@ -252,7 +275,45 @@ _NRRD_FIELD_PARSERS = {
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
     'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
-    'measurement frame': lambda fieldValue: parse_matrix(fieldValue, dtype=int),
+    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue, dtype=int),
+}
+
+_NRRD_FIELD_FORMATTERS = {
+    'dimension': format_number,
+    'type': str,
+    'sizes': format_number_list,
+    'endian': str,
+    'encoding': str,
+    'min': format_number,
+    'max': format_number,
+    'oldmin': format_number,
+    'old min': format_number,
+    'oldmax': format_number,
+    'old max': format_number,
+    'lineskip': format_number,
+    'line skip': format_number,
+    'byteskip': format_number,
+    'byte skip': format_number,
+    'content': str,
+    'sample units': str,
+    'datafile': str,
+    'data file': str,
+    'spacings': format_number_list,
+    'thicknesses': format_number_list,
+    'axis mins': format_number_list,
+    'axismins': format_number_list,
+    'axis maxs': format_number_list,
+    'axismaxs': format_number_list,
+    'centerings': lambda fieldValue: ' '.join(fieldValue),
+    'labels': lambda fieldValue: ' '.join(fieldValue),
+    'units': lambda fieldValue: ' '.join(fieldValue),
+    'kinds': lambda fieldValue: ' '.join(fieldValue),
+    'space': str,
+    'space dimension': format_number,
+    'space units': format_number_list,
+    'space origin': format_vector,
+    'space directions': format_optional_matrix,
+    'measurement frame': format_optional_matrix,
 }
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
@@ -297,6 +358,7 @@ def _determine_dtype(fields):
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in fields:
             raise NrrdError('Nrrd header misses required field: "%s".' % (field))
+
     # Process the data type
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
     if np.dtype(np_typestring).itemsize > 1:
@@ -308,6 +370,31 @@ def _determine_dtype(fields):
             np_typestring = '<' + np_typestring
 
     return np.dtype(np_typestring)
+
+
+def _validate_magic_line(line):
+    """For NRRD files, the first four characters are always "NRRD", and
+    remaining characters give information about the file format version
+
+    >>> _validate_magic_line('NRRD0005')
+    8
+    >>> _validate_magic_line('NRRD0006')
+    Traceback (most recent call last):
+        ...
+    NrrdError: NRRD file version too new for this library.
+    >>> _validate_magic_line('NRRD')
+    Traceback (most recent call last):
+        ...
+    NrrdError: Invalid NRRD magic line: NRRD
+    """
+    if not line.startswith('NRRD'):
+        raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
+    try:
+        if int(line[4:]) > 5:
+            raise NrrdError('NRRD file version too new for this library.')
+    except ValueError:
+        raise NrrdError('Invalid NRRD magic line: %s' % (line,))
+    return len(line)
 
 
 def read_data(fields, filehandle, filename=None):
@@ -380,31 +467,6 @@ def read_data(fields, filehandle, filename=None):
     return data
 
 
-def _validate_magic_line(line):
-    """For NRRD files, the first four characters are always "NRRD", and
-    remaining characters give information about the file format version
-
-    >>> _validate_magic_line('NRRD0005')
-    8
-    >>> _validate_magic_line('NRRD0006')
-    Traceback (most recent call last):
-        ...
-    NrrdError: NRRD file version too new for this library.
-    >>> _validate_magic_line('NRRD')
-    Traceback (most recent call last):
-        ...
-    NrrdError: Invalid NRRD magic line: NRRD
-    """
-    if not line.startswith('NRRD'):
-        raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
-    try:
-        if int(line[4:]) > 5:
-            raise NrrdError('NRRD file version too new for this library.')
-    except ValueError:
-        raise NrrdError('Invalid NRRD magic line: %s' % (line,))
-    return len(line)
-
-
 def read_header(nrrdfile):
     """Parse the fields in the nrrd header
 
@@ -462,7 +524,7 @@ def read_header(nrrdfile):
         field_desc = line.split(': ', 1)
         if len(field_desc) is 2:
             field, desc = field_desc
-            ## preceeding and suffixing white space should be ignored.
+            # Preceeding and suffixing white space should be ignored.
             field = field.rstrip().lstrip()
             desc = desc.rstrip().lstrip()
             if field not in _NRRD_FIELD_PARSERS:
@@ -488,60 +550,6 @@ def read(filename):
         header = read_header(filehandle)
         data = read_data(header, filehandle, filename)
         return (data, header)
-
-
-def _format_nrrd_list(field_value):
-    return ' '.join([_to_reproducible_float(x) for x in field_value])
-
-
-def _format_nrrdvector(vector):
-    return '(' + ','.join([_to_reproducible_float(x) for x in vector]) + ')'
-
-
-def _format_optional_nrrdvector(vector):
-    if vector is None:
-        return 'none'
-    else:
-        return _format_nrrdvector(vector)
-
-
-_NRRD_FIELD_FORMATTERS = {
-    'dimension': str,
-    'type': str,
-    'sizes': _format_nrrd_list,
-    'endian': str,
-    'encoding': str,
-    'min': str,
-    'max': str,
-    'oldmin': str,
-    'old min': str,
-    'oldmax': str,
-    'old max': str,
-    'lineskip': str,
-    'line skip': str,
-    'byteskip': str,
-    'byte skip': str,
-    'content': str,
-    'sample units': str,
-    'datafile': str,
-    'data file': str,
-    'spacings': _format_nrrd_list,
-    'thicknesses': _format_nrrd_list,
-    'axis mins': _format_nrrd_list,
-    'axismins': _format_nrrd_list,
-    'axis maxs': _format_nrrd_list,
-    'axismaxs': _format_nrrd_list,
-    'centerings': _format_nrrd_list,
-    'labels': _format_nrrd_list,
-    'units': _format_nrrd_list,
-    'kinds': _format_nrrd_list,
-    'space': str,
-    'space dimension': str,
-    'space units': _format_nrrd_list,
-    'space origin': _format_nrrdvector,
-    'space directions': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
-    'measurement frame': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
-}
 
 
 def _write_data(data, filehandle, options):
