@@ -166,9 +166,9 @@ def format_number_list(x):
 def format_number(x):
     if isinstance(x, float):
         # This will help prevent loss of precision
-        # IEEE754-1985 standard says that 16 decimal digits is enough in all cases.
+        # IEEE754-1985 standard says that 15 decimal digits is enough in all cases.
         # Remove trailing zeros, and dot if at end
-        value = '{:.16f}'.format(x).rstrip('0').rstrip('.')
+        value = '{:.15f}'.format(x).rstrip('0').rstrip('.')
     else:
         value = str(x)
 
