@@ -33,13 +33,13 @@ class TestFieldParsing(unittest.TestCase):
         np.testing.assert_equal(desired, actual)
 
     def test_parse_vector(self):
-        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_vector('100, 200, 300)')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_vector('(100, 200, 300')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_vector('100, 200, 300')
 
         self.assert_equal_with_datatype(nrrd.parse_vector('(100, 200, 300)'), [100, 200, 300])
@@ -59,17 +59,17 @@ class TestFieldParsing(unittest.TestCase):
         self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=float), [100.47655, 220.32])
         self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=int), [100, 220])
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "dtype should be None for automatic type detection, float or int"):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_vector('(100.47655, 220.32)', dtype=np.uint8)
 
     def test_parse_optional_vector(self):
-        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_optional_vector('100, 200, 300)')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_optional_vector('(100, 200, 300')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_optional_vector('100, 200, 300')
 
         self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)'), [100, 200, 300])
@@ -98,7 +98,7 @@ class TestFieldParsing(unittest.TestCase):
 
         self.assertEqual(nrrd.parse_optional_vector('none'), None)
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "dtype should be None for automatic type detection, float or int"):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_optional_vector('(100.47655, 220.32)', dtype=np.uint8)
 
     def test_parse_matrix(self):
@@ -122,7 +122,7 @@ class TestFieldParsing(unittest.TestCase):
         self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=int),
                                         [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "dtype should be None for automatic type detection, float or int"):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=np.uint8)
 
     def test_parse_optional_matrix(self):
@@ -150,7 +150,7 @@ class TestFieldParsing(unittest.TestCase):
 
         self.assert_equal_with_datatype(nrrd.parse_number_list('1'), [1])
 
-        with self.assertRaisesRegex(nrrd.NrrdError, "dtype should be None for automatic type detection, float or int"):
+        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_number_list('1 2 3 4', dtype=np.uint8)
 
     def test_parse_number_auto_dtype(self):
@@ -228,23 +228,23 @@ class TestReadingFunctions(unittest.TestCase):
 
     def test_read_raw_header(self):
         expected_header = {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
-        header = nrrd.read_header(("NRRD0005", "type: float", "dimension: 3"))
+        header = nrrd.read_header(('NRRD0005', 'type: float', 'dimension: 3'))
         self.assertEqual(expected_header, header)
 
         expected_header = {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
-        header = nrrd.read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
+        header = nrrd.read_header(('NRRD0005', 'my extra info:=my : colon-separated : values'))
         self.assertEqual(expected_header, header)
 
 
 class TestWritingFunctions(unittest.TestCase):
     def setUp(self):
-        self.temp_write_dir = tempfile.mkdtemp("nrrdtest")
+        self.temp_write_dir = tempfile.mkdtemp('nrrdtest')
         self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH)
         with open(RAW_DATA_FILE_PATH, 'rb') as f:
             self.expected_data = f.read()
 
     def write_and_read_back_with_encoding(self, encoding):
-        output_filename = os.path.join(self.temp_write_dir, "testfile_%s.nrrd" % encoding)
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_%s.nrrd' % encoding)
         nrrd.write(output_filename, self.data_input, {u'encoding': encoding})
         # Read back the same file
         data, header = nrrd.read(output_filename)

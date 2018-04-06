@@ -111,7 +111,7 @@ def parse_vector(input, dtype=None):
     # TODO Document this better
 
     if input[0] != '(' or input[-1] != ')':
-        raise NrrdError("Vector should be enclosed by parentheses.")
+        raise NrrdError('Vector should be enclosed by parentheses.')
 
     # Always convert to float and then truncate to integer if desired
     # The reason why is parsing a floating point string to int will fail (i.e. int('25.1') will fail)
@@ -127,7 +127,7 @@ def parse_vector(input, dtype=None):
     elif dtype == int:
         vector = vector.astype(int)
     elif dtype != float:
-        raise NrrdError("dtype should be None for automatic type detection, float or int")
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
 
     return vector
 
@@ -155,7 +155,7 @@ def parse_matrix(input, dtype=None):
     elif dtype == int:
         matrix = matrix.astype(int)
     elif dtype != float:
-        raise NrrdError("dtype should be None for automatic type detection, float or int")
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
 
     return matrix
 
@@ -174,7 +174,7 @@ def parse_optional_matrix(input):
     unique_sizes = np.unique(sizes)
 
     assert len(unique_sizes) == 1 or (len(unique_sizes) == 2 and unique_sizes.min() == 0), \
-        "Matrix should have same number of elements in each row"
+        'Matrix should have same number of elements in each row'
 
     # Create a vector row of NaN's that matches same size of remaining vector rows
     # Stack the vector rows together to create matrix
@@ -196,7 +196,7 @@ def parse_number_list(input, dtype=None):
     elif dtype == int:
         number_list = number_list.astype(int)
     elif dtype != float:
-        raise NrrdError("dtype should be None for automatic type detection, float or int")
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
 
     return number_list
 
