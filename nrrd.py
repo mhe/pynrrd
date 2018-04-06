@@ -126,6 +126,8 @@ def parse_vector(input, dtype=None):
             vector = vector_trunc
     elif dtype == int:
         vector = vector.astype(int)
+    elif dtype != float:
+        raise NrrdError("dtype should be None for automatic type detection, float or int")
 
     return vector
 
@@ -152,6 +154,8 @@ def parse_matrix(input, dtype=None):
             matrix = matrix_trunc
     elif dtype == int:
         matrix = matrix.astype(int)
+    elif dtype != float:
+        raise NrrdError("dtype should be None for automatic type detection, float or int")
 
     return matrix
 
@@ -191,6 +195,8 @@ def parse_number_list(input, dtype=None):
             number_list = number_list_trunc
     elif dtype == int:
         number_list = number_list.astype(int)
+    elif dtype != float:
+        raise NrrdError("dtype should be None for automatic type detection, float or int")
 
     return number_list
 
