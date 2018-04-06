@@ -109,8 +109,9 @@ _NUMPY2NRRD_ENDIAN_MAP = {
 def parse_vector(input, dtype=None):
     """Parse a vector from a nrrd header, return a list."""
     # TODO Document this better
-    assert input[0] == '(', "Vector should be enclosed by parentheses."
-    assert input[-1] == ')', "Vector should be enclosed by parentheses."
+
+    if input[0] != '(' or input[-1] != ')':
+        raise NrrdError("Vector should be enclosed by parentheses.")
 
     # Always convert to float and then truncate to integer if desired
     # The reason why is parsing a floating point string to int will fail (i.e. int('25.1') will fail)

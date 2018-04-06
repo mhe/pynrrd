@@ -24,38 +24,49 @@ if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
     unittest.TestCase.assertRaisesRegex = getattr(unittest.TestCase, 'assertRaisesRegexp')
 
 
+# class CustomTestCase(unittest.TestCase):
+#     def npAssertAlmostEqual(self, first, second, rtol=1e-06, atol=1e-08):
+#         np.testing.assert_allclose(first, second, rtol=rtol, atol=atol)
+
 class TestFieldParsing(unittest.TestCase):
     def setUp(self):
         pass
 
+    def assert_equal_with_datatype(self, desired, actual):
+        self.assertEqual(desired.dtype, type(actual[0]))
+        np.testing.assert_equal(desired, actual)
+
     def test_parse_vector(self):
         with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
-            nrrd.parse_vector('100, 200, 300)') # Should assert
+            nrrd.parse_vector('100, 200, 300)')
 
-        # self.assertRaises()
+        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+            nrrd.parse_vector('(100, 200, 300')
 
-        # vector = nrrd.parse_vector('(100, 200, 300)')
-        # self.assertEqual(vector.dtype, float)
+        with self.assertRaisesRegex(nrrd.NrrdError, "Vector should be enclosed by parentheses."):
+            nrrd.parse_vector('100, 200, 300')
 
-        # nrrd.parse_vector('(100, 200, 300)', dtype=float)
-        # nrrd.parse_vector('(100, 200, 300)', dtype=int)
-        #
-        # nrrd.parse_vector('(100.50, 200, 300)')
-        # nrrd.parse_vector('(100, 200.50, 300)', dtype=float)
-        # nrrd.parse_vector('(100, 200, 300.50)', dtype=int)
-        #
-        # nrrd.parse_vector('(100.47655, 220.32, 300.50)')
-        # nrrd.parse_vector('(100.47655, 220.32, 300.50)', dtype=float)
-        # nrrd.parse_vector('(100.47655, 220.32, 300.50)', dtype=int)
-        #
-        # nrrd.parse_vector('(100.47655, 220.32)')
-        # nrrd.parse_vector('(100.47655, 220.32)', dtype=float)
-        # nrrd.parse_vector('(100.47655, 220.32)', dtype=int)
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100, 200, 300)'), [100, 200, 300])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100, 200, 300)', dtype=float), [100., 200., 300.])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100, 200, 300)', dtype=int), [100, 200, 300])
+
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100.50, 200, 300)'), [100.50, 200., 300.])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100, 200.50, 300)', dtype=float), [100., 200.50, 300.])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100, 200, 300.50)', dtype=int), [100, 200, 300])
+
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32, 300.50)'), [100.47655, 220.32, 300.50])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32, 300.50)', dtype=float),
+                                        [100.47655, 220.32, 300.50])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32, 300.50)', dtype=int), [100, 220, 300])
+
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)'), [100.47655, 220.32])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=float), [100.47655, 220.32])
+        self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=int), [100, 220])
 
 
 
         # Testing vector parsing
-        print(nrrd.parse_vector('(100, 200, 300)'))
+        # print(nrrd.parse_vector('(100, 200, 300)'))
         # print(nrrd.parse_vector('(100, 200, 300.00001)'))
         # print(nrrd.parse_vector('(100.5, 200.1, 300)'))
         # print(nrrd.parse_vector('(100.20, 200, 300)'))
