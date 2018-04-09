@@ -154,6 +154,39 @@ def parse_matrix(x, dtype=None):
 
 
 def parse_optional_matrix(x):
+    """Parse optional NRRD matrix from string into Numpy array.
+
+    Function parses optional NRRD matrix from string into an 2D Numpy array. This function works the same as :meth:`parse_matrix` except if a row vector in the matrix is none, the resulting row in the returned matrix will be
+    all NaNs.
+
+    For example, the following matrix NRRD input
+
+      x: 'none (1,2,3) (4,5,6) (7,8,9)'
+
+    will return
+
+      matrix:
+      array([[ nan,  nan,  nan],
+       [  1.,   2.,   3.],
+       [  4.,   5.,   6.],
+       [  7.,   8.,   9.]])
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD matrix to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the matrix elements for fractional numbers. If found, then
+        the matrix will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    matrix : (M,N) :class:`numpy.ndarray`
+        Matrix that is parsed from the :obj:`x` string
+    """
+
     # Split input by spaces to get each row and convert into a vector. The row can be 'none', in which case it will
     # return None
     matrix = [parse_optional_vector(x, dtype=float) for x in x.split()]
@@ -178,6 +211,28 @@ def parse_optional_matrix(x):
 
 
 def parse_number_list(x, dtype=None):
+    """Parse NRRD number list from string into Numpy array.
+
+    Function parses NRRD number list from string into an 1D Numpy array.
+    A NRRD number list is structured as follows:
+        * <Number 1> <Number 2> <Number 3> ... <Number N>
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD number list to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the list elements for fractional numbers. If found, then
+        the list will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    vector : (N,) :class:`numpy.ndarray`
+        Vector that is parsed from the :obj:`x` string
+    """
+
     # Always convert to float and then perform truncation to integer if necessary
     number_list = np.array([float(x) for x in x.split()])
 
@@ -195,6 +250,22 @@ def parse_number_list(x, dtype=None):
 
 
 def parse_number_auto_dtype(x):
+    """Parse number from string with automatic type detection.
+
+    Function parses input string and converts to a number using automatic type detection. If the number contains any
+    fractional parts, then the vector will be converted to float, otherwise int.
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String
+
+    Returns
+    -------
+    result : :class:`int` or :class:`float`
+        Number parsed from :obj:`x` string
+    """
+
     value = float(x)
 
     if value.is_integer():
