@@ -217,7 +217,7 @@ class TestFieldFormatting(unittest.TestCase):
 
         self.assertEqual(nrrd.format_matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), '(1,2,3) (4,5,6) (7,8,9)')
         self.assertEqual(nrrd.format_matrix([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]), '(1,2,3) (4,5,6) '
-                                                                                                   '(7,8,9)')
+                                                                                         '(7,8,9)')
         self.assertEqual(nrrd.format_matrix([[1, 2.2, 3.3], [4.4, 5.5, 6.6], [7.7, 8.8, 9.9]]),
                          '(1,2.2000000000000002,3.2999999999999998) (4.4000000000000004,5.5,6.5999999999999996) '
                          '(7.7000000000000002,8.8000000000000007,9.9000000000000004)')
@@ -239,11 +239,11 @@ class TestFieldFormatting(unittest.TestCase):
                          '(7.7000000000000002,8.8000000000000007,9.9000000000000004)')
 
         self.assertEqual(nrrd.format_optional_matrix(np.array([
-                         [np.NaN, np.NaN, np.NaN], [1, 2, 3], [4, 5, 6], [7, 8, 9]])),
-                         'none (1,2,3) (4,5,6) (7,8,9)')
+            [np.NaN, np.NaN, np.NaN], [1, 2, 3], [4, 5, 6], [7, 8, 9]])),
+            'none (1,2,3) (4,5,6) (7,8,9)')
         self.assertEqual(nrrd.format_optional_matrix(np.array([
-                         [1, 2, 3], [np.NaN, np.NaN, np.NaN], [4, 5, 6], [7, 8, 9]])),
-                         '(1,2,3) none (4,5,6) (7,8,9)')
+            [1, 2, 3], [np.NaN, np.NaN, np.NaN], [4, 5, 6], [7, 8, 9]])),
+            '(1,2,3) none (4,5,6) (7,8,9)')
 
     def test_format_number_list(self):
         self.assertEqual(nrrd.format_number_list([1, 2, 3]), '1 2 3')
@@ -253,20 +253,6 @@ class TestFieldFormatting(unittest.TestCase):
         self.assertEqual(nrrd.format_number_list(np.array([1, 2, 3])), '1 2 3')
         self.assertEqual(nrrd.format_number_list(np.array([1., 2., 3.])), '1 2 3')
         self.assertEqual(nrrd.format_number_list(np.array([1.2, 2., 3.2])), '1.2 2 3.2000000000000002')
-
-    # def test_parse_number_list(self):
-    #     self.assert_equal_with_datatype(nrrd.parse_number_list('1 2 3 4'), [1, 2, 3, 4])
-    #     self.assert_equal_with_datatype(nrrd.parse_number_list('1 2 3 4', dtype=float), [1., 2., 3., 4.])
-    #     self.assert_equal_with_datatype(nrrd.parse_number_list('1 2 3 4', dtype=int), [1, 2, 3, 4])
-    #
-    #     self.assert_equal_with_datatype(nrrd.parse_number_list('1'), [1])
-    #
-    #     with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
-    #         nrrd.parse_number_list('1 2 3 4', dtype=np.uint8)
-    #
-    # def test_parse_number_auto_dtype(self):
-    #     self.assertEqual(nrrd.parse_number_auto_dtype('25'), 25)
-    #     self.assertEqual(nrrd.parse_number_auto_dtype('25.125'), 25.125)
 
 
 class TestReadingFunctions(unittest.TestCase):

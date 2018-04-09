@@ -30,8 +30,27 @@ class NrrdError(Exception):
 
 
 def parse_vector(x, dtype=None):
-    """Parse a vector from a nrrd header, return a list."""
-    # TODO Document this better
+    """Parse NRRD vector from string into Numpy array.
+
+    Function parses NRRD vector from string into an 1D Numpy array.
+    A NRRD vector is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD vector to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the vector elements for fractional numbers. If found, then
+        the vector will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    vector : (N,) :class:`numpy.ndarray`
+        Vector that is parsed from the :obj:`x` string
+    """
 
     if x[0] != '(' or x[-1] != ')':
         raise NrrdError('Vector should be enclosed by parentheses.')
@@ -56,6 +75,30 @@ def parse_vector(x, dtype=None):
 
 
 def parse_optional_vector(x, dtype=None):
+    """Parse optional NRRD vector from string into Numpy array.
+
+    Function parses optional NRRD vector from string into an 1D Numpy array. This function works the same as
+    :meth:`parse_vector` except if the :obj:`x` is 'none', the result will be None
+
+    Thus, an optional NRRD vector is structured as one of the following:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) OR
+        * none
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD vector to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the vector elements for fractional numbers. If found, then
+        the vector will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    vector : (N,) :class:`numpy.ndarray`
+        Vector that is parsed from the :obj:`x` string OR None if :obj:`x` is 'none'
+    """
     if x == 'none':
         return None
     else:
@@ -63,7 +106,27 @@ def parse_optional_vector(x, dtype=None):
 
 
 def parse_matrix(x, dtype=None):
-    """Parse a vector from a nrrd header, return a list."""
+    """Parse NRRD matrix from string into Numpy array.
+
+    Function parses NRRD matrix from string into an 2D Numpy array.
+    A NRRD matrix is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD matrix to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the matrix elements for fractional numbers. If found, then
+        the matrix will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    matrix : (M,N) :class:`numpy.ndarray`
+        Matrix that is parsed from the :obj:`x` string
+    """
 
     # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
     matrix = [parse_vector(x, dtype=float) for x in x.split()]
