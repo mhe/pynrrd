@@ -130,7 +130,7 @@ class TestReadingFunctions(unittest.TestCase):
 
         self.assertEqual(header, expected_header)
         np.testing.assert_equal(data.dtype, np.uint16)
-        np.testing.assert_equal(data, np.arange(1, 28).reshape(9, 3).T)
+        np.testing.assert_equal(data, np.arange(1, 28).reshape(3, 9, order='F'))
 
 
 class TestWritingFunctions(unittest.TestCase):
@@ -156,6 +156,39 @@ class TestWritingFunctions(unittest.TestCase):
 
     def test_write_bz2(self):
         self.write_and_read_back_with_encoding(u'bzip2')
+
+    def test_write_ascii_1d(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_1d.nrrd')
+
+        x = np.arange(1, 28)
+        nrrd.write(output_filename, x, {u'encoding': 'ascii'})
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(header['encoding'], 'ascii')
+        np.testing.assert_equal(data, x)
+
+    def test_write_ascii_2d(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_2d.nrrd')
+
+        x = np.arange(1, 28).reshape(3, 9, order='F')
+        nrrd.write(output_filename, x, {u'encoding': 'ascii'})
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(header['encoding'], 'ascii')
+        np.testing.assert_equal(data, x)
+
+    def test_write_ascii_3d(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_3d.nrrd')
+
+        x = np.arange(1, 28).reshape(3, 3, 3, order='F')
+        nrrd.write(output_filename, x, {u'encoding': 'ascii'})
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(header['encoding'], 'ascii')
+        np.testing.assert_equal(x, data)
 
 
 if __name__ == '__main__':

@@ -447,6 +447,12 @@ def _write_data(data, filehandle, options):
     rawdata = data.tostring(order='F')
     if options['encoding'] == 'raw':
         filehandle.write(rawdata)
+    elif options['encoding'].lower() in ['ascii', 'text', 'txt']:
+        # savetxt only works for 1D and 2D arrays, so reshape any > 2 dim arrays into one long 1D array
+        if data.ndim > 2:
+            np.savetxt(filehandle, data.ravel(order='F'), '%.17g')
+        else:
+            np.savetxt(filehandle, data.T, '%.17g')
     else:
         if options['encoding'] == 'gzip':
             comp_obj = zlib.compressobj(9, zlib.DEFLATED, zlib.MAX_WBITS | 16)
@@ -479,7 +485,8 @@ def write(filename, data, options={}, detached_header=False):
     # Infer a number of fields from the ndarray and ignore values
     # in the options dictionary.
     options['type'] = _TYPEMAP_NUMPY2NRRD[data.dtype.str[1:]]
-    if data.dtype.itemsize > 1:
+    # Do not add endianness if encoding is ASCII
+    if data.dtype.itemsize > 1 and options.get('encoding', '').lower() not in ['ascii', 'text', 'txt']:
         options['endian'] = _NUMPY2NRRD_ENDIAN_MAP[data.dtype.str[:1]]
     # if 'space' is specified 'space dimension' can not. See
     # http://teem.sourceforge.net/nrrd/format.html#space
