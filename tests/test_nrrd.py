@@ -2,6 +2,8 @@ import os
 import sys
 import tempfile
 
+import numpy as np
+
 # Look on level up for nrrd.py
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -29,8 +31,8 @@ class TestReadingFunctions(unittest.TestCase):
                                 u'space directions': [['1', '0', '0'], ['0', '1', '0'], ['0', '0', '1']],
                                 u'space origin': ['0', '0', '0'],
                                 u'type': 'short'}
-        with open(RAW_DATA_FILE_PATH, 'rb') as f:
-            self.expected_data = f.read()
+
+        self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30), order='F')
 
     def test_read_header_only(self):
         header = None
@@ -57,28 +59,28 @@ class TestReadingFunctions(unittest.TestCase):
     def test_read_header_and_data_filename(self):
         data, header = nrrd.read(RAW_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        np.testing.assert_equal(data, self.expected_data)
 
     def test_read_detached_header_and_data(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
         data, header = nrrd.read(RAW_NHDR_FILE_PATH)
         self.assertEqual(expected_header, header)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        np.testing.assert_equal(data, self.expected_data)
 
     def test_read_header_and_gz_compressed_data(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'gzip'
         data, header = nrrd.read(GZ_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        np.testing.assert_equal(data, self.expected_data)
 
     def test_read_header_and_bz2_compressed_data(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'bzip2'
         data, header = nrrd.read(BZ2_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        np.testing.assert_equal(data, self.expected_data)
 
     def test_read_header_and_gz_compressed_data_with_lineskip3(self):
         expected_header = self.expected_header
@@ -86,7 +88,7 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header[u'line skip'] = 3
         data, header = nrrd.read(GZ_LINESKIP_NRRD_FILE_PATH)
         self.assertEqual(self.expected_header, header)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        np.testing.assert_equal(data, self.expected_data)
 
     def test_read_raw_header(self):
         expected_header = {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
