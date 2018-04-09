@@ -2,6 +2,8 @@ import os
 import sys
 import tempfile
 
+import numpy as np
+
 # Look on level up for nrrd.py
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -15,6 +17,9 @@ RAW_DATA_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30.raw')
 GZ_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz.nrrd')
 BZ2_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_bz2.nrrd')
 GZ_LINESKIP_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz_lineskip.nrrd')
+
+ASCII_1D_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'test1d_ascii.nrrd')
+ASCII_2D_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'test2d_ascii.nrrd')
 
 
 class TestReadingFunctions(unittest.TestCase):
@@ -96,6 +101,36 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header = {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
         header = nrrd.read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
         self.assertEqual(expected_header, header)
+
+    def test_read_header_and_ascii_1d_data(self):
+        expected_header = {u'dimension': 1,
+                           u'encoding': 'ascii',
+                           u'keyvaluepairs': {},
+                           u'kinds': ['domain'],
+                           u'sizes': [27],
+                           u'spacings': ['1.0458000000000001'],
+                           u'type': 'unsigned char'}
+
+        data, header = nrrd.read(ASCII_1D_NRRD_FILE_PATH)
+
+        self.assertEqual(header, expected_header)
+        np.testing.assert_equal(data.dtype, np.uint8)
+        np.testing.assert_equal(data, np.arange(1, 28))
+
+    def test_read_header_and_ascii_2d_data(self):
+        expected_header = {u'dimension': 2,
+                           u'encoding': 'ascii',
+                           u'keyvaluepairs': {},
+                           u'kinds': ['domain', 'domain'],
+                           u'sizes': [3, 9],
+                           u'spacings': ['1.0458000000000001', '2'],
+                           u'type': 'unsigned short'}
+
+        data, header = nrrd.read(ASCII_2D_NRRD_FILE_PATH)
+
+        self.assertEqual(header, expected_header)
+        np.testing.assert_equal(data.dtype, np.uint16)
+        np.testing.assert_equal(data, np.arange(1, 28).reshape(9, 3).T)
 
 
 class TestWritingFunctions(unittest.TestCase):

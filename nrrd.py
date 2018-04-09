@@ -119,7 +119,7 @@ _NRRD_FIELD_PARSERS = {
     'type': str,
     'sizes': lambda fieldValue: [int(x) for x in fieldValue.split()],
     'endian': str,
-    'encoding': str,
+    'encoding': lambda fieldValue: str(fieldValue).lower(),
     'min': float,
     'max': float,
     'oldmin': float,
@@ -198,7 +198,8 @@ def _determine_dtype(fields):
             raise NrrdError('Nrrd header misses required field: "%s".' % (field))
     # Process the data type
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
-    if np.dtype(np_typestring).itemsize > 1:
+    # Endianness is not necessary for ASCII encoding type
+    if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ascii', 'text', 'txt']:
         if 'endian' not in fields:
             raise NrrdError('Nrrd header misses required field: "endian".')
         if fields['endian'] == 'big':
@@ -246,6 +247,9 @@ def read_data(fields, filehandle, filename=None):
     if fields['encoding'] == 'raw':
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
+    elif fields['encoding'] in ['ascii', 'text', 'txt']:
+        datafilehandle.seek(byteskip, os.SEEK_CUR)
+        data = np.fromfile(datafilehandle, dtype, sep=' ')
     else:
         # Probably the data is compressed then
         if fields['encoding'] == 'gzip' or\
