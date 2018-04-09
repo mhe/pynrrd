@@ -165,10 +165,12 @@ def format_number_list(x):
 
 def format_number(x):
     if isinstance(x, float):
-        # This will help prevent loss of precision
-        # IEEE754-1985 standard says that 15 decimal digits is enough in all cases.
-        # Remove trailing zeros, and dot if at end
-        value = '{:.15f}'.format(x).rstrip('0').rstrip('.')
+        # Helps prevent loss of precision as using str() in Python 2 only prints 12 digits of precision.
+        # However, IEEE754-1985 standard says that 17 significant decimal digits is required to adequately represent a
+        # floating point number.
+        # The g option is used rather than f because g precision uses significant digits while f is just the number of
+        # digits after the decimal. (NRRD C implementation uses g).
+        value = '{:.17g}'.format(x)
     else:
         value = str(x)
 

@@ -171,6 +171,20 @@ class TestFieldFormatting(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_format_number(self):
+        # Loop through 0 -> 10 in increments of 0.1 and test if the formatted number equals what str(number) returns.
+        for x in np.linspace(0.1, 10.0, 100):
+            self.assertEqual(nrrd.format_number(x), repr(x))
+
+        # A few example floating points and the resulting output numbers that should be seen
+        values = {
+            123412341234.123: '123412341234.123',
+            0.000000123123: '1.23123e-07'
+        }
+
+        for key, value in values.items():
+            self.assertEqual(nrrd.format_number(key), value)
+
     def test_format_vector(self):
         self.assertEqual(nrrd.format_vector([1, 2, 3]), '(1,2,3)')
         self.assertEqual(nrrd.format_vector([1., 2., 3.]), '(1,2,3)')
@@ -191,45 +205,11 @@ class TestFieldFormatting(unittest.TestCase):
 
         self.assertEqual(nrrd.format_optional_vector(None), 'none')
 
-    # def test_format_optional_vector(self):
-    #     with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
-    #         nrrd.parse_optional_vector('100, 200, 300)')
-    #
-    #     with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
-    #         nrrd.parse_optional_vector('(100, 200, 300')
-    #
-    #     with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
-    #         nrrd.parse_optional_vector('100, 200, 300')
-    #
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)'), [100, 200, 300])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)', dtype=float),
-    #                                     [100., 200., 300.])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)', dtype=int), [100, 200, 300])
-    #
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.50, 200, 300)'), [100.50, 200., 300.])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200.50, 300)', dtype=float),
-    #                                     [100., 200.50, 300.])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300.50)', dtype=int),
-    #                                     [100, 200, 300])
-    #
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32, 300.50)'),
-    #                                     [100.47655, 220.32, 300.50])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32, 300.50)', dtype=float),
-    #                                     [100.47655, 220.32, 300.50])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32, 300.50)', dtype=int),
-    #                                     [100, 220, 300])
-    #
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32)'),
-    #                                     [100.47655, 220.32])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32)', dtype=float),
-    #                                     [100.47655, 220.32])
-    #     self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100.47655, 220.32)', dtype=int), [100, 220])
-    #
-    #     self.assertEqual(nrrd.parse_optional_vector('none'), None)
-    #
-    #     with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
-    #         nrrd.parse_optional_vector('(100.47655, 220.32)', dtype=np.uint8)
-    #
+    def test_format_matrix(self):
+        self.assertEqual(nrrd.format_matrix(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])), '(1,2,3) (4,5,6) (7,8,9)')
+        # self.assertEqual(nrrd.format_matrix(np.array([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]])), '(1,2,3) (4,5,6) (7,8,9)')
+        # self.assertEqual(nrrd.format_matrix(np.array([[1, 2.2, 3.3], [4.4, 5.5, 6.6], [7.7, 8.8, 9.9]])), '(1,2.2,3.3) (4.4,5.5,6.6) (7.7,8.8,9.9)')
+
     # def test_parse_matrix(self):
     #     self.assert_equal_with_datatype(
     #         nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
