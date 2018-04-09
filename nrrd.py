@@ -145,7 +145,9 @@ def format_vector(x):
 
 
 def format_optional_vector(x):
-    if x is None:
+    # If vector is None or all elements are NaN, then return none
+    # Otherwise format the vector as normal
+    if x is None or np.all(np.isnan(x)):
         return 'none'
     else:
         return format_vector(x)

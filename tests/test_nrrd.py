@@ -174,12 +174,12 @@ class TestFieldFormatting(unittest.TestCase):
     def test_format_number(self):
         # Loop through 0 -> 10 in increments of 0.1 and test if the formatted number equals what str(number) returns.
         for x in np.linspace(0.1, 10.0, 100):
-            self.assertEqual(nrrd.format_number(x), repr(x))
+            self.assertEqual(nrrd.format_number(x), repr(x).rstrip('0').rstrip('.'))
 
         # A few example floating points and the resulting output numbers that should be seen
         values = {
             123412341234.123: '123412341234.123',
-            0.000000123123: '1.23123e-07'
+            0.000000123123: '1.2312300000000001e-07'
         }
 
         for key, value in values.items():
@@ -188,55 +188,63 @@ class TestFieldFormatting(unittest.TestCase):
     def test_format_vector(self):
         self.assertEqual(nrrd.format_vector([1, 2, 3]), '(1,2,3)')
         self.assertEqual(nrrd.format_vector([1., 2., 3.]), '(1,2,3)')
-        self.assertEqual(nrrd.format_vector([1.2, 2., 3.2]), '(1.2,2,3.2)')
+        self.assertEqual(nrrd.format_vector([1.2, 2., 3.2]), '(1.2,2,3.2000000000000002)')
 
         self.assertEqual(nrrd.format_vector(np.array([1, 2, 3])), '(1,2,3)')
         self.assertEqual(nrrd.format_vector(np.array([1., 2., 3.])), '(1,2,3)')
-        self.assertEqual(nrrd.format_vector(np.array([1.2, 2., 3.2])), '(1.2,2,3.2)')
+        self.assertEqual(nrrd.format_vector(np.array([1.2, 2., 3.2])), '(1.2,2,3.2000000000000002)')
 
     def test_format_optional_vector(self):
         self.assertEqual(nrrd.format_optional_vector([1, 2, 3]), '(1,2,3)')
         self.assertEqual(nrrd.format_optional_vector([1., 2., 3.]), '(1,2,3)')
-        self.assertEqual(nrrd.format_optional_vector([1.2, 2., 3.2]), '(1.2,2,3.2)')
+        self.assertEqual(nrrd.format_optional_vector([1.2, 2., 3.2]), '(1.2,2,3.2000000000000002)')
 
         self.assertEqual(nrrd.format_optional_vector(np.array([1, 2, 3])), '(1,2,3)')
         self.assertEqual(nrrd.format_optional_vector(np.array([1., 2., 3.])), '(1,2,3)')
-        self.assertEqual(nrrd.format_optional_vector(np.array([1.2, 2., 3.2])), '(1.2,2,3.2)')
+        self.assertEqual(nrrd.format_optional_vector(np.array([1.2, 2., 3.2])), '(1.2,2,3.2000000000000002)')
 
         self.assertEqual(nrrd.format_optional_vector(None), 'none')
+        self.assertEqual(nrrd.format_optional_vector(np.array([np.NaN, np.NaN, np.NaN])), 'none')
+        self.assertEqual(nrrd.format_optional_vector([np.NaN, np.NaN, np.NaN]), 'none')
 
     def test_format_matrix(self):
         self.assertEqual(nrrd.format_matrix(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])), '(1,2,3) (4,5,6) (7,8,9)')
-        # self.assertEqual(nrrd.format_matrix(np.array([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]])), '(1,2,3) (4,5,6) (7,8,9)')
-        # self.assertEqual(nrrd.format_matrix(np.array([[1, 2.2, 3.3], [4.4, 5.5, 6.6], [7.7, 8.8, 9.9]])), '(1,2.2,3.3) (4.4,5.5,6.6) (7.7,8.8,9.9)')
+        self.assertEqual(nrrd.format_matrix(np.array([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]])), '(1,2,3) (4,5,6) '
+                                                                                                   '(7,8,9)')
+        self.assertEqual(nrrd.format_matrix(np.array([[1, 2.2, 3.3], [4.4, 5.5, 6.6], [7.7, 8.8, 9.9]])),
+                         '(1,2.2000000000000002,3.2999999999999998) (4.4000000000000004,5.5,6.5999999999999996) '
+                         '(7.7000000000000002,8.8000000000000007,9.9000000000000004)')
 
-    # def test_parse_matrix(self):
-    #     self.assert_equal_with_datatype(
-    #         nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
-    #         [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
-    #
-    #     self.assert_equal_with_datatype(
-    #         nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
-    #                           dtype=float),
-    #         [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
-    #
-    #     self.assert_equal_with_datatype(
-    #         nrrd.parse_matrix('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
-    #                           dtype=int), [[1, 0, 0], [0, 1, 0], [0, 0, 4]])
-    #
-    #     self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)'),
-    #                                     [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    #     self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=float),
-    #                                     [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
-    #     self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=int),
-    #                                     [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    #
-    #     with self.assertRaisesRegex(nrrd.NrrdError, 'Matrix should have same number of elements in each row'):
-    #         nrrd.parse_matrix('(1,0,0,0) (0,1,0) (0,0,1)')
-    #
-    #     with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
-    #         nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=np.uint8)
-    #
+        self.assertEqual(nrrd.format_matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), '(1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_matrix([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]), '(1,2,3) (4,5,6) '
+                                                                                                   '(7,8,9)')
+        self.assertEqual(nrrd.format_matrix([[1, 2.2, 3.3], [4.4, 5.5, 6.6], [7.7, 8.8, 9.9]]),
+                         '(1,2.2000000000000002,3.2999999999999998) (4.4000000000000004,5.5,6.5999999999999996) '
+                         '(7.7000000000000002,8.8000000000000007,9.9000000000000004)')
+
+    def test_format_optional_matrix(self):
+        self.assertEqual(nrrd.format_optional_matrix(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])),
+                         '(1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_matrix(np.array([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]])),
+                         '(1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_matrix(np.array([[1, 2.2, 3.3], [4.4, 5.5, 6.6], [7.7, 8.8, 9.9]])),
+                         '(1,2.2000000000000002,3.2999999999999998) (4.4000000000000004,5.5,6.5999999999999996) '
+                         '(7.7000000000000002,8.8000000000000007,9.9000000000000004)')
+
+        self.assertEqual(nrrd.format_optional_matrix([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), '(1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_matrix([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]),
+                         '(1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_matrix([[1, 2.2, 3.3], [4.4, 5.5, 6.6], [7.7, 8.8, 9.9]]),
+                         '(1,2.2000000000000002,3.2999999999999998) (4.4000000000000004,5.5,6.5999999999999996) '
+                         '(7.7000000000000002,8.8000000000000007,9.9000000000000004)')
+
+        self.assertEqual(nrrd.format_optional_matrix(np.array([
+                         [np.NaN, np.NaN, np.NaN], [1, 2, 3], [4, 5, 6], [7, 8, 9]])),
+                         'none (1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_matrix(np.array([
+                         [1, 2, 3], [np.NaN, np.NaN, np.NaN], [4, 5, 6], [7, 8, 9]])),
+                         '(1,2,3) none (4,5,6) (7,8,9)')
+
     # def test_parse_optional_matrix(self):
     #     self.assert_equal_with_datatype(nrrd.parse_optional_matrix(
     #         '(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
