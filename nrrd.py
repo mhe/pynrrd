@@ -156,7 +156,8 @@ def parse_matrix(x, dtype=None):
 def parse_optional_matrix(x):
     """Parse optional NRRD matrix from string into Numpy array.
 
-    Function parses optional NRRD matrix from string into an 2D Numpy array. This function works the same as :meth:`parse_matrix` except if a row vector in the matrix is none, the resulting row in the returned matrix will be
+    Function parses optional NRRD matrix from string into an 2D Numpy array. This function works the same as
+    :meth:`parse_matrix` except if a row vector in the matrix is none, the resulting row in the returned matrix will be
     all NaNs.
 
     For example, the following matrix NRRD input
@@ -280,7 +281,9 @@ def format_number(x):
     Function converts a number to string. For numbers of class :class:`float`, up to 17 digits will be used to print the entire floating point number. Any padding zeros will be removed at the end of the number.
 
     .. note::
-            IEEE754-1985 standard says that 17 significant decimal digits are required to adequately represent a 64-bit floating point number. Not all fractional numbers can be exactly represented in floating point. An example is 0.1 which will be approximated as 0.10000000000000001.
+            IEEE754-1985 standard says that 17 significant decimal digits are required to adequately represent a
+            64-bit floating point number. Not all fractional numbers can be exactly represented in floating point. An
+            example is 0.1 which will be approximated as 0.10000000000000001.
 
     Parameters
     ----------
@@ -356,14 +359,73 @@ def format_optional_vector(x):
 
 
 def format_matrix(x):
+    """Format a 2D Numpy array into NRRD matrix string
+
+    Function converts a 2D Numpy array into a string using the NRRD matrix format.
+    A NRRD matrix is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    Parameters
+    ----------
+    x : (M,N) :class:`numpy.ndarray`
+        Matrix to convert to NRRD vector string
+
+    Returns
+    -------
+    matrix : :class:`str`
+        String containing NRRD matrix
+    """
     return ' '.join([format_vector(y) for y in x])
 
 
 def format_optional_matrix(x):
+    """Format a 2D Numpy array into a NRRD optional matrix string
+
+    Function converts a 2D Numpy array into a string using the NRRD matrix format. For any rows of the matrix that
+    contain all NaNs for each element, the row will be replaced with a 'none' indicating the row has no vector.
+    A NRRD matrix is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    For example, the following matrix NRRD input
+
+      x:
+      array([[ nan,  nan,  nan],
+       [  1.,   2.,   3.],
+       [  4.,   5.,   6.],
+       [  7.,   8.,   9.]])
+
+    will return
+
+    Parameters
+    ----------
+    x : (M,N) :class:`numpy.ndarray`
+        Matrix to convert to NRRD vector string
+
+    Returns
+    -------
+    matrix : :class:`str`
+        String containing NRRD matrix
+    """
     return ' '.join([format_optional_vector(y) for y in x])
 
 
 def format_number_list(x):
+    """Format a 1D Numpy array into NRRD number list.
+
+    Function converts a 1D Numpy array into a string using NRRD number list format.
+    A NRRD number list is structured as follows:
+        * <Number 1> <Number 2> <Number 3> ... <Number N>
+
+    Parameters
+    ----------
+    x : (N,) :class:`numpy.ndarray`
+        Vector to convert to NRRD number list string
+
+    Returns
+    -------
+    list : :class:`str`
+        String containing NRRD list
+    """
     return ' '.join([format_number(y) for y in x])
 
 
