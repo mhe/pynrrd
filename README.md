@@ -19,11 +19,11 @@ The module's only dependency is [numpy][2].
 Installation
 ------------
 
-### Install via pip and GitHub (recommended)
-    pip install git+https://github.com/mhe/pynrrd.git
-    
-### Install via pip and PyPi repository
+### Install via pip and PyPi repository (recommended)
     pip install pynrrd
+
+### Install via pip and GitHub
+    pip install git+https://github.com/mhe/pynrrd.git
     
 ### Install from source
     python setup.py install
@@ -77,4 +77,4 @@ Other shortcomings:
 License
 -------
 
-See LICENSE.
+See [LICENSE](https://github.com/mhe/pynrrd/blob/master/LICENSE).
