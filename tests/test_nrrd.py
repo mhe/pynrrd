@@ -341,7 +341,7 @@ class TestReadingFunctions(unittest.TestCase):
                            u'keyvaluepairs': {},
                            u'kinds': ['domain'],
                            u'sizes': [27],
-                           u'spacings': ['1.0458000000000001'],
+                           u'spacings': [1.0458000000000001],
                            u'type': 'unsigned char'}
 
         data, header = nrrd.read(ASCII_1D_NRRD_FILE_PATH)
@@ -356,12 +356,12 @@ class TestReadingFunctions(unittest.TestCase):
                            u'keyvaluepairs': {},
                            u'kinds': ['domain', 'domain'],
                            u'sizes': [3, 9],
-                           u'spacings': ['1.0458000000000001', '2'],
+                           u'spacings': [1.0458000000000001, 2],
                            u'type': 'unsigned short'}
 
         data, header = nrrd.read(ASCII_2D_NRRD_FILE_PATH)
 
-        self.assertEqual(header, expected_header)
+        np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.uint16)
         np.testing.assert_equal(data, np.arange(1, 28).reshape(3, 9, order='F'))
 
