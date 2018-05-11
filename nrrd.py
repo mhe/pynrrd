@@ -9,32 +9,425 @@ Copyright (c) 2011-2017 Maarten Everts and others. See LICENSE and AUTHORS.
 
 """
 
-import zlib
 import bz2
 import os
+import zlib
 from datetime import datetime
 
 import numpy as np
+
 # Reading and writing gzipped data directly gives problems when the uncompressed
 # data is larger than 4GB (2^32). Therefore we'll read and write the data in
 # chunks. How this affects speed and/or memory usage is something to be analyzed
 # further. The following two values define the size of the chunks.
-_READ_CHUNKSIZE = 2**20
-_WRITE_CHUNKSIZE = 2**20
+_READ_CHUNKSIZE = 2 ** 20
+_WRITE_CHUNKSIZE = 2 ** 20
+
 
 class NrrdError(Exception):
     """Exceptions for Nrrd class."""
     pass
 
-#This will help prevent loss of precision
-#IEEE754-1985 standard says that 17 decimal digits is enough in all cases.
-def _to_reproducible_float(x):
+
+def parse_vector(x, dtype=None):
+    """Parse NRRD vector from string into Numpy array.
+
+    Function parses NRRD vector from string into an 1D Numpy array.
+    A NRRD vector is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD vector to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the vector elements for fractional numbers. If found, then
+        the vector will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    vector : (N,) :class:`numpy.ndarray`
+        Vector that is parsed from the :obj:`x` string
+    """
+
+    if x[0] != '(' or x[-1] != ')':
+        raise NrrdError('Vector should be enclosed by parentheses.')
+
+    # Always convert to float and then truncate to integer if desired
+    # The reason why is parsing a floating point string to int will fail (i.e. int('25.1') will fail)
+    vector = np.array([float(x) for x in x[1:-1].split(',')])
+
+    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
+    # Truncate to integer if dtype is int also
+    if dtype is None:
+        vector_trunc = vector.astype(int)
+
+        if np.all((vector - vector_trunc) == 0):
+            vector = vector_trunc
+    elif dtype == int:
+        vector = vector.astype(int)
+    elif dtype != float:
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
+
+    return vector
+
+
+def parse_optional_vector(x, dtype=None):
+    """Parse optional NRRD vector from string into Numpy array.
+
+    Function parses optional NRRD vector from string into an 1D Numpy array. This function works the same as
+    :meth:`parse_vector` except if the :obj:`x` is 'none', the result will be None
+
+    Thus, an optional NRRD vector is structured as one of the following:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) OR
+        * none
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD vector to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the vector elements for fractional numbers. If found, then
+        the vector will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    vector : (N,) :class:`numpy.ndarray`
+        Vector that is parsed from the :obj:`x` string OR None if :obj:`x` is 'none'
+    """
+    if x == 'none':
+        return None
+    else:
+        return parse_vector(x, dtype)
+
+
+def parse_matrix(x, dtype=None):
+    """Parse NRRD matrix from string into Numpy array.
+
+    Function parses NRRD matrix from string into an 2D Numpy array.
+    A NRRD matrix is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD matrix to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the matrix elements for fractional numbers. If found, then
+        the matrix will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    matrix : (M,N) :class:`numpy.ndarray`
+        Matrix that is parsed from the :obj:`x` string
+    """
+
+    # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
+    matrix = [parse_vector(x, dtype=float) for x in x.split()]
+
+    # Get the size of each row vector and then remove duplicate sizes
+    # There should be exactly one value in the matrix because all row sizes need to be the same
+    if len(np.unique([len(x) for x in matrix])) != 1:
+        raise NrrdError('Matrix should have same number of elements in each row')
+
+    matrix = np.vstack(matrix)
+
+    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
+    # Truncate to integer if dtype is int also
+    if dtype is None:
+        matrix_trunc = matrix.astype(int)
+
+        if np.all((matrix - matrix_trunc) == 0):
+            matrix = matrix_trunc
+    elif dtype == int:
+        matrix = matrix.astype(int)
+    elif dtype != float:
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
+
+    return matrix
+
+
+def parse_optional_matrix(x):
+    """Parse optional NRRD matrix from string into Numpy array.
+
+    Function parses optional NRRD matrix from string into an 2D Numpy array. This function works the same as
+    :meth:`parse_matrix` except if a row vector in the matrix is none, the resulting row in the returned matrix will be
+    all NaNs.
+
+    For example, the following matrix NRRD input
+
+      x: 'none (1,2,3) (4,5,6) (7,8,9)'
+
+    will return
+
+      matrix:
+      array([[ nan,  nan,  nan],
+       [  1.,   2.,   3.],
+       [  4.,   5.,   6.],
+       [  7.,   8.,   9.]])
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD matrix to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the matrix elements for fractional numbers. If found, then
+        the matrix will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    matrix : (M,N) :class:`numpy.ndarray`
+        Matrix that is parsed from the :obj:`x` string
+    """
+
+    # Split input by spaces to get each row and convert into a vector. The row can be 'none', in which case it will
+    # return None
+    matrix = [parse_optional_vector(x, dtype=float) for x in x.split()]
+
+    # Get the size of each row vector, 0 if None
+    sizes = np.array([0 if x is None else len(x) for x in matrix])
+
+    # Get sizes of each row vector removing duplicate sizes
+    # Since each row vector should be same size, the unique sizes should return one value for the row size or it may
+    # return a second one (0) if there are None vectors
+    unique_sizes = np.unique(sizes)
+
+    if len(unique_sizes) != 1 and (len(unique_sizes) != 2 or unique_sizes.min() != 0):
+        raise NrrdError('Matrix should have same number of elements in each row')
+
+    # Create a vector row of NaN's that matches same size of remaining vector rows
+    # Stack the vector rows together to create matrix
+    nan_row = np.full((unique_sizes.max()), np.nan)
+    matrix = np.vstack([nan_row if x is None else x for x in matrix])
+
+    return matrix
+
+
+def parse_number_list(x, dtype=None):
+    """Parse NRRD number list from string into Numpy array.
+
+    Function parses NRRD number list from string into an 1D Numpy array.
+    A NRRD number list is structured as follows:
+        * <Number 1> <Number 2> <Number 3> ... <Number N>
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String containing NRRD number list to convert to Numpy array
+    dtype : data-type, optional
+        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
+        will be automatically determined by checking any of the list elements for fractional numbers. If found, then
+        the list will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
+        or int. Default is to automatically determine datatype.
+
+    Returns
+    -------
+    vector : (N,) :class:`numpy.ndarray`
+        Vector that is parsed from the :obj:`x` string
+    """
+
+    # Always convert to float and then perform truncation to integer if necessary
+    number_list = np.array([float(x) for x in x.split()])
+
+    if dtype is None:
+        number_list_trunc = number_list.astype(int)
+
+        if np.all((number_list - number_list_trunc) == 0):
+            number_list = number_list_trunc
+    elif dtype == int:
+        number_list = number_list.astype(int)
+    elif dtype != float:
+        raise NrrdError('dtype should be None for automatic type detection, float or int')
+
+    return number_list
+
+
+def parse_number_auto_dtype(x):
+    """Parse number from string with automatic type detection.
+
+    Function parses input string and converts to a number using automatic type detection. If the number contains any
+    fractional parts, then the vector will be converted to float, otherwise int.
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String
+
+    Returns
+    -------
+    result : :class:`int` or :class:`float`
+        Number parsed from :obj:`x` string
+    """
+
+    value = float(x)
+
+    if value.is_integer():
+        value = int(value)
+
+    return value
+
+
+def format_number(x):
+    """Format number to string
+
+    Function converts a number to string. For numbers of class :class:`float`, up to 17 digits will be used to print the entire floating point number. Any padding zeros will be removed at the end of the number.
+
+    .. note::
+            IEEE754-1985 standard says that 17 significant decimal digits are required to adequately represent a
+            64-bit floating point number. Not all fractional numbers can be exactly represented in floating point. An
+            example is 0.1 which will be approximated as 0.10000000000000001.
+
+    Parameters
+    ----------
+    x : :class:`int` or :class:`float`
+        Number to convert to string
+
+    Returns
+    -------
+    vector : :class:`str`
+        String of number :obj:`x`
+    """
+
     if isinstance(x, float):
-        # Remove trailing zeros, and dot if at end
-        value = '{:.16f}'.format(x).rstrip('0').rstrip('.')
+        # Helps prevent loss of precision as using str() in Python 2 only prints 12 digits of precision.
+        # However, IEEE754-1985 standard says that 17 significant decimal digits is required to adequately represent a
+        # floating point number.
+        # The g option is used rather than f because g precision uses significant digits while f is just the number of
+        # digits after the decimal. (NRRD C implementation uses g).
+        value = '{:.17g}'.format(x)
     else:
         value = str(x)
+
     return value
+
+
+def format_vector(x):
+    """Format a 1D Numpy array into NRRD vector string
+
+    Function converts a 1D Numpy array into a string using NRRD vector format.
+    A NRRD vector is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    Parameters
+    ----------
+    x : (N,) :class:`numpy.ndarray`
+        Vector to convert to NRRD vector string
+
+    Returns
+    -------
+    vector : :class:`str`
+        String containing NRRD vector
+    """
+    return '(' + ','.join([format_number(y) for y in x]) + ')'
+
+
+def format_optional_vector(x):
+    """Format a 1D Numpy array into NRRD optional vector string
+
+    Function converts a 1D Numpy array or None object into a string using NRRD vector format. If the input :obj:`x` is
+    None, then :obj:`vector` will be 'none'
+
+    An optional NRRD vector is structured as one of the following:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) OR
+        * none
+
+    Parameters
+    ----------
+    x : (N,) :class:`numpy.ndarray` or :obj:`None`
+        Vector to convert to NRRD vector string
+
+    Returns
+    -------
+    vector : :class:`str`
+        String containing NRRD vector
+    """
+
+    # If vector is None or all elements are NaN, then return none
+    # Otherwise format the vector as normal
+    if x is None or np.all(np.isnan(x)):
+        return 'none'
+    else:
+        return format_vector(x)
+
+
+def format_matrix(x):
+    """Format a 2D Numpy array into NRRD matrix string
+
+    Function converts a 2D Numpy array into a string using the NRRD matrix format.
+    A NRRD matrix is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    Parameters
+    ----------
+    x : (M,N) :class:`numpy.ndarray`
+        Matrix to convert to NRRD vector string
+
+    Returns
+    -------
+    matrix : :class:`str`
+        String containing NRRD matrix
+    """
+    return ' '.join([format_vector(y) for y in x])
+
+
+def format_optional_matrix(x):
+    """Format a 2D Numpy array into a NRRD optional matrix string
+
+    Function converts a 2D Numpy array into a string using the NRRD matrix format. For any rows of the matrix that
+    contain all NaNs for each element, the row will be replaced with a 'none' indicating the row has no vector.
+    A NRRD matrix is structured as follows:
+        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>) (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    For example, the following matrix NRRD input
+
+      x:
+      array([[ nan,  nan,  nan],
+       [  1.,   2.,   3.],
+       [  4.,   5.,   6.],
+       [  7.,   8.,   9.]])
+
+    will return
+
+    Parameters
+    ----------
+    x : (M,N) :class:`numpy.ndarray`
+        Matrix to convert to NRRD vector string
+
+    Returns
+    -------
+    matrix : :class:`str`
+        String containing NRRD matrix
+    """
+    return ' '.join([format_optional_vector(y) for y in x])
+
+
+def format_number_list(x):
+    """Format a 1D Numpy array into NRRD number list.
+
+    Function converts a 1D Numpy array into a string using NRRD number list format.
+    A NRRD number list is structured as follows:
+        * <Number 1> <Number 2> <Number 3> ... <Number N>
+
+    Parameters
+    ----------
+    x : (N,) :class:`numpy.ndarray`
+        Vector to convert to NRRD number list string
+
+    Returns
+    -------
+    list : :class:`str`
+        String containing NRRD list
+    """
+    return ' '.join([format_number(y) for y in x])
+
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
@@ -101,23 +494,10 @@ _NUMPY2NRRD_ENDIAN_MAP = {
     'B': 'big'
 }
 
-def parse_nrrdvector(inp):
-    """Parse a vector from a nrrd header, return a list."""
-    assert inp[0] == '(', "Vector should be enclosed by parenthesis."
-    assert inp[-1] == ')', "Vector should be enclosed by parenthesis."
-    return [_to_reproducible_float(x) for x in inp[1:-1].split(',')]
-
-def parse_optional_nrrdvector(inp):
-    """Parse a vector from a nrrd header that can also be none."""
-    if inp == "none":
-        return inp
-    else:
-        return parse_nrrdvector(inp)
-
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
-    'sizes': lambda fieldValue: [int(x) for x in fieldValue.split()],
+    'sizes': lambda fieldValue: parse_number_list(fieldValue, dtype=int),
     'endian': str,
     'encoding': str,
     'min': float,
@@ -134,12 +514,12 @@ _NRRD_FIELD_PARSERS = {
     'sample units': str,
     'datafile': str,
     'data file': str,
-    'spacings': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'thicknesses': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axis mins': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axismins': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axis maxs': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
-    'axismaxs': lambda fieldValue: [_to_reproducible_float(x) for x in fieldValue.split()],
+    'spacings': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'thicknesses': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axis mins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axismins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axis maxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axismaxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
     'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
@@ -147,11 +527,47 @@ _NRRD_FIELD_PARSERS = {
     'space': str,
     'space dimension': int,
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space origin': parse_nrrdvector,
-    'space directions': lambda fieldValue:
-                        [parse_optional_nrrdvector(x) for x in fieldValue.split()],
-    'measurement frame': lambda fieldValue:
-                         [parse_nrrdvector(x) for x in fieldValue.split()],
+    'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
+    'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
+    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue, dtype=int),
+}
+
+_NRRD_FIELD_FORMATTERS = {
+    'dimension': format_number,
+    'type': str,
+    'sizes': format_number_list,
+    'endian': str,
+    'encoding': str,
+    'min': format_number,
+    'max': format_number,
+    'oldmin': format_number,
+    'old min': format_number,
+    'oldmax': format_number,
+    'old max': format_number,
+    'lineskip': format_number,
+    'line skip': format_number,
+    'byteskip': format_number,
+    'byte skip': format_number,
+    'content': str,
+    'sample units': str,
+    'datafile': str,
+    'data file': str,
+    'spacings': format_number_list,
+    'thicknesses': format_number_list,
+    'axis mins': format_number_list,
+    'axismins': format_number_list,
+    'axis maxs': format_number_list,
+    'axismaxs': format_number_list,
+    'centerings': lambda fieldValue: ' '.join(fieldValue),
+    'labels': lambda fieldValue: ' '.join(fieldValue),
+    'units': lambda fieldValue: ' '.join(fieldValue),
+    'kinds': lambda fieldValue: ' '.join(fieldValue),
+    'space': str,
+    'space dimension': format_number,
+    'space units': format_number_list,
+    'space origin': format_vector,
+    'space directions': format_optional_matrix,
+    'measurement frame': format_optional_matrix,
 }
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
@@ -196,6 +612,7 @@ def _determine_dtype(fields):
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in fields:
             raise NrrdError('Nrrd header misses required field: "%s".' % (field))
+
     # Process the data type
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
     if np.dtype(np_typestring).itemsize > 1:
@@ -207,6 +624,31 @@ def _determine_dtype(fields):
             np_typestring = '<' + np_typestring
 
     return np.dtype(np_typestring)
+
+
+def _validate_magic_line(line):
+    """For NRRD files, the first four characters are always "NRRD", and
+    remaining characters give information about the file format version
+
+    >>> _validate_magic_line('NRRD0005')
+    8
+    >>> _validate_magic_line('NRRD0006')
+    Traceback (most recent call last):
+        ...
+    NrrdError: NRRD file version too new for this library.
+    >>> _validate_magic_line('NRRD')
+    Traceback (most recent call last):
+        ...
+    NrrdError: Invalid NRRD magic line: NRRD
+    """
+    if not line.startswith('NRRD'):
+        raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
+    try:
+        if int(line[4:]) > 5:
+            raise NrrdError('NRRD file version too new for this library.')
+    except ValueError:
+        raise NrrdError('Invalid NRRD magic line: %s' % (line,))
+    return len(line)
 
 
 def read_data(fields, filehandle, filename=None):
@@ -248,11 +690,11 @@ def read_data(fields, filehandle, filename=None):
         data = np.fromfile(datafilehandle, dtype)
     else:
         # Probably the data is compressed then
-        if fields['encoding'] == 'gzip' or\
-             fields['encoding'] == 'gz':
+        if fields['encoding'] == 'gzip' or \
+                fields['encoding'] == 'gz':
             decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
-        elif fields['encoding'] == 'bzip2' or\
-             fields['encoding'] == 'bz2':
+        elif fields['encoding'] == 'bzip2' or \
+                fields['encoding'] == 'bz2':
             decompobj = bz2.BZ2Decompressor()
         else:
             raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
@@ -278,29 +720,6 @@ def read_data(fields, filehandle, filename=None):
     data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
 
-def _validate_magic_line(line):
-    """For NRRD files, the first four characters are always "NRRD", and
-    remaining characters give information about the file format version
-
-    >>> _validate_magic_line('NRRD0005')
-    8
-    >>> _validate_magic_line('NRRD0006')
-    Traceback (most recent call last):
-        ...
-    NrrdError: NRRD file version too new for this library.
-    >>> _validate_magic_line('NRRD')
-    Traceback (most recent call last):
-        ...
-    NrrdError: Invalid NRRD magic line: NRRD
-    """
-    if not line.startswith('NRRD'):
-        raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
-    try:
-        if int(line[4:]) > 5:
-            raise NrrdError('NRRD file version too new for this library.')
-    except ValueError:
-        raise NrrdError('Invalid NRRD magic line: %s' % (line,))
-    return len(line)
 
 def read_header(nrrdfile):
     """Parse the fields in the nrrd header
@@ -359,7 +778,7 @@ def read_header(nrrdfile):
         field_desc = line.split(': ', 1)
         if len(field_desc) is 2:
             field, desc = field_desc
-            ## preceeding and suffixing white space should be ignored.
+            # Preceeding and suffixing white space should be ignored.
             field = field.rstrip().lstrip()
             desc = desc.rstrip().lstrip()
             if field not in _NRRD_FIELD_PARSERS:
@@ -387,57 +806,6 @@ def read(filename):
         return (data, header)
 
 
-def _format_nrrd_list(field_value):
-    return ' '.join([_to_reproducible_float(x) for x in field_value])
-
-def _format_nrrdvector(vector):
-    return '(' + ','.join([_to_reproducible_float(x) for x in vector]) + ')'
-
-def _format_optional_nrrdvector(vector):
-    if vector is None:
-        return 'none'
-    else:
-        return _format_nrrdvector(vector)
-
-_NRRD_FIELD_FORMATTERS = {
-    'dimension': str,
-    'type': str,
-    'sizes': _format_nrrd_list,
-    'endian': str,
-    'encoding': str,
-    'min': str,
-    'max': str,
-    'oldmin': str,
-    'old min': str,
-    'oldmax': str,
-    'old max': str,
-    'lineskip': str,
-    'line skip': str,
-    'byteskip': str,
-    'byte skip': str,
-    'content': str,
-    'sample units': str,
-    'datafile': str,
-    'data file': str,
-    'spacings': _format_nrrd_list,
-    'thicknesses': _format_nrrd_list,
-    'axis mins': _format_nrrd_list,
-    'axismins': _format_nrrd_list,
-    'axis maxs': _format_nrrd_list,
-    'axismaxs': _format_nrrd_list,
-    'centerings': _format_nrrd_list,
-    'labels': _format_nrrd_list,
-    'units': _format_nrrd_list,
-    'kinds': _format_nrrd_list,
-    'space': str,
-    'space dimension': str,
-    'space units': _format_nrrd_list,
-    'space origin': _format_nrrdvector,
-    'space directions': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
-    'measurement frame': lambda fieldValue: ' '.join([_format_optional_nrrdvector(x) for x in fieldValue]),
-}
-
-
 def _write_data(data, filehandle, options):
     # Now write data directly
     rawdata = data.tostring(order='F')
@@ -461,6 +829,7 @@ def _write_data(data, filehandle, options):
             start_index = end_index
         filehandle.write(comp_obj.flush())
         filehandle.flush()
+
 
 def write(filename, data, options={}, detached_header=False):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
@@ -543,6 +912,8 @@ def write(filename, data, options={}, detached_header=False):
         with open(datafilename, 'wb') as datafilehandle:
             _write_data(data, datafilehandle, options)
 
+
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()
