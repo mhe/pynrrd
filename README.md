@@ -61,7 +61,6 @@ Bugs and shortcomings
 Most of the [nrrd format specification][3] is implemented. Exceptions
 are: 
 
--  files where encoding is 'txt', 'text', or 'ascii'
 -  files where "data file" is "LIST"
 
 Other shortcomings:
