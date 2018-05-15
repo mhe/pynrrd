@@ -18,6 +18,9 @@ GZ_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz.nrrd')
 BZ2_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_bz2.nrrd')
 GZ_LINESKIP_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz_lineskip.nrrd')
 
+ASCII_1D_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'test1d_ascii.nrrd')
+ASCII_2D_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'test2d_ascii.nrrd')
+
 # Fix issue with assertRaisesRegex only available in Python 3 while
 # assertRaisesRegexp is available in Python 2 (and deprecated in Python 3)
 if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
@@ -335,6 +338,36 @@ class TestReadingFunctions(unittest.TestCase):
         header = nrrd.read_header(('NRRD0005', 'my extra info:=my : colon-separated : values'))
         np.testing.assert_equal(expected_header, header)
 
+    def test_read_header_and_ascii_1d_data(self):
+        expected_header = {u'dimension': 1,
+                           u'encoding': 'ascii',
+                           u'keyvaluepairs': {},
+                           u'kinds': ['domain'],
+                           u'sizes': [27],
+                           u'spacings': [1.0458000000000001],
+                           u'type': 'unsigned char'}
+
+        data, header = nrrd.read(ASCII_1D_NRRD_FILE_PATH)
+
+        self.assertEqual(header, expected_header)
+        np.testing.assert_equal(data.dtype, np.uint8)
+        np.testing.assert_equal(data, np.arange(1, 28))
+
+    def test_read_header_and_ascii_2d_data(self):
+        expected_header = {u'dimension': 2,
+                           u'encoding': 'ascii',
+                           u'keyvaluepairs': {},
+                           u'kinds': ['domain', 'domain'],
+                           u'sizes': [3, 9],
+                           u'spacings': [1.0458000000000001, 2],
+                           u'type': 'unsigned short'}
+
+        data, header = nrrd.read(ASCII_2D_NRRD_FILE_PATH)
+
+        np.testing.assert_equal(header, expected_header)
+        np.testing.assert_equal(data.dtype, np.uint16)
+        np.testing.assert_equal(data, np.arange(1, 28).reshape(3, 9, order='F'))
+
 
 class TestWritingFunctions(unittest.TestCase):
     def setUp(self):
@@ -359,6 +392,39 @@ class TestWritingFunctions(unittest.TestCase):
 
     def test_write_bz2(self):
         self.write_and_read_back_with_encoding(u'bzip2')
+
+    def test_write_ascii_1d(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_1d.nrrd')
+
+        x = np.arange(1, 28)
+        nrrd.write(output_filename, x, {u'encoding': 'ascii'})
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(header['encoding'], 'ascii')
+        np.testing.assert_equal(data, x)
+
+    def test_write_ascii_2d(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_2d.nrrd')
+
+        x = np.arange(1, 28).reshape(3, 9, order='F')
+        nrrd.write(output_filename, x, {u'encoding': 'ascii'})
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(header['encoding'], 'ascii')
+        np.testing.assert_equal(data, x)
+
+    def test_write_ascii_3d(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_3d.nrrd')
+
+        x = np.arange(1, 28).reshape(3, 3, 3, order='F')
+        nrrd.write(output_filename, x, {u'encoding': 'ascii'})
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(header['encoding'], 'ascii')
+        np.testing.assert_equal(x, data)
 
 
 if __name__ == '__main__':
