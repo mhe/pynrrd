@@ -529,7 +529,7 @@ _NRRD_FIELD_PARSERS = {
     'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
     'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
     'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
-    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue, dtype=int),
+    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue),
 }
 
 _NRRD_FIELD_FORMATTERS = {
