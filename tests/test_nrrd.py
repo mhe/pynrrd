@@ -17,6 +17,7 @@ RAW_DATA_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30.raw')
 GZ_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz.nrrd')
 BZ2_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_bz2.nrrd')
 GZ_LINESKIP_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30_gz_lineskip.nrrd')
+RAW_4D_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'test_simple4d_raw.nrrd')
 
 ASCII_1D_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'test1d_ascii.nrrd')
 ASCII_2D_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'test2d_ascii.nrrd')
@@ -368,6 +369,27 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(data.dtype, np.uint16)
         np.testing.assert_equal(data, np.arange(1, 28).reshape(3, 9, order='F'))
 
+    def test_read_simple_4d_nrrd(self):
+        expected_header = {'keyvaluepairs': {},
+                           'type': 'double',
+                           'dimension': 4,
+                           'space': 'right-anterior-superior',
+                           'sizes': np.array([1, 1, 1, 1]),
+                           'space directions': np.array([[1.5, 0. , 0. ],
+                                                         [0. , 1.5, 0. ],
+                                                         [0. , 0. , 1. ],
+                                                         [np.NaN, np.NaN, np.NaN]]),
+                           'endian': 'little',
+                           'encoding': 'raw',
+                           'measurement frame': np.array([[1., 0., 0.],
+                                                          [0., 1., 0.],
+                                                          [0., 0., 1.]])}
+
+        data, header = nrrd.read(RAW_4D_NRRD_FILE_PATH)
+
+        np.testing.assert_equal(header, expected_header)
+        np.testing.assert_equal(data.dtype, np.float64)
+        np.testing.assert_equal(data, np.array([[[[0.76903426]]]]))
 
 class TestWritingFunctions(unittest.TestCase):
     def setUp(self):

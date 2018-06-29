@@ -1,0 +1,13 @@
+NRRD0005
+# Complete NRRD file format specification at:
+# http://teem.sourceforge.net/nrrd/format.html
+type: double
+dimension: 4
+space: right-anterior-superior
+sizes: 1 1 1 1
+space directions: (1.5,0,0) (0,1.5,0) (0,0,1) none
+endian: little
+encoding: raw
+measurement frame: (1,0,0) (0,1,0) (0,0,1)
+
+’ƒ†¼í›è?
