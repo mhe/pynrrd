@@ -1,3 +1,4 @@
+# encoding: utf-8
 import bz2
 import os
 import zlib
@@ -218,9 +219,9 @@ def read_header(nrrdfile):
     """Parse the fields in the nrrd header
 
     nrrdfile can be any object which supports the iterator protocol and
-    returns a string each time its next() method is called -- file objects and
+    returns a string each time its next() method is called — file objects and
     list objects are both suitable. If nrrdfile is a file object, it must be
-    opened with the 'b' flag on platforms where that makes a difference
+    opened with the ‘b’ flag on platforms where that makes a difference
     (e.g. Windows)
 
     >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
