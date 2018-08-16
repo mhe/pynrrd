@@ -3,19 +3,32 @@ try:
 except ImportError:
     from distutils.core import setup
 import os
+import re
 
 currentPath = os.path.abspath(os.path.dirname(__file__))
 
+
+def findVersion(*filePaths):
+    with open(os.path.join(currentPath, *filePaths), 'r') as f:
+        versionFile = f.read()
+        versionMatch = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', versionFile, re.M)
+
+        if versionMatch:
+            return versionMatch.group(1)
+
+        raise RuntimeError('Unable to find version string.')
+
+
 # Get the long description from the README file
 with open(os.path.join(currentPath, 'README.md'), 'r') as f:
-    long_description = f.read()
+    longDescription = f.read()
 
-long_description = '\n' + long_description
+longDescription = '\n' + longDescription
 
 setup(name='pynrrd',
-      version='0.2.5',
+      version=findVersion('nrrd.py'),
       description='Pure python module for reading and writing NRRD files.',
-      long_description=long_description,
+      long_description=longDescription,
       long_description_content_type='text/markdown',
       author='Maarten Everts',
       author_email='me@nn8.nl',
