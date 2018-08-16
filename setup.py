@@ -1,8 +1,8 @@
 import os
-import re
-from nrrd._version import __version__
 
 from setuptools import setup, find_packages
+
+from nrrd._version import __version__
 
 currentPath = os.path.abspath(os.path.dirname(__file__))
 
@@ -23,6 +23,9 @@ setup(name='pynrrd',
       license='MIT License',
       install_requires=['numpy>=1.11.1'],
       packages=find_packages(),
+      package_data={
+          'nrrd': ['tests/*']
+      },
       keywords='nrrd teem image processing file format',
       classifiers=[
           'License :: OSI Approved :: MIT License',
