@@ -1,5 +1,6 @@
 import os
 import sys
+from decimal import Decimal
 
 # Required specifically in each module so that searches happen at the parent directory for importing modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -14,10 +15,9 @@ class TestFieldFormatting(unittest.TestCase):
         pass
 
     def test_format_number(self):
-        # TODO Test fails on some systems, fix this
         # Loop through 0 -> 10 in increments of 0.1 and test if the formatted number equals what str(number) returns.
         for x in np.linspace(0.1, 10.0, 100):
-            self.assertEqual(nrrd.format_number(x), repr(x).rstrip('0').rstrip('.'))
+            self.assertEqual(nrrd.format_number(x), format(x, '.17').rstrip('0').rstrip('.'))
 
         # A few example floating points and the resulting output numbers that should be seen
         values = {
