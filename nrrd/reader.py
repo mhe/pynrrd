@@ -2,6 +2,7 @@
 import bz2
 import os
 import zlib
+import re
 
 from nrrd.parsers import *
 
@@ -11,6 +12,8 @@ from nrrd.parsers import *
 # further. The following two values define the size of the chunks.
 _READ_CHUNKSIZE = 2 ** 20
 
+# TODO: Allow support for custom parsers
+# TODO: Need to think of solution for fields that are acceptable with and without spaces?
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
@@ -215,7 +218,7 @@ def read_data(fields, filehandle, filename=None):
     return data
 
 
-def read_header(nrrdfile):
+def read_header(nrrdfile, custom_field_map={}):
     """Parse the fields in the nrrd header
 
     nrrdfile can be any object which supports the iterator protocol and
@@ -228,9 +231,58 @@ def read_header(nrrdfile):
     {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
     >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
     {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
+
+    Option custom field map can be specified for custom key/value pairs that should be parsed into a specific datatype.
+    The field map is a dictionary with the key being the field name and the value being a string identifying the
+    datatype. Valid datatype strings are:
+     Datatype        Example Syntax in NRRD File
+    -------------------------------------------
+    int             5
+    double          2.5
+    string          testing
+    int list        1 2 3 4 5
+    double list     1.2 2.0 3.1 4.7 5.0
+    string list     first second third
+    int vector      (1,0,0)
+    double vector   (3.14,3.14,6.28)
+    int matrix      (1,0,0) (0,1,0) (0,0,1)
+    double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
+
     """
     # Collect number of bytes in the file header (for seeking below)
     header_size = 0
+
+    # TODO Handle custom field map here
+    # Convert the strings into functions, then add to _NRRD_FIELD_PARSERS
+    field_parsers = _NRRD_FIELD_PARSERS
+    for field, datatype in custom_field_map.items():
+        if field in field_parsers:
+            pass
+        if datatype == 'int':
+            pass
+        elif datatype == 'double':
+            pass
+        elif datatype == 'string':
+            pass
+        elif datatype == 'int':
+            pass
+        elif datatype == 'double':
+            pass
+        elif datatype == 'string':
+            pass
+        elif datatype == 'int':
+            pass
+        elif datatype == 'double':
+            pass
+        elif datatype == 'string':
+            pass
+        elif datatype == 'int':
+            pass
+        elif datatype == 'double':
+            pass
+        elif datatype == 'string':
+            pass
+        pass
 
     it = iter(nrrdfile)
     magic_line = next(it)
@@ -241,8 +293,8 @@ def read_header(nrrdfile):
         magic_line = magic_line.decode('ascii', 'ignore')
 
     header_size += _validate_magic_line(magic_line)
+    header = {}
 
-    header = {u'keyvaluepairs': {}}
     for raw_line in it:
         header_size += len(raw_line)
         if need_decode:
@@ -258,32 +310,21 @@ def read_header(nrrdfile):
         if line == '':
             break
 
-        # Handle the <key>:=<value> lines first since <value> may contain a
-        # ': ' which messes up the <field>: <desc> parsing
-        key_value = line.split(':=', 1)
-        if len(key_value) is 2:
-            key, value = key_value
-            # TODO: escape \\ and \n ??
-            # value.replace(r'\\\\', r'\\').replace(r'\n', '\n')
-            header[u'keyvaluepairs'][key] = value
-            continue
+        # TODO: Handle key/value pairs and fields the same way
+        # TODO: Upon saving, if field is not recognized, then save as key/value pair (:=)
 
-        # Handle the "<field>: <desc>" lines.
-        field_desc = line.split(': ', 1)
-        if len(field_desc) is 2:
-            field, desc = field_desc
-            # Preceeding and suffixing white space should be ignored.
-            field = field.rstrip().lstrip()
-            desc = desc.rstrip().lstrip()
-            if field not in _NRRD_FIELD_PARSERS:
-                raise NrrdError('Unexpected field in nrrd header: %s' % repr(field))
-            if field in header.keys():
-                raise NrrdError('Duplicate header field: %s' % repr(field))
-            header[field] = _NRRD_FIELD_PARSERS[field](desc)
-            continue
+        # Read the field and value from the line, split using regex to search for := or : delimeter
+        field, value = re.split(r':=?', line, 1)
 
-        # Should not reach here
-        raise NrrdError('Invalid header line: %s' % repr(line))
+        # Remove whitespace before and after
+        field, value = field.strip(), value.strip()
+
+        if field not in _NRRD_FIELD_PARSERS:
+            raise NrrdError('Unexpected field in nrrd header: %s' % repr(field))
+        elif field in header.keys():
+            raise NrrdError('Duplicate header field: %s' % repr(field))
+
+        header[field] = _NRRD_FIELD_PARSERS[field](value)
 
     # line reading was buffered; correct file pointer to just behind header:
     if hasattr(nrrdfile, 'seek'):
@@ -292,9 +333,9 @@ def read_header(nrrdfile):
     return header
 
 
-def read(filename):
+def read(filename, custom_field_map={}):
     """Read a nrrd file and return a tuple (data, header)."""
     with open(filename, 'rb') as filehandle:
-        header = read_header(filehandle)
+        header = read_header(filehandle, custom_field_map)
         data = read_data(header, filehandle, filename)
         return data, header
