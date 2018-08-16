@@ -1,23 +1,10 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
 import os
-import re
+
+from setuptools import setup, find_packages
+
+from nrrd._version import __version__
 
 currentPath = os.path.abspath(os.path.dirname(__file__))
-
-
-def findVersion(*filePaths):
-    with open(os.path.join(currentPath, *filePaths), 'r') as f:
-        versionFile = f.read()
-        versionMatch = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', versionFile, re.M)
-
-        if versionMatch:
-            return versionMatch.group(1)
-
-        raise RuntimeError('Unable to find version string.')
-
 
 # Get the long description from the README file
 with open(os.path.join(currentPath, 'README.md'), 'r') as f:
@@ -26,16 +13,19 @@ with open(os.path.join(currentPath, 'README.md'), 'r') as f:
 longDescription = '\n' + longDescription
 
 setup(name='pynrrd',
-      version=findVersion('nrrd.py'),
+      version=__version__,
       description='Pure python module for reading and writing NRRD files.',
       long_description=longDescription,
       long_description_content_type='text/markdown',
       author='Maarten Everts',
       author_email='me@nn8.nl',
       url='https://github.com/mhe/pynrrd',
-      py_modules=['nrrd'],
       license='MIT License',
       install_requires=['numpy>=1.11.1'],
+      packages=find_packages(),
+      package_data={
+          'nrrd': ['tests/*']
+      },
       keywords='nrrd teem image processing file format',
       classifiers=[
           'License :: OSI Approved :: MIT License',
