@@ -53,7 +53,7 @@ Tests
 
 To run the tests:
 
-    python tests/test_nrrd.py
+    python -m unittest discover -v tests
 
 Bugs and shortcomings
 ---------------------
