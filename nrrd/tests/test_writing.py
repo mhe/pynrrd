@@ -1,8 +1,13 @@
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
 import tempfile
-import unittest
-import nrrd
 import numpy as np
 from nrrd.tests.util import *
+import nrrd
+
 
 class TestWritingFunctions(unittest.TestCase):
     def setUp(self):

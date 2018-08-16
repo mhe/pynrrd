@@ -1,10 +1,5 @@
 import os
-import sys
 import unittest
-
-# TODO Why is this necessary?
-# Look on level up for nrrd.py
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 DATA_DIR_PATH = os.path.join(os.path.dirname(__file__), 'data')
 RAW_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30.nrrd')
