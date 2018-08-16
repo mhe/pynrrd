@@ -1,8 +1,8 @@
 # encoding: utf-8
 import bz2
 import os
-import zlib
 import re
+import zlib
 
 from nrrd.parsers import *
 
@@ -142,9 +142,7 @@ def _get_field_type(field, custom_field_map):
         return 'int'
     elif field in ['min', 'max', 'oldmin', 'old min', 'oldmax', 'old max']:
         return 'double'
-    elif field in ['type']:
-        return 'datatype'
-    elif field in ['endian', 'encoding', 'content', 'sample units', 'datafile', 'data file', 'space']:
+    elif field in ['endian', 'encoding', 'content', 'sample units', 'datafile', 'data file', 'space', 'type']:
         return 'string'
     elif field in ['sizes']:
         return 'int list'
@@ -167,8 +165,36 @@ def _get_field_type(field, custom_field_map):
         # Default the type to string if unknown type
         return 'string'
 
+    # TODO Capitalize all instances of Nrrd
 
-def _determine_dtype(fields):
+def _parse_field_value(value, field_type):
+    if field_type == 'int':
+        return int(value)
+    elif field_type == 'double':
+        return float(value)
+    elif field_type == 'string':
+        return str(value)
+    elif field_type == 'int list':
+        return parse_number_list(value, dtype=int)
+    elif field_type == 'double list':
+        return parse_number_list(value, dtype=float)
+    elif field_type == 'string list':
+        # TODO Handle cases where quotation marks are around the items
+        return [str(x) for x in value.split()]
+    elif field_type == 'int vector':
+        return parse_vector(value, dtype=int)
+    elif field_type == 'double vector':
+        return parse_vector(value, dtype=float)
+    elif field_type == 'int matrix':
+        # TODO Need to figure this out
+        return 12
+    elif field_type == 'double matrix':
+        return parse_optional_matrix(value)
+    else:
+        raise NrrdError('Invalid field type given: %s' % field_type)
+
+
+def _determine_datatype(fields):
     """Determine the numpy dtype of the data."""
     # Check whether the required fields are there
     for field in _NRRD_REQUIRED_FIELDS:
@@ -223,7 +249,7 @@ def read_data(fields, filehandle, filename=None):
     """
 
     # Determine the data type from the fields
-    dtype = _determine_dtype(fields)
+    dtype = _determine_datatype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
     byteskip = fields.get('byteskip', fields.get('byte skip', 0))
@@ -321,38 +347,6 @@ def read_header(nrrdfile, custom_field_map=None):
     # Collect number of bytes in the file header (for seeking below)
     header_size = 0
 
-    # TODO Handle custom field map here
-    # Convert the strings into functions, then add to _NRRD_FIELD_PARSERS
-    field_parsers = _NRRD_FIELD_PARSERS
-    for field, datatype in custom_field_map.items():
-        if field in field_parsers:
-            pass
-        if datatype == 'int':
-            pass
-        elif datatype == 'double':
-            pass
-        elif datatype == 'string':
-            pass
-        elif datatype == 'int':
-            pass
-        elif datatype == 'double':
-            pass
-        elif datatype == 'string':
-            pass
-        elif datatype == 'int':
-            pass
-        elif datatype == 'double':
-            pass
-        elif datatype == 'string':
-            pass
-        elif datatype == 'int':
-            pass
-        elif datatype == 'double':
-            pass
-        elif datatype == 'string':
-            pass
-        pass
-
     it = iter(nrrdfile)
     magic_line = next(it)
 
@@ -393,7 +387,9 @@ def read_header(nrrdfile, custom_field_map=None):
         elif field in header.keys():
             raise NrrdError('Duplicate header field: %s' % repr(field))
 
-        header[field] = _NRRD_FIELD_PARSERS[field](value)
+        field_type = _get_field_type(field, custom_field_map)
+
+        header[field] = _parse_field_value(value, field_type)
 
     # line reading was buffered; correct file pointer to just behind header:
     if hasattr(nrrdfile, 'seek'):
