@@ -1,2 +1,1 @@
-# TODO: Minimum numpy version? 
-numpy
+numpy>=1.11.1
