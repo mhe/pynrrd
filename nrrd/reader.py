@@ -14,6 +14,44 @@ _READ_CHUNKSIZE = 2 ** 20
 
 # TODO: Allow support for custom parsers
 # TODO: Need to think of solution for fields that are acceptable with and without spaces?
+_NRRD_FIELD_TYPE = {
+    'dimension': 'int',
+    'type': str,
+    'sizes': lambda fieldValue: parse_number_list(fieldValue, dtype=int),
+    'endian': str,
+    'encoding': lambda fieldValue: str(fieldValue).lower(),
+    'min': float,
+    'max': float,
+    'oldmin': float,
+    'old min': float,
+    'oldmax': float,
+    'old max': float,
+    'lineskip': int,
+    'line skip': int,
+    'byteskip': int,
+    'byte skip': int,
+    'content': str,
+    'sample units': str,
+    'datafile': str,
+    'data file': str,
+    'spacings': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'thicknesses': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axis mins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axismins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axis maxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'axismaxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
+    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'space': str,
+    'space dimension': int,
+    'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
+    'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
+    'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
+    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue),
+}
+
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
     'type': str,
@@ -97,6 +135,37 @@ _TYPEMAP_NRRD2NUMPY = {
     'double': 'f8',
     'block': 'V'
 }
+
+
+def _get_field_type(field, custom_field_map):
+    if field in ['dimension', 'lineskip', 'line skip', 'byteskip', 'byte skip', 'space dimension']:
+        return 'int'
+    elif field in ['min', 'max', 'oldmin', 'old min', 'oldmax', 'old max']:
+        return 'double'
+    elif field in ['type']:
+        return 'datatype'
+    elif field in ['endian', 'encoding', 'content', 'sample units', 'datafile', 'data file', 'space']:
+        return 'string'
+    elif field in ['sizes']:
+        return 'int list'
+    elif field in ['spacings', 'thicknesses', 'axismins', 'axis mins', 'axismaxs', 'axis maxs']:
+        return 'double list'
+    elif field in ['kinds', 'labels', 'units', 'space units', 'centerings']:
+        return 'string list'
+    elif field in []:
+        return 'int vector'
+    elif field in ['space origin']:
+        return 'double vector'
+    elif field in ['measurement frame']:  # TODO Not sure there is any such thing as int matrix in this case?
+        return 'int matrix'
+    elif field in ['space directions']:
+        return 'double matrix'
+    else:
+        if custom_field_map and field in custom_field_map:
+            return custom_field_map[field]
+
+        # Default the type to string if unknown type
+        return 'string'
 
 
 def _determine_dtype(fields):
@@ -218,7 +287,7 @@ def read_data(fields, filehandle, filename=None):
     return data
 
 
-def read_header(nrrdfile, custom_field_map={}):
+def read_header(nrrdfile, custom_field_map=None):
     """Parse the fields in the nrrd header
 
     nrrdfile can be any object which supports the iterator protocol and
@@ -333,7 +402,7 @@ def read_header(nrrdfile, custom_field_map={}):
     return header
 
 
-def read(filename, custom_field_map={}):
+def read(filename, custom_field_map=None):
     """Read a nrrd file and return a tuple (data, header)."""
     with open(filename, 'rb') as filehandle:
         header = read_header(filehandle, custom_field_map)
