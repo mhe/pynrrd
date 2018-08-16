@@ -1,9 +1,7 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
 import os
 import re
+
+from setuptools import setup, find_packages
 
 currentPath = os.path.abspath(os.path.dirname(__file__))
 
@@ -33,9 +31,9 @@ setup(name='pynrrd',
       author='Maarten Everts',
       author_email='me@nn8.nl',
       url='https://github.com/mhe/pynrrd',
-      py_modules=['nrrd'],
       license='MIT License',
       install_requires=['numpy>=1.11.1'],
+      packages=find_packages(),
       keywords='nrrd teem image processing file format',
       classifiers=[
           'License :: OSI Approved :: MIT License',
