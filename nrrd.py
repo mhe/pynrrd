@@ -16,6 +16,8 @@ from datetime import datetime
 
 import numpy as np
 
+__version__ = '0.2.5'
+
 # Reading and writing gzipped data directly gives problems when the uncompressed
 # data is larger than 4GB (2^32). Therefore we'll read and write the data in
 # chunks. How this affects speed and/or memory usage is something to be analyzed
