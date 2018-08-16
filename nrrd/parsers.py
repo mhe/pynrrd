@@ -1,6 +1,6 @@
 import numpy as np
 
-from errors import NrrdError
+from nrrd.errors import NrrdError
 
 
 def parse_vector(x, dtype=None):

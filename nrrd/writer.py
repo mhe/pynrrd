@@ -2,8 +2,14 @@ import bz2
 import zlib
 from datetime import datetime
 
-from errors import NrrdError
-from formatters import *
+from nrrd.errors import NrrdError
+from nrrd.formatters import *
+
+# Reading and writing gzipped data directly gives problems when the uncompressed
+# data is larger than 4GB (2^32). Therefore we'll read and write the data in
+# chunks. How this affects speed and/or memory usage is something to be analyzed
+# further. The following two values define the size of the chunks.
+_WRITE_CHUNKSIZE = 2 ** 20
 
 _NRRD_FIELD_ORDER = [
     'type',

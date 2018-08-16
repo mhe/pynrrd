@@ -2,10 +2,13 @@ import bz2
 import os
 import zlib
 
-import numpy as np
+from nrrd.parsers import *
 
-from errors import NrrdError
-from parsers import *
+# Reading and writing gzipped data directly gives problems when the uncompressed
+# data is larger than 4GB (2^32). Therefore we'll read and write the data in
+# chunks. How this affects speed and/or memory usage is something to be analyzed
+# further. The following two values define the size of the chunks.
+_READ_CHUNKSIZE = 2 ** 20
 
 _NRRD_FIELD_PARSERS = {
     'dimension': int,
@@ -97,7 +100,7 @@ def _determine_dtype(fields):
     # Check whether the required fields are there
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in fields:
-            raise NrrdError('Nrrd header misses required field: "%s".' % (field))
+            raise NrrdError('Nrrd header misses required field: "%s".' % field)
 
     # Process the data type
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
@@ -145,7 +148,7 @@ def read_data(fields, filehandle, filename=None):
     in case of an attached header, assumed to point to the first byte after the
     '\n\n' line.
     """
-    data = np.zeros(0)
+
     # Determine the data type from the fields
     dtype = _determine_dtype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
@@ -293,4 +296,4 @@ def read(filename):
     with open(filename, 'rb') as filehandle:
         header = read_header(filehandle)
         data = read_data(header, filehandle, filename)
-        return (data, header)
+        return data, header
