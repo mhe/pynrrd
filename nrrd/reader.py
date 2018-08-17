@@ -113,9 +113,11 @@ def _parse_field_value(value, field_type):
     elif field_type == 'double vector':
         return parse_vector(value, dtype=float)
     elif field_type == 'int matrix':
-        # TODO Need to figure this out
-        return 12
+        return parse_matrix(value, dtype=int)
     elif field_type == 'double matrix':
+        # For matrices of double type, parse as an optional matrix to allow for rows of the matrix to be none
+        # This is only valid for double matrices because the matrix is represented with NaN in the entire row
+        # for none rows. NaN is only valid for floating point numbers
         return parse_optional_matrix(value)
     else:
         raise NrrdError('Invalid field type given: %s' % field_type)
