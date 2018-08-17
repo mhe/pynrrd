@@ -12,8 +12,6 @@ from nrrd.parsers import *
 # further. The following two values define the size of the chunks.
 _READ_CHUNKSIZE = 2 ** 20
 
-# TODO: Allow support for custom parsers
-# TODO: Need to think of solution for fields that are acceptable with and without spaces?
 # TODO: Go through and reformat code
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
@@ -306,9 +304,6 @@ def read_header(nrrdfile, custom_field_map=None):
         # Single blank line separates the header from the data
         if line == '':
             break
-
-        # TODO: Handle key/value pairs and fields the same way
-        # TODO: Upon saving, if field is not recognized, then save as key/value pair (:=)
 
         # Read the field and value from the line, split using regex to search for := or : delimeter
         field, value = re.split(r':=?', line, 1)
