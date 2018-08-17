@@ -133,7 +133,7 @@ def _determine_datatype(fields):
     # Process the data type
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
     # Endianness is not necessary for ASCII encoding type
-    if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ascii', 'text', 'txt']:
+    if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
         if 'endian' not in fields:
             raise NrrdError('Nrrd header misses required field: "endian".')
         if fields['endian'] == 'big':
