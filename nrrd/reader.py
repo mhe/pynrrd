@@ -206,7 +206,7 @@ def read_data(fields, filehandle, filename=None):
     if fields['encoding'] == 'raw':
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
-    elif fields['encoding'] in ['ascii', 'text', 'txt']:
+    elif fields['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype, sep=' ')
     else:

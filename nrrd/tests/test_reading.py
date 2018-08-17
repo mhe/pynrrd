@@ -89,7 +89,7 @@ class TestReadingFunctions(unittest.TestCase):
 
     def test_read_header_and_ascii_1d_data(self):
         expected_header = {u'dimension': 1,
-                           u'encoding': 'ascii',
+                           u'encoding': 'ASCII',
                            u'kinds': ['domain'],
                            u'sizes': [27],
                            u'spacings': [1.0458000000000001],
@@ -103,7 +103,7 @@ class TestReadingFunctions(unittest.TestCase):
 
     def test_read_header_and_ascii_2d_data(self):
         expected_header = {u'dimension': 2,
-                           u'encoding': 'ascii',
+                           u'encoding': 'ASCII',
                            u'kinds': ['domain', 'domain'],
                            u'sizes': [3, 9],
                            u'spacings': [1.0458000000000001, 2],
@@ -138,7 +138,7 @@ class TestReadingFunctions(unittest.TestCase):
 
     # def test_custom_fields(self):
     #     expected_header = {u'dimension': 1,
-    #                        u'encoding': 'ascii',
+    #                        u'encoding': 'ASCII',
     #                        u'kinds': ['domain'],
     #                        u'sizes': [27],
     #                        u'spacings': [1.0458000000000001],
