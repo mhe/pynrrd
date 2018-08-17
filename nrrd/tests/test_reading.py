@@ -32,6 +32,14 @@ class TestReadingFunctions(unittest.TestCase):
         # used to compare the two values.
         np.testing.assert_equal(self.expected_header, header)
 
+    def test_read_header_only_with_filename(self):
+        header = nrrd.read_header(RAW_NRRD_FILE_PATH)
+
+        # np.testing.assert_equal is used to compare the headers because it will appropriately handle each
+        # value in the structure. Since some of the values can be Numpy arrays inside the headers, this must be
+        # used to compare the two values.
+        np.testing.assert_equal(self.expected_header, header)
+
     def test_read_detached_header_only(self):
         header = None
         expected_header = self.expected_header
@@ -39,10 +47,6 @@ class TestReadingFunctions(unittest.TestCase):
         with open(RAW_NHDR_FILE_PATH, 'rb') as f:
             header = nrrd.read_header(f)
         np.testing.assert_equal(self.expected_header, header)
-
-    def test_read_detached_header_only_filename(self):
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Missing magic "NRRD" word. Is this an NRRD file\?'):
-            nrrd.read_header(RAW_NHDR_FILE_PATH)
 
     def test_read_header_and_data_filename(self):
         data, header = nrrd.read(RAW_NRRD_FILE_PATH)
@@ -136,26 +140,27 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(data.dtype, np.float64)
         np.testing.assert_equal(data, np.array([[[[0.76903426]]]]))
 
-    # def test_custom_fields(self):
-    #     expected_header = {u'dimension': 1,
-    #                        u'encoding': 'ASCII',
-    #                        u'kinds': ['domain'],
-    #                        u'sizes': [27],
-    #                        u'spacings': [1.0458000000000001],
-    #                        u'int': '24',
-    #                        u'double': '25.5566',
-    #                        u'string': 'This is a long string of information that is important.',
-    #                        u'int list': '1 2 3 4 5 100',
-    #                        u'double list': '0.2 0.502 0.8',
-    #                        u'string list': 'words are split by space in list',
-    #                        u'int vector': '(100, 200, -300)',
-    #                        u'double vector': '(100.5,200.3,-300.99)',
-    #                        u'int matrix': '(1,0,0) (0,1,0) (0,0,1)',
-    #                        u'double matrix': '(1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)'}
-    #
-    #     header = nrrd.read_header(ASCII_1D_NRRD_FILE_PATH)
-    #
-    #     self.assertEqual(header, expected_header)
+    def test_custom_fields(self):
+        expected_header = {u'dimension': 1,
+                           u'encoding': 'ASCII',
+                           u'kinds': ['domain'],
+                           u'sizes': [27],
+                           u'spacings': [1.0458000000000001],
+                           u'int': '24',
+                           u'double': '25.5566',
+                           u'string': 'This is a long string of information that is important.',
+                           u'int list': '1 2 3 4 5 100',
+                           u'double list': '0.2 0.502 0.8',
+                           u'string list': 'words are split by space in list',
+                           u'int vector': '(100, 200, -300)',
+                           u'double vector': '(100.5,200.3,-300.99)',
+                           u'int matrix': '(1,0,0) (0,1,0) (0,0,1)',
+                           u'double matrix': '(1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)',
+                           u'type': 'unsigned char'}
+
+        header = nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH)
+
+        self.assertEqual(header, expected_header)
 
 
 if __name__ == '__main__':

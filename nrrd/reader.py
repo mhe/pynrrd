@@ -273,6 +273,11 @@ def read_header(nrrdfile, custom_field_map=None):
     double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
 
     """
+    if isinstance(nrrdfile, str) and nrrdfile.count('\n') == 0:
+        with open(nrrdfile, 'rb') as filehandle:
+            header = read_header(filehandle, custom_field_map)
+            return header
+
     # Collect number of bytes in the file header (for seeking below)
     header_size = 0
 
