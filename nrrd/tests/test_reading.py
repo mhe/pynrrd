@@ -140,7 +140,7 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(data.dtype, np.float64)
         np.testing.assert_equal(data, np.array([[[[0.76903426]]]]))
 
-    def test_custom_fields(self):
+    def test_custom_fields_without_field_map(self):
         expected_header = {u'dimension': 1,
                            u'encoding': 'ASCII',
                            u'kinds': ['domain'],
@@ -161,6 +161,38 @@ class TestReadingFunctions(unittest.TestCase):
         header = nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH)
 
         self.assertEqual(header, expected_header)
+
+    def test_custom_fields_with_field_map(self):
+        expected_header = {u'dimension': 1,
+                           u'encoding': 'ASCII',
+                           u'kinds': ['domain'],
+                           u'sizes': [27],
+                           u'spacings': [1.0458000000000001],
+                           u'int': 24,
+                           u'double': 25.5566,
+                           u'string': 'This is a long string of information that is important.',
+                           u'int list': np.array([1, 2, 3, 4, 5, 100]),
+                           u'double list': np.array([0.2, 0.502, 0.8]),
+                           u'string list': ['words', 'are', 'split', 'by', 'space', 'in', 'list'],
+                           u'int vector': np.array([100, 200, -300]),
+                           u'double vector': np.array([100.5, 200.3, -300.99]),
+                           u'int matrix': np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+                           u'double matrix': np.array([[1.2, 0.3, 0.0], [0.0, 1.5, 0.0], [0.0, -0.55, 1.6]]),
+                           u'type': 'unsigned char'}
+
+        custom_field_map = {'int': 'int',
+                            'double': 'double',
+                            'string': 'string',
+                            'int list': 'int list',
+                            'double list': 'double list',
+                            'string list': 'string list',
+                            'int vector': 'int vector',
+                            'double vector': 'double vector',
+                            'int matrix': 'int matrix',
+                            'double matrix': 'double matrix'}
+        header = nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
+
+        np.testing.assert_equal(header, expected_header)
 
 
 if __name__ == '__main__':
