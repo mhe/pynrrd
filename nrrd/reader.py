@@ -14,81 +14,7 @@ _READ_CHUNKSIZE = 2 ** 20
 
 # TODO: Allow support for custom parsers
 # TODO: Need to think of solution for fields that are acceptable with and without spaces?
-_NRRD_FIELD_TYPE = {
-    'dimension': 'int',
-    'type': str,
-    'sizes': lambda fieldValue: parse_number_list(fieldValue, dtype=int),
-    'endian': str,
-    'encoding': lambda fieldValue: str(fieldValue).lower(),
-    'min': float,
-    'max': float,
-    'oldmin': float,
-    'old min': float,
-    'oldmax': float,
-    'old max': float,
-    'lineskip': int,
-    'line skip': int,
-    'byteskip': int,
-    'byte skip': int,
-    'content': str,
-    'sample units': str,
-    'datafile': str,
-    'data file': str,
-    'spacings': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'thicknesses': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axis mins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axismins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axis maxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axismaxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space': str,
-    'space dimension': int,
-    'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
-    'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
-    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue),
-}
-
-_NRRD_FIELD_PARSERS = {
-    'dimension': int,
-    'type': str,
-    'sizes': lambda fieldValue: parse_number_list(fieldValue, dtype=int),
-    'endian': str,
-    'encoding': lambda fieldValue: str(fieldValue).lower(),
-    'min': float,
-    'max': float,
-    'oldmin': float,
-    'old min': float,
-    'oldmax': float,
-    'old max': float,
-    'lineskip': int,
-    'line skip': int,
-    'byteskip': int,
-    'byte skip': int,
-    'content': str,
-    'sample units': str,
-    'datafile': str,
-    'data file': str,
-    'spacings': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'thicknesses': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axis mins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axismins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axis maxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axismaxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space': str,
-    'space dimension': int,
-    'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
-    'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
-    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue),
-}
+# TODO: Go through and reformat code
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
@@ -166,6 +92,7 @@ def _get_field_type(field, custom_field_map):
         return 'string'
 
     # TODO Capitalize all instances of Nrrd
+
 
 def _parse_field_value(value, field_type):
     if field_type == 'int':
@@ -382,9 +309,8 @@ def read_header(nrrdfile, custom_field_map=None):
         # Remove whitespace before and after
         field, value = field.strip(), value.strip()
 
-        if field not in _NRRD_FIELD_PARSERS:
-            raise NrrdError('Unexpected field in nrrd header: %s' % repr(field))
-        elif field in header.keys():
+        # Check if the field has been added already
+        if field in header.keys():
             raise NrrdError('Duplicate header field: %s' % repr(field))
 
         field_type = _get_field_type(field, custom_field_map)
