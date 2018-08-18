@@ -4,6 +4,7 @@ from datetime import datetime
 
 from nrrd.errors import NrrdError
 from nrrd.formatters import *
+from nrrd.reader import _get_field_type
 
 # Reading and writing gzipped data directly gives problems when the uncompressed
 # data is larger than 4GB (2^32). Therefore we'll read and write the data in
@@ -64,43 +65,31 @@ _NUMPY2NRRD_ENDIAN_MAP = {
     'B': 'big'
 }
 
-_NRRD_FIELD_FORMATTERS = {
-    'dimension': format_number,
-    'type': str,
-    'sizes': format_number_list,
-    'endian': str,
-    'encoding': str,
-    'min': format_number,
-    'max': format_number,
-    'oldmin': format_number,
-    'old min': format_number,
-    'oldmax': format_number,
-    'old max': format_number,
-    'lineskip': format_number,
-    'line skip': format_number,
-    'byteskip': format_number,
-    'byte skip': format_number,
-    'content': str,
-    'sample units': str,
-    'datafile': str,
-    'data file': str,
-    'spacings': format_number_list,
-    'thicknesses': format_number_list,
-    'axis mins': format_number_list,
-    'axismins': format_number_list,
-    'axis maxs': format_number_list,
-    'axismaxs': format_number_list,
-    'centerings': lambda fieldValue: ' '.join(fieldValue),
-    'labels': lambda fieldValue: ' '.join(fieldValue),
-    'units': lambda fieldValue: ' '.join(fieldValue),
-    'kinds': lambda fieldValue: ' '.join(fieldValue),
-    'space': str,
-    'space dimension': format_number,
-    'space units': format_number_list,
-    'space origin': format_vector,
-    'space directions': format_optional_matrix,
-    'measurement frame': format_optional_matrix,
-}
+
+def _format_field_value(value, field_type):
+    if field_type == 'int':
+        return format_number(value)
+    elif field_type == 'double':
+        return format_number(value)
+    elif field_type == 'string':
+        return str(value)
+    elif field_type == 'int list':
+        return format_number_list(value)
+    elif field_type == 'double list':
+        return format_number_list(value)
+    elif field_type == 'string list':
+        # TODO Handle cases where the user wants quotation marks around the items
+        return ' '.join(value)
+    elif field_type == 'int vector':
+        return format_vector(value)
+    elif field_type == 'double vector':
+        return format_optional_vector(value)
+    elif field_type == 'int matrix':
+        return format_matrix(value)
+    elif field_type == 'double matrix':
+        return format_optional_matrix(value)
+    else:
+        raise NrrdError('Invalid field type given: %s' % field_type)
 
 
 def _write_data(data, filehandle, options):
@@ -133,8 +122,8 @@ def _write_data(data, filehandle, options):
         filehandle.write(comp_obj.flush())
         filehandle.flush()
 
-
-def write(filename, data, options={}, detached_header=False):
+# TODO Change options to header, makes more sense
+def write(filename, data, options={}, detached_header=False, custom_field_map=None):
     """Write the numpy data to a nrrd file. The nrrd header values to use are
     inferred from from the data. Additional options can be passed in the
     options dictionary. See the read() function for the structure of this
@@ -191,18 +180,38 @@ def write(filename, data, options={}, detached_header=False):
         filehandle.write(b'# Complete NRRD file format specification at:\n')
         filehandle.write(b'# http://teem.sourceforge.net/nrrd/format.html\n')
 
-        # Write the fields in order, this ignores fields not in
-        # _NRRD_FIELD_ORDER
+        # Copy the options since dictionaries are mutable when passed as an argument
+        # Thus, to prevent changes to the actual options, a copy is made
+        # Empty ordered_options list is made (will be converted into dictionary)
+        local_options = options.copy()
+        ordered_options = []
+
+        # Loop through field order and add the key/value if present
+        # Remove the key/value from the local options so that we know not to add it again
         for field in _NRRD_FIELD_ORDER:
-            if field in options:
-                outline = (field + ': ' +
-                           _NRRD_FIELD_FORMATTERS[field](options[field]) +
-                           '\n').encode('ascii')
-                filehandle.write(outline)
-        d = options.get('keyvaluepairs', {})
-        for (key, value) in sorted(d.items(), key=lambda t: t[0]):
-            outline = (str(key) + ':=' + str(value) + '\n').encode('ascii')
-            filehandle.write(outline)
+            if field in local_options:
+                ordered_options.append((field, local_options[field]))
+                del local_options[field]
+
+        # Leftover items are assumed to be the custom field/value options
+        # So get current size and any items past this index will be a custom value
+        custom_field_start_index = len(ordered_options)
+
+        # Add the leftover items to the end of the list and convert the options into a dictionary
+        ordered_options.extend(local_options.items())
+        ordered_options = dict(ordered_options)
+
+        for x, (field, value) in enumerate(ordered_options.items()):
+            # Get the field_type based on field and then get corresponding
+            # value as a str using _format_field_value
+            field_type = _get_field_type(field, custom_field_map)
+            value_str = _format_field_value(value, field_type)
+
+            # Custom fields are written as key/value pairs with a := instead of : delimeter
+            if x >= custom_field_start_index:
+                filehandle.write(('%s:= %s\n' % (field, value_str)).encode('ascii'))
+            else:
+                filehandle.write(('%s: %s\n' % (field, value_str)).encode('ascii'))
 
         # Write the closing extra newline
         filehandle.write(b'\n')
