@@ -66,6 +66,76 @@ class TestWritingFunctions(unittest.TestCase):
         self.assertEqual(header['encoding'], 'ascii')
         np.testing.assert_equal(x, data)
 
+    def test_write_custom_fields_without_custom_field_map(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_custom_fields.nrrd')
+
+        data, header = nrrd.read(ASCII_1D_CUSTOM_FIELDS_FILE_PATH)
+        nrrd.write(output_filename, data, header)
+
+        with open(output_filename, 'r') as fh:
+            lines = fh.readlines()
+
+            # Strip newline from end of line
+            lines = [line.rstrip() for line in lines]
+
+            self.assertEqual(lines[5], 'type: uint8')
+            self.assertEqual(lines[6], 'dimension: 1')
+            self.assertEqual(lines[7], 'sizes: 27')
+            self.assertEqual(lines[8], 'kinds: domain')
+            self.assertEqual(lines[9], 'encoding: ASCII')
+            self.assertEqual(lines[10], 'spacings: 1.0458000000000001')
+            self.assertEqual(lines[11], 'int:= 24')
+            self.assertEqual(lines[12], 'double:= 25.5566')
+            self.assertEqual(lines[13], 'string:= This is a long string of information that is important.')
+            self.assertEqual(lines[14], 'int list:= 1 2 3 4 5 100')
+            self.assertEqual(lines[15], 'double list:= 0.2 0.502 0.8')
+            self.assertEqual(lines[16], 'string list:= words are split by space in list')
+            self.assertEqual(lines[17], 'int vector:= (100, 200, -300)')
+            self.assertEqual(lines[18], 'double vector:= (100.5,200.3,-300.99)')
+            self.assertEqual(lines[19], 'int matrix:= (1,0,0) (0,1,0) (0,0,1)')
+            self.assertEqual(lines[20], 'double matrix:= (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)')
+
+    def test_write_custom_fields_with_custom_field_map(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_custom_fields.nrrd')
+
+        custom_field_map = {'int': 'int',
+                            'double': 'double',
+                            'string': 'string',
+                            'int list': 'int list',
+                            'double list': 'double list',
+                            'string list': 'string list',
+                            'int vector': 'int vector',
+                            'double vector': 'double vector',
+                            'int matrix': 'int matrix',
+                            'double matrix': 'double matrix'}
+
+        data, header = nrrd.read(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
+        nrrd.write(output_filename, data, header, custom_field_map=custom_field_map)
+
+        with open(output_filename, 'r') as fh:
+            lines = fh.readlines()
+
+            # Strip newline from end of line
+            lines = [line.rstrip() for line in lines]
+
+            self.assertEqual(lines[5], 'type: uint8')
+            self.assertEqual(lines[6], 'dimension: 1')
+            self.assertEqual(lines[7], 'sizes: 27')
+            self.assertEqual(lines[8], 'kinds: domain')
+            self.assertEqual(lines[9], 'encoding: ASCII')
+            self.assertEqual(lines[10], 'spacings: 1.0458000000000001')
+            self.assertEqual(lines[11], 'int:= 24')
+            self.assertEqual(lines[12], 'double:= 25.5566')
+            self.assertEqual(lines[13], 'string:= This is a long string of information that is important.')
+            self.assertEqual(lines[14], 'int list:= 1 2 3 4 5 100')
+            self.assertEqual(lines[15], 'double list:= 0.20000000000000001 0.502 0.80000000000000004')
+            self.assertEqual(lines[16], 'string list:= words are split by space in list')
+            self.assertEqual(lines[17], 'int vector:= (100,200,-300)')
+            self.assertEqual(lines[18], 'double vector:= (100.5,200.30000000000001,-300.99000000000001)')
+            self.assertEqual(lines[19], 'int matrix:= (1,0,0) (0,1,0) (0,0,1)')
+            self.assertEqual(lines[20], 'double matrix:= (1.2,0.29999999999999999,0) (0,1.5,0) (0,-0.55000000000000004,'
+                                        '1.6000000000000001)')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,8 +1,10 @@
 # encoding: utf-8
 import bz2
 import os
+import re
 import zlib
 
+from collections import OrderedDict
 from nrrd.parsers import *
 
 # Reading and writing gzipped data directly gives problems when the uncompressed
@@ -11,43 +13,7 @@ from nrrd.parsers import *
 # further. The following two values define the size of the chunks.
 _READ_CHUNKSIZE = 2 ** 20
 
-_NRRD_FIELD_PARSERS = {
-    'dimension': int,
-    'type': str,
-    'sizes': lambda fieldValue: parse_number_list(fieldValue, dtype=int),
-    'endian': str,
-    'encoding': lambda fieldValue: str(fieldValue).lower(),
-    'min': float,
-    'max': float,
-    'oldmin': float,
-    'old min': float,
-    'oldmax': float,
-    'old max': float,
-    'lineskip': int,
-    'line skip': int,
-    'byteskip': int,
-    'byte skip': int,
-    'content': str,
-    'sample units': str,
-    'datafile': str,
-    'data file': str,
-    'spacings': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'thicknesses': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axis mins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axismins': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axis maxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'axismaxs': lambda fieldValue: parse_number_list(fieldValue, dtype=float),
-    'centerings': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'labels': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'kinds': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space': str,
-    'space dimension': int,
-    'space units': lambda fieldValue: [str(x) for x in fieldValue.split()],
-    'space origin': lambda fieldValue: parse_vector(fieldValue, dtype=float),
-    'space directions': lambda fieldValue: parse_optional_matrix(fieldValue),
-    'measurement frame': lambda fieldValue: parse_optional_matrix(fieldValue),
-}
+# TODO: Go through and reformat code
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
@@ -96,7 +62,67 @@ _TYPEMAP_NRRD2NUMPY = {
 }
 
 
-def _determine_dtype(fields):
+def _get_field_type(field, custom_field_map):
+    if field in ['dimension', 'lineskip', 'line skip', 'byteskip', 'byte skip', 'space dimension']:
+        return 'int'
+    elif field in ['min', 'max', 'oldmin', 'old min', 'oldmax', 'old max']:
+        return 'double'
+    elif field in ['endian', 'encoding', 'content', 'sample units', 'datafile', 'data file', 'space', 'type']:
+        return 'string'
+    elif field in ['sizes']:
+        return 'int list'
+    elif field in ['spacings', 'thicknesses', 'axismins', 'axis mins', 'axismaxs', 'axis maxs']:
+        return 'double list'
+    elif field in ['kinds', 'labels', 'units', 'space units', 'centerings']:
+        return 'string list'
+    elif field in []:
+        return 'int vector'
+    elif field in ['space origin']:
+        return 'double vector'
+    elif field in ['measurement frame']:
+        return 'int matrix'
+    elif field in ['space directions']:
+        return 'double matrix'
+    else:
+        if custom_field_map and field in custom_field_map:
+            return custom_field_map[field]
+
+        # Default the type to string if unknown type
+        return 'string'
+
+    # TODO Capitalize all instances of Nrrd
+
+
+def _parse_field_value(value, field_type):
+    if field_type == 'int':
+        return int(value)
+    elif field_type == 'double':
+        return float(value)
+    elif field_type == 'string':
+        return str(value)
+    elif field_type == 'int list':
+        return parse_number_list(value, dtype=int)
+    elif field_type == 'double list':
+        return parse_number_list(value, dtype=float)
+    elif field_type == 'string list':
+        # TODO Handle cases where quotation marks are around the items
+        return [str(x) for x in value.split()]
+    elif field_type == 'int vector':
+        return parse_vector(value, dtype=int)
+    elif field_type == 'double vector':
+        return parse_vector(value, dtype=float)
+    elif field_type == 'int matrix':
+        return parse_matrix(value, dtype=int)
+    elif field_type == 'double matrix':
+        # For matrices of double type, parse as an optional matrix to allow for rows of the matrix to be none
+        # This is only valid for double matrices because the matrix is represented with NaN in the entire row
+        # for none rows. NaN is only valid for floating point numbers
+        return parse_optional_matrix(value)
+    else:
+        raise NrrdError('Invalid field type given: %s' % field_type)
+
+
+def _determine_datatype(fields):
     """Determine the numpy dtype of the data."""
     # Check whether the required fields are there
     for field in _NRRD_REQUIRED_FIELDS:
@@ -106,7 +132,7 @@ def _determine_dtype(fields):
     # Process the data type
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
     # Endianness is not necessary for ASCII encoding type
-    if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ascii', 'text', 'txt']:
+    if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
         if 'endian' not in fields:
             raise NrrdError('Nrrd header misses required field: "endian".')
         if fields['endian'] == 'big':
@@ -151,7 +177,7 @@ def read_data(fields, filehandle, filename=None):
     """
 
     # Determine the data type from the fields
-    dtype = _determine_dtype(fields)
+    dtype = _determine_datatype(fields)
     # determine byte skip, line skip, and data file (there are two ways to write them)
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
     byteskip = fields.get('byteskip', fields.get('byte skip', 0))
@@ -179,7 +205,7 @@ def read_data(fields, filehandle, filename=None):
     if fields['encoding'] == 'raw':
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
-    elif fields['encoding'] in ['ascii', 'text', 'txt']:
+    elif fields['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype, sep=' ')
     else:
@@ -215,7 +241,7 @@ def read_data(fields, filehandle, filename=None):
     return data
 
 
-def read_header(nrrdfile):
+def read_header(nrrdfile, custom_field_map=None):
     """Parse the fields in the nrrd header
 
     nrrdfile can be any object which supports the iterator protocol and
@@ -228,7 +254,29 @@ def read_header(nrrdfile):
     {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
     >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
     {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
+
+    Option custom field map can be specified for custom key/value pairs that should be parsed into a specific datatype.
+    The field map is a dictionary with the key being the field name and the value being a string identifying the
+    datatype. Valid datatype strings are:
+     Datatype        Example Syntax in NRRD File
+    -------------------------------------------
+    int             5
+    double          2.5
+    string          testing
+    int list        1 2 3 4 5
+    double list     1.2 2.0 3.1 4.7 5.0
+    string list     first second third
+    int vector      (1,0,0)
+    double vector   (3.14,3.14,6.28)
+    int matrix      (1,0,0) (0,1,0) (0,0,1)
+    double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
+
     """
+    if isinstance(nrrdfile, str) and nrrdfile.count('\n') == 0:
+        with open(nrrdfile, 'rb') as filehandle:
+            header = read_header(filehandle, custom_field_map)
+            return header
+
     # Collect number of bytes in the file header (for seeking below)
     header_size = 0
 
@@ -241,8 +289,8 @@ def read_header(nrrdfile):
         magic_line = magic_line.decode('ascii', 'ignore')
 
     header_size += _validate_magic_line(magic_line)
+    header = OrderedDict()
 
-    header = {u'keyvaluepairs': {}}
     for raw_line in it:
         header_size += len(raw_line)
         if need_decode:
@@ -258,32 +306,19 @@ def read_header(nrrdfile):
         if line == '':
             break
 
-        # Handle the <key>:=<value> lines first since <value> may contain a
-        # ': ' which messes up the <field>: <desc> parsing
-        key_value = line.split(':=', 1)
-        if len(key_value) is 2:
-            key, value = key_value
-            # TODO: escape \\ and \n ??
-            # value.replace(r'\\\\', r'\\').replace(r'\n', '\n')
-            header[u'keyvaluepairs'][key] = value
-            continue
+        # Read the field and value from the line, split using regex to search for := or : delimeter
+        field, value = re.split(r':=?', line, 1)
 
-        # Handle the "<field>: <desc>" lines.
-        field_desc = line.split(': ', 1)
-        if len(field_desc) is 2:
-            field, desc = field_desc
-            # Preceeding and suffixing white space should be ignored.
-            field = field.rstrip().lstrip()
-            desc = desc.rstrip().lstrip()
-            if field not in _NRRD_FIELD_PARSERS:
-                raise NrrdError('Unexpected field in nrrd header: %s' % repr(field))
-            if field in header.keys():
-                raise NrrdError('Duplicate header field: %s' % repr(field))
-            header[field] = _NRRD_FIELD_PARSERS[field](desc)
-            continue
+        # Remove whitespace before and after
+        field, value = field.strip(), value.strip()
 
-        # Should not reach here
-        raise NrrdError('Invalid header line: %s' % repr(line))
+        # Check if the field has been added already
+        if field in header.keys():
+            raise NrrdError('Duplicate header field: %s' % repr(field))
+
+        field_type = _get_field_type(field, custom_field_map)
+
+        header[field] = _parse_field_value(value, field_type)
 
     # line reading was buffered; correct file pointer to just behind header:
     if hasattr(nrrdfile, 'seek'):
@@ -292,9 +327,9 @@ def read_header(nrrdfile):
     return header
 
 
-def read(filename):
+def read(filename, custom_field_map=None):
     """Read a nrrd file and return a tuple (data, header)."""
     with open(filename, 'rb') as filehandle:
-        header = read_header(filehandle)
+        header = read_header(filehandle, custom_field_map)
         data = read_data(header, filehandle, filename)
         return data, header
