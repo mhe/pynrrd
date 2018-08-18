@@ -79,7 +79,7 @@ def _get_field_type(field, custom_field_map):
         return 'int vector'
     elif field in ['space origin']:
         return 'double vector'
-    elif field in ['measurement frame']:  # TODO Not sure there is any such thing as int matrix in this case?
+    elif field in ['measurement frame']:
         return 'int matrix'
     elif field in ['space directions']:
         return 'double matrix'
