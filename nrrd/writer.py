@@ -1,6 +1,7 @@
 import bz2
 import zlib
 from datetime import datetime
+from collections import OrderedDict
 
 from nrrd.errors import NrrdError
 from nrrd.formatters import *
@@ -199,7 +200,7 @@ def write(filename, data, options={}, detached_header=False, custom_field_map=No
 
         # Add the leftover items to the end of the list and convert the options into a dictionary
         ordered_options.extend(local_options.items())
-        ordered_options = dict(ordered_options)
+        ordered_options = OrderedDict(ordered_options)
 
         for x, (field, value) in enumerate(ordered_options.items()):
             # Get the field_type based on field and then get corresponding

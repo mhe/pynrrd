@@ -4,6 +4,7 @@ import os
 import re
 import zlib
 
+from collections import OrderedDict
 from nrrd.parsers import *
 
 # Reading and writing gzipped data directly gives problems when the uncompressed
@@ -288,7 +289,7 @@ def read_header(nrrdfile, custom_field_map=None):
         magic_line = magic_line.decode('ascii', 'ignore')
 
     header_size += _validate_magic_line(magic_line)
-    header = {}
+    header = OrderedDict()
 
     for raw_line in it:
         header_size += len(raw_line)
