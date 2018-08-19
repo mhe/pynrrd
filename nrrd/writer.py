@@ -1,6 +1,6 @@
 import bz2
-import zlib
 import os
+import zlib
 from collections import OrderedDict
 from datetime import datetime
 
@@ -129,12 +129,10 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
     if 'encoding' not in header:
         header['encoding'] = 'gzip'
 
-    # TODO Validate data here basically
-    # TODO Validate data file detached
-
     # A bit of magic in handling options here.
     # If *.nhdr filename provided, this overrides `detached_header=False`
     # If *.nrrd filename provided AND detached_header=True, separate header and data files written.
+    # If detached_header=True and data file is present, then write the files separately
     # For all other cases, header & data written to same file.
     if filename.endswith('.nhdr'):
         detached_header = True
@@ -154,17 +152,19 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
             elif header['encoding'] in ['bzip2', 'bz2']:
                 data_filename = '%s.raw.bz2' % base_filename
             else:
-                raise NRRDError('Invalid encoding specification while writing NRRD file' % header['encoding'])
+                raise NRRDError('Invalid encoding specification while writing NRRD file: %s' % header['encoding'])
 
             header['data file'] = data_filename
         else:
             data_filename = header['data file']
     elif filename.endswith('.nrrd') and detached_header:
         data_filename = filename
+        header['data file'] = data_filename
         filename = '%s.nhdr' % os.path.splitext(filename)[0]
     else:
         # Write header & data as one file
         data_filename = filename
+        detached_header = False
 
     with open(filename, 'wb') as fh:
         fh.write(b'NRRD0005\n')
@@ -237,9 +237,9 @@ def _write_data(data, fh, header):
         raw_data = data.tostring(order='F')
 
         # Construct the compressor object based on encoding
-        if header['encoding'] == 'gzip':
+        if header['encoding'] in ['gzip', 'gz']:
             compressobj = zlib.compressobj(9, zlib.DEFLATED, zlib.MAX_WBITS | 16)
-        elif header['encoding'] == 'bzip2':
+        elif header['encoding'] in ['bzip2', 'bz2']:
             compressobj = bz2.BZ2Compressor()
         else:
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
