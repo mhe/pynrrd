@@ -1,7 +1,7 @@
 import bz2
 import zlib
-from datetime import datetime
 from collections import OrderedDict
+from datetime import datetime
 
 from nrrd.errors import NRRDError
 from nrrd.formatters import *
@@ -122,6 +122,7 @@ def _write_data(data, filehandle, options):
             start_index = end_index
         filehandle.write(comp_obj.flush())
         filehandle.flush()
+
 
 # TODO Change options to header, makes more sense
 def write(filename, data, options={}, detached_header=False, custom_field_map=None):

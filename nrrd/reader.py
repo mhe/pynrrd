@@ -3,8 +3,8 @@ import bz2
 import os
 import re
 import zlib
-
 from collections import OrderedDict
+
 from nrrd.parsers import *
 
 # Reading and writing gzipped data directly gives problems when the uncompressed
