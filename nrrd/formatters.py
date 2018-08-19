@@ -53,6 +53,7 @@ def format_vector(x):
     vector : :class:`str`
         String containing NRRD vector
     """
+
     return '(' + ','.join([format_number(y) for y in x]) + ')'
 
 
@@ -102,6 +103,7 @@ def format_matrix(x):
     matrix : :class:`str`
         String containing NRRD matrix
     """
+
     return ' '.join([format_vector(y) for y in x])
 
 
@@ -133,6 +135,7 @@ def format_optional_matrix(x):
     matrix : :class:`str`
         String containing NRRD matrix
     """
+
     return ' '.join([format_optional_vector(y) for y in x])
 
 
@@ -153,4 +156,5 @@ def format_number_list(x):
     list : :class:`str`
         String containing NRRD list
     """
+
     return ' '.join([format_number(y) for y in x])

@@ -1,3 +1,3 @@
-class NrrdError(Exception):
-    """Exceptions for Nrrd class."""
+class NRRDError(Exception):
+    """Exceptions for NRRD class."""
     pass

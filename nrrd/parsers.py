@@ -1,6 +1,6 @@
 import numpy as np
 
-from nrrd.errors import NrrdError
+from nrrd.errors import NRRDError
 
 
 def parse_vector(x, dtype=None):
@@ -27,7 +27,7 @@ def parse_vector(x, dtype=None):
     """
 
     if x[0] != '(' or x[-1] != ')':
-        raise NrrdError('Vector should be enclosed by parentheses.')
+        raise NRRDError('Vector should be enclosed by parentheses.')
 
     # Always convert to float and then truncate to integer if desired
     # The reason why is parsing a floating point string to int will fail (i.e. int('25.1') will fail)
@@ -43,7 +43,7 @@ def parse_vector(x, dtype=None):
     elif dtype == int:
         vector = vector.astype(int)
     elif dtype != float:
-        raise NrrdError('dtype should be None for automatic type detection, float or int')
+        raise NRRDError('dtype should be None for automatic type detection, float or int')
 
     return vector
 
@@ -73,6 +73,7 @@ def parse_optional_vector(x, dtype=None):
     vector : (N,) :class:`numpy.ndarray`
         Vector that is parsed from the :obj:`x` string OR None if :obj:`x` is 'none'
     """
+
     if x == 'none':
         return None
     else:
@@ -108,7 +109,7 @@ def parse_matrix(x, dtype=None):
     # Get the size of each row vector and then remove duplicate sizes
     # There should be exactly one value in the matrix because all row sizes need to be the same
     if len(np.unique([len(x) for x in matrix])) != 1:
-        raise NrrdError('Matrix should have same number of elements in each row')
+        raise NRRDError('Matrix should have same number of elements in each row')
 
     matrix = np.vstack(matrix)
 
@@ -122,7 +123,7 @@ def parse_matrix(x, dtype=None):
     elif dtype == int:
         matrix = matrix.astype(int)
     elif dtype != float:
-        raise NrrdError('dtype should be None for automatic type detection, float or int')
+        raise NRRDError('dtype should be None for automatic type detection, float or int')
 
     return matrix
 
@@ -150,11 +151,6 @@ def parse_optional_matrix(x):
     ----------
     x : :class:`str`
         String containing NRRD matrix to convert to Numpy array
-    dtype : data-type, optional
-        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
-        will be automatically determined by checking any of the matrix elements for fractional numbers. If found, then
-        the matrix will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
-        or int. Default is to automatically determine datatype.
 
     Returns
     -------
@@ -175,7 +171,7 @@ def parse_optional_matrix(x):
     unique_sizes = np.unique(sizes)
 
     if len(unique_sizes) != 1 and (len(unique_sizes) != 2 or unique_sizes.min() != 0):
-        raise NrrdError('Matrix should have same number of elements in each row')
+        raise NRRDError('Matrix should have same number of elements in each row')
 
     # Create a vector row of NaN's that matches same size of remaining vector rows
     # Stack the vector rows together to create matrix
@@ -219,7 +215,7 @@ def parse_number_list(x, dtype=None):
     elif dtype == int:
         number_list = number_list.astype(int)
     elif dtype != float:
-        raise NrrdError('dtype should be None for automatic type detection, float or int')
+        raise NRRDError('dtype should be None for automatic type detection, float or int')
 
     return number_list
 
