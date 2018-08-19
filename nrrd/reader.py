@@ -330,9 +330,9 @@ def read_data(header, fh, filename=None):
     else:
         # Handle compressed data now
         # Construct the decompression object based on encoding
-        if header['encoding'] == 'gzip' or header['encoding'] == 'gz':
+        if header['encoding'] in ['gzip', 'gz']:
             decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
-        elif header['encoding'] == 'bzip2' or header['encoding'] == 'bz2':
+        elif header['encoding'] in ['bzip2', 'bz2']:
             decompobj = bz2.BZ2Decompressor()
         else:
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
