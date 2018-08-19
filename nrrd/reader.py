@@ -169,7 +169,7 @@ def _validate_magic_line(line):
     return len(line)
 
 
-def read_header(nrrdfile, custom_field_map=None):
+def read_header(file, custom_field_map=None):
     """Parse the fields in the NRRD header
 
     nrrdfile can be any object which supports the iterator protocol and
@@ -200,15 +200,17 @@ def read_header(nrrdfile, custom_field_map=None):
     double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
     """
 
-    if isinstance(nrrdfile, str) and nrrdfile.count('\n') == 0:
-        with open(nrrdfile, 'rb') as filehandle:
-            header = read_header(filehandle, custom_field_map)
+    # If the file is a filename rather than the file handle, then open the file and call this function again with the
+    # file handle. Since read function uses a filename, it is easy to think read_header is the same syntax.
+    if isinstance(file, str) and file.count('\n') == 0:
+        with open(file, 'rb') as fh:
+            header = read_header(fh, custom_field_map)
             return header
 
     # Collect number of bytes in the file header (for seeking below)
     header_size = 0
 
-    it = iter(nrrdfile)
+    it = iter(file)
     magic_line = next(it)
 
     need_decode = False
@@ -249,8 +251,8 @@ def read_header(nrrdfile, custom_field_map=None):
         header[field] = _parse_field_value(value, field_type)
 
     # line reading was buffered; correct file pointer to just behind header:
-    if hasattr(nrrdfile, 'seek'):
-        nrrdfile.seek(header_size)
+    if hasattr(file, 'seek'):
+        file.seek(header_size)
 
     # Check whether the required fields are there
     for field in _NRRD_REQUIRED_FIELDS:
@@ -260,7 +262,7 @@ def read_header(nrrdfile, custom_field_map=None):
     return header
 
 
-def read_data(fields, filehandle, filename=None):
+def read_data(fields, fh, filename=None):
     """Read the NRRD data from a file object into a numpy structure.
 
     File handle is is assumed to point to the first byte of the data. That is,
@@ -274,7 +276,7 @@ def read_data(fields, filehandle, filename=None):
     lineskip = fields.get('lineskip', fields.get('line skip', 0))
     byteskip = fields.get('byteskip', fields.get('byte skip', 0))
     datafile = fields.get('datafile', fields.get('data file', None))
-    datafilehandle = filehandle
+    datafilehandle = fh
     if datafile is not None:
         # If the datafile path is absolute, don't muck with it. Otherwise
         # treat the path as relative to the directory in which the detached
@@ -335,7 +337,7 @@ def read_data(fields, filehandle, filename=None):
 
 def read(filename, custom_field_map=None):
     """Read a NRRD file and return a tuple (data, header)."""
-    with open(filename, 'rb') as filehandle:
-        header = read_header(filehandle, custom_field_map)
-        data = read_data(header, filehandle, filename)
+    with open(filename, 'rb') as fh:
+        header = read_header(fh, custom_field_map)
+        data = read_data(header, fh, filename)
         return data, header
