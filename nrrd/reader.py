@@ -267,11 +267,6 @@ def read_header(file, custom_field_map=None):
     if hasattr(file, 'seek'):
         file.seek(header_size)
 
-    # Check that the required fields are in the header
-    for field in _NRRD_REQUIRED_FIELDS:
-        if field not in header:
-            raise NRRDError('Header is missing required field: "%s".' % field)
-
     return header
 
 
@@ -282,6 +277,14 @@ def read_data(header, fh, filename=None):
     in case of an attached header, assumed to point to the first byte after the
     '\n\n' line.
     """
+
+    # Check that the required fields are in the header
+    for field in _NRRD_REQUIRED_FIELDS:
+        if field not in header:
+            raise NRRDError('Header is missing required field: "%s".' % field)
+
+    if header['dimension'] != len(header['sizes']):
+        raise NRRDError('Number of elements in sizes does not match dimension')
 
     # Determine the data type from the header
     dtype = _determine_datatype(header)
