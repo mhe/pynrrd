@@ -210,51 +210,64 @@ def read_header(file, custom_field_map=None):
     # Collect number of bytes in the file header (for seeking below)
     header_size = 0
 
+    # Get iterator for the file and extract the first line, the magic line
     it = iter(file)
     magic_line = next(it)
 
+    # Depending on what type file is, decoding may or may not be necessary. Decode if necessary, otherwise skip.
     need_decode = False
     if hasattr(magic_line, 'decode'):
         need_decode = True
         magic_line = magic_line.decode('ascii', 'ignore')
 
+    # Validate the magic line and increment header size by size of the line
     header_size += _validate_magic_line(magic_line)
+
+    # Create empty header
+    # This is an OrderedDict rather than an ordinary dict because an OrderedDict will keep it's order that key/values
+    # are added for when looping back through it. The added benefit of this is that saving the header will save the
+    # fields in the same order.
     header = OrderedDict()
 
-    for raw_line in it:
-        header_size += len(raw_line)
+    # Loop through each line
+    for line in it:
+        header_size += len(line)
         if need_decode:
-            raw_line = raw_line.decode('ascii', 'ignore')
+            line = line.decode('ascii', 'ignore')
 
         # Trailing whitespace ignored per the NRRD spec
-        line = raw_line.rstrip()
+        line = line.rstrip()
 
-        # Comments start with '#', no leading whitespace allowed
+        # Skip comments starting with # (no leading whitespace is allowed)
+        # Or, stop reading the header once a blank line is encountered. This separates header from data.
         if line.startswith('#'):
             continue
-        # Single blank line separates the header from the data
-        if line == '':
+        elif line == '':
             break
 
-        # Read the field and value from the line, split using regex to search for := or : delimeter
+        # Read the field and value from the line, split using regex to search for := or : delimiter
         field, value = re.split(r':=?', line, 1)
 
-        # Remove whitespace before and after
+        # Remove whitespace before and after the field and value
         field, value = field.strip(), value.strip()
 
         # Check if the field has been added already
         if field in header.keys():
             raise NRRDError('Duplicate header field: %s' % repr(field))
 
+        # Get the datatype of the field based on it's field name and custom field map
         field_type = _get_field_type(field, custom_field_map)
 
+        # Parse the field value using the datatype retrieved
+        # Place it in the header dictionary
         header[field] = _parse_field_value(value, field_type)
 
-    # line reading was buffered; correct file pointer to just behind header:
+    # Reading the file line by line is buffered and so the header is not in the correct position for reading data if
+    # the file contains the data in it as well. The solution is to set the file pointer to just behind the header.
     if hasattr(file, 'seek'):
         file.seek(header_size)
 
-    # Check whether the required fields are there
+    # Check that the required fields are in the header
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in header:
             raise NRRDError('Header is missing required field: "%s".' % field)
@@ -262,7 +275,7 @@ def read_header(file, custom_field_map=None):
     return header
 
 
-def read_data(fields, fh, filename=None):
+def read_data(header, fh, filename=None):
     """Read the NRRD data from a file object into a numpy structure.
 
     File handle is is assumed to point to the first byte of the data. That is,
@@ -270,12 +283,13 @@ def read_data(fields, fh, filename=None):
     '\n\n' line.
     """
 
-    # Determine the data type from the fields
-    dtype = _determine_datatype(fields)
+    # Determine the data type from the header
+    dtype = _determine_datatype(header)
+
     # determine byte skip, line skip, and data file (there are two ways to write them)
-    lineskip = fields.get('lineskip', fields.get('line skip', 0))
-    byteskip = fields.get('byteskip', fields.get('byte skip', 0))
-    datafile = fields.get('datafile', fields.get('data file', None))
+    lineskip = header.get('lineskip', header.get('line skip', 0))
+    byteskip = header.get('byteskip', header.get('byte skip', 0))
+    datafile = header.get('datafile', header.get('data file', None))
     datafilehandle = fh
     if datafile is not None:
         # If the datafile path is absolute, don't muck with it. Otherwise
@@ -287,31 +301,31 @@ def read_data(fields, fh, filename=None):
             datafilename = os.path.join(os.path.dirname(filename), datafile)
         datafilehandle = open(datafilename, 'rb')
 
-    num_pixels = np.array(fields['sizes']).prod()
+    num_pixels = np.array(header['sizes']).prod()
     # Seek to start of data based on lineskip/byteskip. byteskip == -1 is
     # only valid for raw encoding and overrides any lineskip
-    if fields['encoding'] == 'raw' and byteskip == -1:
+    if header['encoding'] == 'raw' and byteskip == -1:
         datafilehandle.seek(-dtype.itemsize * num_pixels, 2)
     else:
         for _ in range(lineskip):
             datafilehandle.readline()
 
-    if fields['encoding'] == 'raw':
+    if header['encoding'] == 'raw':
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype)
-    elif fields['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
+    elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
         datafilehandle.seek(byteskip, os.SEEK_CUR)
         data = np.fromfile(datafilehandle, dtype, sep=' ')
     else:
         # Probably the data is compressed then
-        if fields['encoding'] == 'gzip' or \
-                fields['encoding'] == 'gz':
+        if header['encoding'] == 'gzip' or \
+                header['encoding'] == 'gz':
             decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
-        elif fields['encoding'] == 'bzip2' or \
-                fields['encoding'] == 'bz2':
+        elif header['encoding'] == 'bzip2' or \
+                header['encoding'] == 'bz2':
             decompobj = bz2.BZ2Decompressor()
         else:
-            raise NRRDError('Unsupported encoding: "%s"' % fields['encoding'])
+            raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 
         decompressed_data = b''
         while True:
@@ -330,7 +344,7 @@ def read_data(fields, fh, filename=None):
 
     # dkh : eliminated need to reverse order of dimensions. NRRD's
     # data layout is same as what numpy calls 'Fortran' order,
-    shape_tmp = list(fields['sizes'])
+    shape_tmp = list(header['sizes'])
     data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
 
