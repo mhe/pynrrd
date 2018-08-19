@@ -289,36 +289,41 @@ def read_data(header, fh, filename=None):
     # Determine the data type from the header
     dtype = _determine_datatype(header)
 
-    # determine byte skip, line skip, and data file (there are two ways to write them)
-    lineskip = header.get('lineskip', header.get('line skip', 0))
-    byteskip = header.get('byteskip', header.get('byte skip', 0))
-    datafile = header.get('datafile', header.get('data file', None))
-    datafilehandle = fh
-    if datafile is not None:
-        # If the datafile path is absolute, don't muck with it. Otherwise
-        # treat the path as relative to the directory in which the detached
-        # header is in
-        if os.path.isabs(datafile):
-            datafilename = datafile
-        else:
-            datafilename = os.path.join(os.path.dirname(filename), datafile)
-        datafilehandle = open(datafilename, 'rb')
+    # Determine the byte skip, line skip and the data file
+    # These all can be written with or without the space according to the NRRD spec, so we check them both
+    line_skip = header.get('lineskip', header.get('line skip', 0))
+    byte_skip = header.get('byteskip', header.get('byte skip', 0))
+    data_filename = header.get('datafile', header.get('data file', None))
 
-    num_pixels = np.array(header['sizes']).prod()
+    # If the data file is separate from the header file, then open the data file to read from that instead
+    if data_filename is not None:
+        # If the pathname is relative, then append the current directory from the filename
+        if not os.path.isabs(data_filename):
+            if filename is None:
+                raise NRRDError('Filename parameter must be specified when a relative data file path is given')
+
+            data_filename = os.path.join(os.path.dirname(filename), data_filename)
+
+        # Override the fh parameter with the data filename
+        fh = open(data_filename, 'rb')
+
+    # Get the total number of data points by multiplying the size of each dimension together
+    total_data_points = header['sizes'].prod()
+
     # Seek to start of data based on lineskip/byteskip. byteskip == -1 is
     # only valid for raw encoding and overrides any lineskip
-    if header['encoding'] == 'raw' and byteskip == -1:
-        datafilehandle.seek(-dtype.itemsize * num_pixels, 2)
+    if header['encoding'] == 'raw' and byte_skip == -1:
+        data_fh.seek(-dtype.itemsize * total_data_points, 2)
     else:
-        for _ in range(lineskip):
-            datafilehandle.readline()
+        for _ in range(line_skip):
+            data_fh.readline()
 
     if header['encoding'] == 'raw':
-        datafilehandle.seek(byteskip, os.SEEK_CUR)
-        data = np.fromfile(datafilehandle, dtype)
+        data_fh.seek(byte_skip, os.SEEK_CUR)
+        data = np.fromfile(data_fh, dtype)
     elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-        datafilehandle.seek(byteskip, os.SEEK_CUR)
-        data = np.fromfile(datafilehandle, dtype, sep=' ')
+        data_fh.seek(byte_skip, os.SEEK_CUR)
+        data = np.fromfile(data_fh, dtype, sep=' ')
     else:
         # Probably the data is compressed then
         if header['encoding'] == 'gzip' or \
@@ -332,18 +337,18 @@ def read_data(header, fh, filename=None):
 
         decompressed_data = b''
         while True:
-            chunk = datafilehandle.read(_READ_CHUNKSIZE)
+            chunk = data_fh.read(_READ_CHUNKSIZE)
             if not chunk:
                 break
             decompressed_data += decompobj.decompress(chunk)
         # byteskip applies to the _decompressed_ byte stream
-        data = np.frombuffer(decompressed_data[byteskip:], dtype)
+        data = np.frombuffer(decompressed_data[byte_skip:], dtype)
 
-    if datafilehandle:
-        datafilehandle.close()
+    if data_fh:
+        data_fh.close()
 
-    if num_pixels != data.size:
-        raise NRRDError('ERROR: {0}-{1}={2}'.format(num_pixels, data.size, num_pixels - data.size))
+    if total_data_points != data.size:
+        raise NRRDError('ERROR: {0}-{1}={2}'.format(total_data_points, data.size, total_data_points - data.size))
 
     # dkh : eliminated need to reverse order of dimensions. NRRD's
     # data layout is same as what numpy calls 'Fortran' order,
