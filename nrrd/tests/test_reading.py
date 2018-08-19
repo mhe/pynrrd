@@ -42,33 +42,42 @@ class TestReadingFunctions(unittest.TestCase):
     def test_read_detached_header_only(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+
         with open(RAW_NHDR_FILE_PATH, 'rb') as f:
             header = nrrd.read_header(f)
+
         np.testing.assert_equal(self.expected_header, header)
 
     def test_read_header_and_data_filename(self):
         data, header = nrrd.read(RAW_NRRD_FILE_PATH)
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
     def test_read_detached_header_and_data(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+
         data, header = nrrd.read(RAW_NHDR_FILE_PATH)
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
     def test_read_header_and_gz_compressed_data(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'gzip'
+
         data, header = nrrd.read(GZ_NRRD_FILE_PATH)
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
     def test_read_header_and_bz2_compressed_data(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'bzip2'
+
         data, header = nrrd.read(BZ2_NRRD_FILE_PATH)
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
@@ -76,7 +85,9 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'gzip'
         expected_header[u'line skip'] = 3
+
         data, header = nrrd.read(GZ_LINESKIP_NRRD_FILE_PATH)
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 

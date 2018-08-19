@@ -13,12 +13,14 @@ class TestWritingFunctions(unittest.TestCase):
     def setUp(self):
         self.temp_write_dir = tempfile.mkdtemp('nrrdtest')
         self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH)
+
         with open(RAW_DATA_FILE_PATH, 'rb') as f:
             self.expected_data = f.read()
 
     def write_and_read_back_with_encoding(self, encoding):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_%s.nrrd' % encoding)
         nrrd.write(output_filename, self.data_input, {u'encoding': encoding})
+
         # Read back the same file
         data, header = nrrd.read(output_filename)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
