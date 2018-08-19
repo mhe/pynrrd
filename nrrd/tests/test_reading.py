@@ -23,7 +23,6 @@ class TestReadingFunctions(unittest.TestCase):
         self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30), order='F')
 
     def test_read_header_only(self):
-        header = None
         with open(RAW_NRRD_FILE_PATH, 'rb') as f:
             header = nrrd.read_header(f)
 
@@ -41,7 +40,6 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
 
     def test_read_detached_header_only(self):
-        header = None
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
         with open(RAW_NHDR_FILE_PATH, 'rb') as f:

@@ -150,11 +150,6 @@ def parse_optional_matrix(x):
     ----------
     x : :class:`str`
         String containing NRRD matrix to convert to Numpy array
-    dtype : data-type, optional
-        Datatype to use for the resulting Numpy array. Datatype can be float, int or None. If dtype is None, then it
-        will be automatically determined by checking any of the matrix elements for fractional numbers. If found, then
-        the matrix will be converted to float datatype, otherwise the datatype will be int. Valid datatypes are float
-        or int. Default is to automatically determine datatype.
 
     Returns
     -------

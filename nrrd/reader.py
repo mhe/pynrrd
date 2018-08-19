@@ -270,7 +270,6 @@ def read_header(nrrdfile, custom_field_map=None):
     double vector   (3.14,3.14,6.28)
     int matrix      (1,0,0) (0,1,0) (0,0,1)
     double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
-
     """
     if isinstance(nrrdfile, str) and nrrdfile.count('\n') == 0:
         with open(nrrdfile, 'rb') as filehandle:
