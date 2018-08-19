@@ -202,27 +202,17 @@ class TestWritingFunctions(unittest.TestCase):
         self.assertEqual(header['encoding'], 'bz2')
         self.assertEqual(header['data file'], output_data_filename)
 
-    # def test_write_detached_gz(self):
-    #     pass
-    #
-    #     output_filename = os.path.join(self.temp_write_dir, 'testfile_%s.nrrd' % encoding)
-    #     nrrd.write(output_filename, self.data_input, {u'encoding': encoding})
-    #
-    #     # Read back the same file
-    #     data, header = nrrd.read(output_filename)
-    #     self.assertEqual(self.expected_data, data.tostring(order='F'))
-    #     self.assertEqual(header['encoding'], encoding)
-    #
-    # def test_write_detached_bz2(self):
-    #     pass
-    #
-    #     output_filename = os.path.join(self.temp_write_dir, 'testfile_%s.nrrd' % encoding)
-    #     nrrd.write(output_filename, self.data_input, {u'encoding': encoding})
-    #
-    #     # Read back the same file
-    #     data, header = nrrd.read(output_filename)
-    #     self.assertEqual(self.expected_data, data.tostring(order='F'))
-    #     self.assertEqual(header['encoding'], encoding)
+    def test_write_detached_ascii(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
+        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.txt')
+
+        nrrd.write(output_filename, self.data_input, {u'encoding': 'txt'}, detached_header=False)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], 'txt')
+        self.assertEqual(header['data file'], output_data_filename)
 
 
 if __name__ == '__main__':
