@@ -310,56 +310,69 @@ def read_data(header, fh, filename=None):
     # Get the total number of data points by multiplying the size of each dimension together
     total_data_points = header['sizes'].prod()
 
-    # Seek to start of data based on lineskip/byteskip. byteskip == -1 is
-    # only valid for raw encoding and overrides any lineskip
+    # If encoding is raw and byte skip is -1, then seek backwards to the data
+    # Otherwise skip the number of lines requested
     if header['encoding'] == 'raw' and byte_skip == -1:
-        data_fh.seek(-dtype.itemsize * total_data_points, 2)
+        fh.seek(-dtype.itemsize * total_data_points, 2)
     else:
         for _ in range(line_skip):
-            data_fh.readline()
+            fh.readline()
 
+    # If a compression encoding is used, then byte skip AFTER decompressing
     if header['encoding'] == 'raw':
-        data_fh.seek(byte_skip, os.SEEK_CUR)
-        data = np.fromfile(data_fh, dtype)
+        # Skip the requested number of bytes and then parse the data using NumPy
+        fh.seek(byte_skip, os.SEEK_CUR)
+        data = np.fromfile(fh, dtype)
     elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-        data_fh.seek(byte_skip, os.SEEK_CUR)
-        data = np.fromfile(data_fh, dtype, sep=' ')
+        # Skip the requested number of bytes and then parse the data using NumPy
+        fh.seek(byte_skip, os.SEEK_CUR)
+        data = np.fromfile(fh, dtype, sep=' ')
     else:
-        # Probably the data is compressed then
-        if header['encoding'] == 'gzip' or \
-                header['encoding'] == 'gz':
+        # Handle compressed data now
+        # Construct the decompression object based on encoding
+        if header['encoding'] == 'gzip' or header['encoding'] == 'gz':
             decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
-        elif header['encoding'] == 'bzip2' or \
-                header['encoding'] == 'bz2':
+        elif header['encoding'] == 'bzip2' or header['encoding'] == 'bz2':
             decompobj = bz2.BZ2Decompressor()
         else:
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 
+        # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
         decompressed_data = b''
         while True:
-            chunk = data_fh.read(_READ_CHUNKSIZE)
+            chunk = fh.read(_READ_CHUNKSIZE)
+
+            # If chunk is None, then file is at end, break out of loop
             if not chunk:
                 break
+
+            # Decompress the data and add it to the decompressed data
             decompressed_data += decompobj.decompress(chunk)
-        # byteskip applies to the _decompressed_ byte stream
+
+        # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
+        # NumPy
         data = np.frombuffer(decompressed_data[byte_skip:], dtype)
 
-    if data_fh:
-        data_fh.close()
+    # Close the file
+    # Even if opened using with keyword, closing it does not hurt
+    fh.close()
 
     if total_data_points != data.size:
-        raise NRRDError('ERROR: {0}-{1}={2}'.format(total_data_points, data.size, total_data_points - data.size))
+        raise NRRDError('Size of the data does not equal the product of all the dimensions: {0}-{1}={2}'
+                        .format(total_data_points, data.size, total_data_points - data.size))
 
-    # dkh : eliminated need to reverse order of dimensions. NRRD's
-    # data layout is same as what numpy calls 'Fortran' order,
-    shape_tmp = list(header['sizes'])
-    data = np.reshape(data, tuple(shape_tmp), order='F')
+    # Eliminate need to reverse order of dimensions. NRRD's data layout is the same as what Numpy calls 'Fortran'
+    # order, where the first index is the one that changes fastest and last index changes slowest
+    data = np.reshape(data, tuple(header['sizes']), order='F')
+
     return data
 
 
 def read(filename, custom_field_map=None):
     """Read a NRRD file and return a tuple (data, header)."""
+
     with open(filename, 'rb') as fh:
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename)
+
         return data, header
