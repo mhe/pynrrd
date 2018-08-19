@@ -13,8 +13,6 @@ from nrrd.parsers import *
 # further. The following two values define the size of the chunks.
 _READ_CHUNKSIZE = 2 ** 20
 
-# TODO: Go through and reformat code
-
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
 _TYPEMAP_NRRD2NUMPY = {
