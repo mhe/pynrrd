@@ -73,6 +73,7 @@ def parse_optional_vector(x, dtype=None):
     vector : (N,) :class:`numpy.ndarray`
         Vector that is parsed from the :obj:`x` string OR None if :obj:`x` is 'none'
     """
+
     if x == 'none':
         return None
     else:

@@ -122,18 +122,16 @@ def _parse_field_value(value, field_type):
 
 def _determine_datatype(fields):
     """Determine the numpy dtype of the data."""
-    # Check whether the required fields are there
-    for field in _NRRD_REQUIRED_FIELDS:
-        if field not in fields:
-            raise NRRDError('Header misses required field: "%s".' % field)
 
-    # Process the data type
+    # Convert the NRRD type string identifier into a NumPy string identifier using a map
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
-    # Endianness is not necessary for ASCII encoding type
+
+    # This is only added if the datatype has more than one byte and is not using ASCII encoding
+    # Note: Endian is not required for ASCII encoding
     if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
         if 'endian' not in fields:
-            raise NRRDError('Header misses required field: "endian".')
-        if fields['endian'] == 'big':
+            raise NRRDError('Header is missing required field: "endian".')
+        elif fields['endian'] == 'big':
             np_typestring = '>' + np_typestring
         elif fields['endian'] == 'little':
             np_typestring = '<' + np_typestring
@@ -156,14 +154,110 @@ def _validate_magic_line(line):
         ...
     NrrdError: Invalid NRRD magic line: NRRD
     """
+
     if not line.startswith('NRRD'):
-        raise NRRDError('Missing magic "NRRD" word. Is this an NRRD file?')
+        raise NRRDError('Invalid NRRD magic line. Is this an NRRD file?')
+
     try:
-        if int(line[4:]) > 5:
-            raise NRRDError('NRRD file version too new for this library.')
+        version = int(line[4:])
+        if version > 5:
+            raise NRRDError('Unsupported NRRD file version (version: %i). This library only supports v%i and below.'
+                            % (version, 5))
     except ValueError:
         raise NRRDError('Invalid NRRD magic line: %s' % (line,))
+
     return len(line)
+
+
+def read_header(nrrdfile, custom_field_map=None):
+    """Parse the fields in the NRRD header
+
+    nrrdfile can be any object which supports the iterator protocol and
+    returns a string each time its next() method is called — file objects and
+    list objects are both suitable. If nrrdfile is a file object, it must be
+    opened with the ‘b’ flag on platforms where that makes a difference
+    (e.g. Windows)
+
+    >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
+    {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
+    >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
+    {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
+
+    Option custom field map can be specified for custom key/value pairs that should be parsed into a specific datatype.
+    The field map is a dictionary with the key being the field name and the value being a string identifying the
+    datatype. Valid datatype strings are:
+     Datatype        Example Syntax in NRRD File
+    -------------------------------------------
+    int             5
+    double          2.5
+    string          testing
+    int list        1 2 3 4 5
+    double list     1.2 2.0 3.1 4.7 5.0
+    string list     first second third
+    int vector      (1,0,0)
+    double vector   (3.14,3.14,6.28)
+    int matrix      (1,0,0) (0,1,0) (0,0,1)
+    double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
+    """
+
+    if isinstance(nrrdfile, str) and nrrdfile.count('\n') == 0:
+        with open(nrrdfile, 'rb') as filehandle:
+            header = read_header(filehandle, custom_field_map)
+            return header
+
+    # Collect number of bytes in the file header (for seeking below)
+    header_size = 0
+
+    it = iter(nrrdfile)
+    magic_line = next(it)
+
+    need_decode = False
+    if hasattr(magic_line, 'decode'):
+        need_decode = True
+        magic_line = magic_line.decode('ascii', 'ignore')
+
+    header_size += _validate_magic_line(magic_line)
+    header = OrderedDict()
+
+    for raw_line in it:
+        header_size += len(raw_line)
+        if need_decode:
+            raw_line = raw_line.decode('ascii', 'ignore')
+
+        # Trailing whitespace ignored per the NRRD spec
+        line = raw_line.rstrip()
+
+        # Comments start with '#', no leading whitespace allowed
+        if line.startswith('#'):
+            continue
+        # Single blank line separates the header from the data
+        if line == '':
+            break
+
+        # Read the field and value from the line, split using regex to search for := or : delimeter
+        field, value = re.split(r':=?', line, 1)
+
+        # Remove whitespace before and after
+        field, value = field.strip(), value.strip()
+
+        # Check if the field has been added already
+        if field in header.keys():
+            raise NRRDError('Duplicate header field: %s' % repr(field))
+
+        field_type = _get_field_type(field, custom_field_map)
+
+        header[field] = _parse_field_value(value, field_type)
+
+    # line reading was buffered; correct file pointer to just behind header:
+    if hasattr(nrrdfile, 'seek'):
+        nrrdfile.seek(header_size)
+
+    # Check whether the required fields are there
+    for field in _NRRD_REQUIRED_FIELDS:
+        if field not in header:
+            raise NRRDError('Header is missing required field: "%s".' % field)
+
+    return header
 
 
 def read_data(fields, filehandle, filename=None):
@@ -237,91 +331,6 @@ def read_data(fields, filehandle, filename=None):
     shape_tmp = list(fields['sizes'])
     data = np.reshape(data, tuple(shape_tmp), order='F')
     return data
-
-
-def read_header(nrrdfile, custom_field_map=None):
-    """Parse the fields in the NRRD header
-
-    nrrdfile can be any object which supports the iterator protocol and
-    returns a string each time its next() method is called — file objects and
-    list objects are both suitable. If nrrdfile is a file object, it must be
-    opened with the ‘b’ flag on platforms where that makes a difference
-    (e.g. Windows)
-
-    >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
-    {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
-    >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
-    {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
-
-    Option custom field map can be specified for custom key/value pairs that should be parsed into a specific datatype.
-    The field map is a dictionary with the key being the field name and the value being a string identifying the
-    datatype. Valid datatype strings are:
-     Datatype        Example Syntax in NRRD File
-    -------------------------------------------
-    int             5
-    double          2.5
-    string          testing
-    int list        1 2 3 4 5
-    double list     1.2 2.0 3.1 4.7 5.0
-    string list     first second third
-    int vector      (1,0,0)
-    double vector   (3.14,3.14,6.28)
-    int matrix      (1,0,0) (0,1,0) (0,0,1)
-    double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
-    """
-    if isinstance(nrrdfile, str) and nrrdfile.count('\n') == 0:
-        with open(nrrdfile, 'rb') as filehandle:
-            header = read_header(filehandle, custom_field_map)
-            return header
-
-    # Collect number of bytes in the file header (for seeking below)
-    header_size = 0
-
-    it = iter(nrrdfile)
-    magic_line = next(it)
-
-    need_decode = False
-    if hasattr(magic_line, 'decode'):
-        need_decode = True
-        magic_line = magic_line.decode('ascii', 'ignore')
-
-    header_size += _validate_magic_line(magic_line)
-    header = OrderedDict()
-
-    for raw_line in it:
-        header_size += len(raw_line)
-        if need_decode:
-            raw_line = raw_line.decode('ascii', 'ignore')
-
-        # Trailing whitespace ignored per the NRRD spec
-        line = raw_line.rstrip()
-
-        # Comments start with '#', no leading whitespace allowed
-        if line.startswith('#'):
-            continue
-        # Single blank line separates the header from the data
-        if line == '':
-            break
-
-        # Read the field and value from the line, split using regex to search for := or : delimeter
-        field, value = re.split(r':=?', line, 1)
-
-        # Remove whitespace before and after
-        field, value = field.strip(), value.strip()
-
-        # Check if the field has been added already
-        if field in header.keys():
-            raise NRRDError('Duplicate header field: %s' % repr(field))
-
-        field_type = _get_field_type(field, custom_field_map)
-
-        header[field] = _parse_field_value(value, field_type)
-
-    # line reading was buffered; correct file pointer to just behind header:
-    if hasattr(nrrdfile, 'seek'):
-        nrrdfile.seek(header_size)
-
-    return header
 
 
 def read(filename, custom_field_map=None):
