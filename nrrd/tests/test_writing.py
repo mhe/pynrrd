@@ -138,6 +138,82 @@ class TestWritingFunctions(unittest.TestCase):
             self.assertEqual(lines[20], 'double matrix:= (1.2,0.29999999999999999,0) (0,1.5,0) (0,-0.55000000000000004,'
                                         '1.6000000000000001)')
 
+    def test_write_detached_raw_as_nrrd(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
+        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nrrd')
+
+        nrrd.write(output_data_filename, self.data_input, {u'encoding': 'raw'}, detached_header=True)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], 'raw')
+        self.assertEqual(header['data file'], output_data_filename)
+
+    def test_write_detached_raw_odd_extension(self):
+        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nrrd2')
+
+        nrrd.write(output_data_filename, self.data_input, {u'encoding': 'raw'}, detached_header=True)
+
+        # Read back the same file
+        data, header = nrrd.read(output_data_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], 'raw')
+        self.assertEqual('data file' in header, False)
+
+    def test_write_detached_raw_odd_extension(self):
+        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nrrd2')
+
+        nrrd.write(output_data_filename, self.data_input, {u'encoding': 'raw'}, detached_header=True)
+
+        # Read back the same file
+        data, header = nrrd.read(output_data_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], 'raw')
+        self.assertEqual('data file' in header, False)
+
+    def test_write_fake_encoding(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid encoding specification while writing NRRD file: fake'):
+            nrrd.write(output_filename, self.data_input, {u'encoding': 'fake'})
+
+    def test_write_detached_gz(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
+        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.raw.gz')
+
+        nrrd.write(output_filename, self.data_input, {u'encoding': 'gz'}, detached_header=False)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], 'gz')
+        self.assertEqual(header['data file'], output_data_filename)
+
+    def test_write_detached_bz2(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
+        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.raw.bz2')
+
+        nrrd.write(output_filename, self.data_input, {u'encoding': 'bz2'}, detached_header=False)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], 'bz2')
+        self.assertEqual(header['data file'], output_data_filename)
+
+    def test_write_detached_ascii(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
+        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.txt')
+
+        nrrd.write(output_filename, self.data_input, {u'encoding': 'txt'}, detached_header=False)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        self.assertEqual(header['encoding'], 'txt')
+        self.assertEqual(header['data file'], output_data_filename)
+
 
 if __name__ == '__main__':
     unittest.main()
