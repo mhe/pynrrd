@@ -90,8 +90,6 @@ def _get_field_type(field, custom_field_map):
         # Default the type to string if unknown type
         return 'string'
 
-    # TODO Capitalize all instances of Nrrd
-
 
 def _parse_field_value(value, field_type):
     if field_type == 'int':
@@ -119,7 +117,7 @@ def _parse_field_value(value, field_type):
         # for none rows. NaN is only valid for floating point numbers
         return parse_optional_matrix(value)
     else:
-        raise NrrdError('Invalid field type given: %s' % field_type)
+        raise NRRDError('Invalid field type given: %s' % field_type)
 
 
 def _determine_datatype(fields):
@@ -127,14 +125,14 @@ def _determine_datatype(fields):
     # Check whether the required fields are there
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in fields:
-            raise NrrdError('Nrrd header misses required field: "%s".' % field)
+            raise NRRDError('Header misses required field: "%s".' % field)
 
     # Process the data type
     np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
     # Endianness is not necessary for ASCII encoding type
     if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
         if 'endian' not in fields:
-            raise NrrdError('Nrrd header misses required field: "endian".')
+            raise NRRDError('Header misses required field: "endian".')
         if fields['endian'] == 'big':
             np_typestring = '>' + np_typestring
         elif fields['endian'] == 'little':
@@ -159,12 +157,12 @@ def _validate_magic_line(line):
     NrrdError: Invalid NRRD magic line: NRRD
     """
     if not line.startswith('NRRD'):
-        raise NrrdError('Missing magic "NRRD" word. Is this an NRRD file?')
+        raise NRRDError('Missing magic "NRRD" word. Is this an NRRD file?')
     try:
         if int(line[4:]) > 5:
-            raise NrrdError('NRRD file version too new for this library.')
+            raise NRRDError('NRRD file version too new for this library.')
     except ValueError:
-        raise NrrdError('Invalid NRRD magic line: %s' % (line,))
+        raise NRRDError('Invalid NRRD magic line: %s' % (line,))
     return len(line)
 
 
@@ -217,7 +215,7 @@ def read_data(fields, filehandle, filename=None):
                 fields['encoding'] == 'bz2':
             decompobj = bz2.BZ2Decompressor()
         else:
-            raise NrrdError('Unsupported encoding: "%s"' % fields['encoding'])
+            raise NRRDError('Unsupported encoding: "%s"' % fields['encoding'])
 
         decompressed_data = b''
         while True:
@@ -232,9 +230,9 @@ def read_data(fields, filehandle, filename=None):
         datafilehandle.close()
 
     if num_pixels != data.size:
-        raise NrrdError('ERROR: {0}-{1}={2}'.format(num_pixels, data.size, num_pixels - data.size))
+        raise NRRDError('ERROR: {0}-{1}={2}'.format(num_pixels, data.size, num_pixels - data.size))
 
-    # dkh : eliminated need to reverse order of dimensions. nrrd's
+    # dkh : eliminated need to reverse order of dimensions. NRRD's
     # data layout is same as what numpy calls 'Fortran' order,
     shape_tmp = list(fields['sizes'])
     data = np.reshape(data, tuple(shape_tmp), order='F')
@@ -242,7 +240,7 @@ def read_data(fields, filehandle, filename=None):
 
 
 def read_header(nrrdfile, custom_field_map=None):
-    """Parse the fields in the nrrd header
+    """Parse the fields in the NRRD header
 
     nrrdfile can be any object which supports the iterator protocol and
     returns a string each time its next() method is called — file objects and
@@ -313,7 +311,7 @@ def read_header(nrrdfile, custom_field_map=None):
 
         # Check if the field has been added already
         if field in header.keys():
-            raise NrrdError('Duplicate header field: %s' % repr(field))
+            raise NRRDError('Duplicate header field: %s' % repr(field))
 
         field_type = _get_field_type(field, custom_field_map)
 
@@ -327,7 +325,7 @@ def read_header(nrrdfile, custom_field_map=None):
 
 
 def read(filename, custom_field_map=None):
-    """Read a nrrd file and return a tuple (data, header)."""
+    """Read a NRRD file and return a tuple (data, header)."""
     with open(filename, 'rb') as filehandle:
         header = read_header(filehandle, custom_field_map)
         data = read_data(header, filehandle, filename)

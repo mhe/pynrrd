@@ -3,7 +3,7 @@ import zlib
 from datetime import datetime
 from collections import OrderedDict
 
-from nrrd.errors import NrrdError
+from nrrd.errors import NRRDError
 from nrrd.formatters import *
 from nrrd.reader import _get_field_type
 
@@ -90,7 +90,7 @@ def _format_field_value(value, field_type):
     elif field_type == 'double matrix':
         return format_optional_matrix(value)
     else:
-        raise NrrdError('Invalid field type given: %s' % field_type)
+        raise NRRDError('Invalid field type given: %s' % field_type)
 
 
 def _write_data(data, filehandle, options):
@@ -110,7 +110,7 @@ def _write_data(data, filehandle, options):
         elif options['encoding'] == 'bzip2':
             comp_obj = bz2.BZ2Compressor()
         else:
-            raise NrrdError('Unsupported encoding: "%s"' % options['encoding'])
+            raise NRRDError('Unsupported encoding: "%s"' % options['encoding'])
 
         # write data in chunks
         start_index = 0
@@ -125,7 +125,7 @@ def _write_data(data, filehandle, options):
 
 # TODO Change options to header, makes more sense
 def write(filename, data, options={}, detached_header=False, custom_field_map=None):
-    """Write the numpy data to a nrrd file. The nrrd header values to use are
+    """Write the numpy data to a NRRD file. The NRRD header values to use are
     inferred from from the data. Additional options can be passed in the
     options dictionary. See the read() function for the structure of this
     dictionary.

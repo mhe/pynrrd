@@ -17,13 +17,13 @@ class TestFieldParsing(unittest.TestCase):
         np.testing.assert_equal(desired, actual)
 
     def test_parse_vector(self):
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_vector('100, 200, 300)')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_vector('(100, 200, 300')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_vector('100, 200, 300')
 
         self.assert_equal_with_datatype(nrrd.parse_vector('(100, 200, 300)'), [100, 200, 300])
@@ -43,17 +43,17 @@ class TestFieldParsing(unittest.TestCase):
         self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=float), [100.47655, 220.32])
         self.assert_equal_with_datatype(nrrd.parse_vector('(100.47655, 220.32)', dtype=int), [100, 220])
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_vector('(100.47655, 220.32)', dtype=np.uint8)
 
     def test_parse_optional_vector(self):
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_optional_vector('100, 200, 300)')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_optional_vector('(100, 200, 300')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Vector should be enclosed by parentheses.'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector should be enclosed by parentheses.'):
             nrrd.parse_optional_vector('100, 200, 300')
 
         self.assert_equal_with_datatype(nrrd.parse_optional_vector('(100, 200, 300)'), [100, 200, 300])
@@ -82,7 +82,7 @@ class TestFieldParsing(unittest.TestCase):
 
         self.assertEqual(nrrd.parse_optional_vector('none'), None)
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_optional_vector('(100.47655, 220.32)', dtype=np.uint8)
 
     def test_parse_matrix(self):
@@ -106,10 +106,10 @@ class TestFieldParsing(unittest.TestCase):
         self.assert_equal_with_datatype(nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=int),
                                         [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Matrix should have same number of elements in each row'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Matrix should have same number of elements in each row'):
             nrrd.parse_matrix('(1,0,0,0) (0,1,0) (0,0,1)')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_matrix('(1,0,0) (0,1,0) (0,0,1)', dtype=np.uint8)
 
     def test_parse_optional_matrix(self):
@@ -130,10 +130,10 @@ class TestFieldParsing(unittest.TestCase):
             [[1.4726600000000003, 0, 0], [np.NaN, np.NaN, np.NaN], [0, 1.4726600000000003, 0],
              [0, 0, 4.7619115092114601]])
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Matrix should have same number of elements in each row'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Matrix should have same number of elements in each row'):
             nrrd.parse_optional_matrix('(1,0,0,0) (0,1,0) (0,0,1)')
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'Matrix should have same number of elements in each row'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Matrix should have same number of elements in each row'):
             nrrd.parse_optional_matrix('none (1,0,0,0) (0,1,0) (0,0,1)')
 
     def test_parse_number_list(self):
@@ -143,7 +143,7 @@ class TestFieldParsing(unittest.TestCase):
 
         self.assert_equal_with_datatype(nrrd.parse_number_list('1'), [1])
 
-        with self.assertRaisesRegex(nrrd.NrrdError, 'dtype should be None for automatic type detection, float or int'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'dtype should be None for automatic type detection, float or int'):
             nrrd.parse_number_list('1 2 3 4', dtype=np.uint8)
 
     def test_parse_number_auto_dtype(self):

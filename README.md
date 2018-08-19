@@ -4,7 +4,7 @@
 pynrrd
 ======
 
-pynrrd is a pure-Python module for reading and writing [nrrd][1] files into and 
+pynrrd is a pure-Python module for reading and writing [NRRD][1] files into and 
 from numpy arrays.
 
 [1]: http://teem.sourceforge.net/nrrd/
@@ -39,7 +39,7 @@ import nrrd
 data = np.zeros((5,4,3,2))
 filename = 'testdata.nrrd'
 
-# write to a nrrd file
+# write to a NRRD file
 nrrd.write(filename, data)
 
 # read the data back from file
@@ -58,7 +58,7 @@ To run the tests:
 Bugs and shortcomings
 ---------------------
 
-Most of the [nrrd format specification][3] is implemented. Exceptions
+Most of the [NRRD format specification][3] is implemented. Exceptions
 are: 
 
 -  files where "data file" is "LIST"
@@ -68,7 +68,7 @@ Other shortcomings:
 - More documentation is desirable, in particular for the options that
   can be passed to the write function.
 - pynrrd is currently probably fairly forgiving in what it accepts for as
-  nrrd files and could be made stricter.
+  NRRD files and could be made stricter.
 
 [3]: http://teem.sourceforge.net/nrrd/format.html
 
