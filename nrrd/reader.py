@@ -184,8 +184,7 @@ def read_header(file, custom_field_map=None):
     Option custom field map can be specified for custom key/value pairs that should be parsed into a specific datatype.
     The field map is a dictionary with the key being the field name and the value being a string identifying the
     datatype. Valid datatype strings are:
-     Datatype        Example Syntax in NRRD File
-    -------------------------------------------
+    Datatype        Example Syntax in NRRD File
     int             5
     double          2.5
     string          testing
