@@ -14,6 +14,10 @@
     :target: https://badge.fury.io/py/pynrrd
     :alt: PyPi version
 
+.. image:: https://readthedocs.org/projects/pynrrd/badge/?version=latest
+    :target: https://pynrrd.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 |
 
 pynrrd
