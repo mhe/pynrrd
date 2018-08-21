@@ -7,9 +7,10 @@ python:
 # Command to install dependencies
 install:
   - pip install -r requirements.txt
+  - pip install codecov
 
 # Command to run tests
-script: python -m unittest discover -v nrrd/tests
+script: coverage run -m unittest discover -v nrrd/tests
 
 # Command to deploy releases to PyPi
 deploy:
@@ -22,3 +23,5 @@ deploy:
     tags: true
     python: 3.4
 
+after_success:
+  - codecov
