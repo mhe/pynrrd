@@ -168,7 +168,7 @@ def _validate_magic_line(line):
 
 
 def read_header(file, custom_field_map=None):
-    """Read header and parse values from :obj:`file`
+    """Read contents of header and parse values from :obj:`file`
 
     :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
     filename is specified, then the file will be opened and closed after the header is read from it. If not specifying
@@ -263,12 +263,30 @@ def read_header(file, custom_field_map=None):
     return header
 
 
-def read_data(header, fh, filename=None):
-    """Read the NRRD data from a file object into a numpy structure.
+def read_data(header, fh=None, filename=None):
+    """Read data from file into :class:`numpy.ndarray`
 
-    File handle is is assumed to point to the first byte of the data. That is,
-    in case of an attached header, assumed to point to the first byte after the
-    '\n\n' line.
+    The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
+    specify both. The file handle (:obj:`fh`) is necessary if the header is attached with the NRRD data. However, if
+    the NRRD data is detached from the header, then the :obj:`filename` parameter is required to obtain the absolute
+    path to the data file.
+
+    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
+
+    Parameters
+    ----------
+    header : :class:`dict` (:class:`str`, :obj:`Object`)
+        Parsed fields/values obtained from :meth:`read_header` function
+    fh : file-object, optional
+        File object pointing to first byte of data. Only necessary if data is attached to header.
+    filename : :class:`str`, optional
+        Filename of the header file. Only necessary if data is detached from the header. This is used to get the
+        absolute data path.
+
+    Returns
+    -------
+    data : :class:`numpy.ndarray`
+        Data read from NRRD file
     """
 
     # Check that the required fields are in the header
