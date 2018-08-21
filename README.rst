@@ -6,6 +6,16 @@
     :target: https://doi.org/10.5281/zenodo.62065
     :alt: DOI
 
+.. image:: https://img.shields.io/pypi/pyversions/pynrrd.svg
+    :target: https://img.shields.io/pypi/pyversions/pynrrd.svg
+    :alt: Python version
+
+.. image:: https://badge.fury.io/py/pynrrd.svg
+    :target: https://badge.fury.io/py/pynrrd
+    :alt: PyPi version
+
+|
+
 pynrrd
 ======
 pynrrd is a pure-Python module for reading and writing `NRRD <http://teem.sourceforge.net/nrrd/>`_ files into and 
@@ -17,74 +27,70 @@ The module's only dependency is `numpy <http://numpy.scipy.org/>`_.
 
 Installation
 ------------
+
 Install via pip and PyPi repository (recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. code-block:: bash
 
     pip install pynrrd
 
 Install via pip and GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. code-block:: bash
 
     pip install git+https://github.com/mhe/pynrrd.git
     
-Install from source
-~~~~~~~~~~~~~~~~~~~
+Install from source (recommended for contributing to pynrrd)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For developers that want to contribute to pynrrd, you can clone the pynrrd repository and install it using the following commands:
 
 .. code-block:: bash
 
-    python setup.py install
+    git clone https://github.com/mhe/pynrrd.git
+    cd pynrrd
+    pip install .
+
+or, for the last line, instead use:
+
+.. code-block:: bash
+
+    pip install -e .
+
+to install in 'develop' or 'editable' mode, where changes can be made to the local working code and Python will use
+the updated pynrrd code.
 
 Example usage
 -------------
-
 .. code-block:: python
 
     import numpy as np
     import nrrd
     
-    # some sample numpy data
+    # Some sample numpy data
     data = np.zeros((5,4,3,2))
     filename = 'testdata.nrrd'
     
-    # write to a NRRD file
+    # Write to a NRRD file
     nrrd.write(filename, data)
     
-    # read the data back from file
-    readdata, options = nrrd.read(filename)
-    print readdata.shape
-    print options
+    # Read the data back from file
+    readdata, header = nrrd.read(filename)
+    print(readdata.shape)
+    print(header)
 
 
 Tests
 -----
-
-To run the tests:
+Run the following command in the base directory to run the tests:
 
 .. code-block:: bash
 
     python -m unittest discover -v nrrd/tests
 
-Bugs and shortcomings
----------------------
-
-Most of the `NRRD format specification <http://teem.sourceforge.net/nrrd/format.html>`_ is implemented. Exceptions
-are: 
-
--  files where "data file" is "LIST"
-
-Other shortcomings:
-
-- More documentation is desirable, in particular for the options that
-  can be passed to the write function.
-- pynrrd is currently probably fairly forgiving in what it accepts for as
-  NRRD files and could be made stricter.
-
+Next Steps
+----------
+For more information, see the `documentation <http://pynrrd.readthedocs.io/>`_.
 
 License
 -------
-
-See `LICENSE <https://github.com/mhe/pynrrd/blob/master/LICENSE>`_.
+See the `LICENSE <https://github.com/mhe/pynrrd/blob/master/LICENSE>`_ for more information.
