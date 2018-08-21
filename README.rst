@@ -2,9 +2,9 @@
     :target: https://travis-ci.org/mhe/pynrrd
     :alt: Build Status
 
-.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.62065.svg
-    :target: https://doi.org/10.5281/zenodo.62065
-    :alt: DOI
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1400858.svg
+   :target: https://doi.org/10.5281/zenodo.1400858
+   :alt: DOI
 
 .. image:: https://img.shields.io/pypi/pyversions/pynrrd.svg
     :target: https://img.shields.io/pypi/pyversions/pynrrd.svg
