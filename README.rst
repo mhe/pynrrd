@@ -20,19 +20,19 @@ Installation
 Install via pip and PyPi repository (recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+.. code-block:: bash
     pip install pynrrd
 
 Install via pip and GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+.. code-block:: bash
     pip install git+https://github.com/mhe/pynrrd.git
     
 Install from source
 ~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+.. code-block:: bash
     python setup.py install
 
 Example usage
@@ -60,7 +60,7 @@ Tests
 
 To run the tests:
 
-.. code-block:: python
+.. code-block:: bash
     python -m unittest discover -v nrrd/tests
 
 Bugs and shortcomings
