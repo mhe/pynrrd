@@ -7,6 +7,7 @@ Welcome to pynrrd's documentation!
 
    README
    user-guide
+   examples
    pynrrd
 
 
