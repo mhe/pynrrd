@@ -18,6 +18,9 @@
     :target: https://pynrrd.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://codecov.io/gh/mhe/pynrrd/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/mhe/pynrrd
+
 |
 
 pynrrd
