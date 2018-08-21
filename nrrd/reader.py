@@ -191,6 +191,10 @@ def read_header(file, custom_field_map=None):
     -------
     header : :class:`dict` (:class:`str`, :obj:`Object`)
         Dictionary containing the header fields and their corresponding parsed value
+
+    See Also
+    --------
+    :meth:`read`, :meth:`read_data`
     """
 
     # If the file is a filename rather than the file handle, then open the file and call this function again with the
@@ -287,6 +291,10 @@ def read_data(header, fh=None, filename=None):
     -------
     data : :class:`numpy.ndarray`
         Data read from NRRD file
+
+    See Also
+    --------
+    :meth:`read`, :meth:`read_header`
     """
 
     # Check that the required fields are in the header
@@ -380,6 +388,30 @@ def read_data(header, fh=None, filename=None):
 
 
 def read(filename, custom_field_map=None):
+    """Read a NRRD file and return the header and data
+
+    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
+
+    Parameters
+    ----------
+    filename : :class:`str`
+        Filename of the NRRD file
+    custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
+        Dictionary used for parsing custom field types where the key is the custom field name and the value is a
+        string identifying datatype for the custom field.
+
+    Returns
+    -------
+    data : :class:`numpy.ndarray`
+        Data read from NRRD file
+    header : :class:`dict` (:class:`str`, :obj:`Object`)
+        Dictionary containing the header fields and their corresponding parsed value
+
+    See Also
+    --------
+    :meth:`write`, :meth:`read_header`, :meth:`read_data`
+    """
+
     """Read a NRRD file and return a tuple (data, header)."""
 
     with open(filename, 'rb') as fh:
