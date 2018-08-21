@@ -168,34 +168,33 @@ def _validate_magic_line(line):
 
 
 def read_header(file, custom_field_map=None):
-    """Parse the fields in the NRRD header
+    """Read contents of header and parse values from :obj:`file`
 
-    nrrdfile can be any object which supports the iterator protocol and
-    returns a string each time its next() method is called — file objects and
-    list objects are both suitable. If nrrdfile is a file object, it must be
-    opened with the ‘b’ flag on platforms where that makes a difference
-    (e.g. Windows)
+    :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
+    filename is specified, then the file will be opened and closed after the header is read from it. If not specifying
+    a filename, the :obj:`file` parameter can be any sort of iterator that returns a string each time :meth:`next` is
+    called. The two common objects that meet these requirements are file objects and a list of strings. When
+    :obj:`file` is a file object, it must be opened with the binary flag ('b') on platforms where that makes a
+    difference, such as Windows.
 
-    >>> read_header(("NRRD0005", "type: float", "dimension: 3"))
-    {u'type': 'float', u'dimension': 3, u'keyvaluepairs': {}}
-    >>> read_header(("NRRD0005", "my extra info:=my : colon-separated : values"))
-    {u'keyvaluepairs': {u'my extra info': u'my : colon-separated : values'}}
+    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
 
-    Option custom field map can be specified for custom key/value pairs that should be parsed into a specific datatype.
-    The field map is a dictionary with the key being the field name and the value being a string identifying the
-    datatype. Valid datatype strings are:
-     Datatype        Example Syntax in NRRD File
-    -------------------------------------------
-    int             5
-    double          2.5
-    string          testing
-    int list        1 2 3 4 5
-    double list     1.2 2.0 3.1 4.7 5.0
-    string list     first second third
-    int vector      (1,0,0)
-    double vector   (3.14,3.14,6.28)
-    int matrix      (1,0,0) (0,1,0) (0,0,1)
-    double matrix   (1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)
+    Parameters
+    ----------
+    file : :class:`str` or string iterator
+        Filename, file object or string iterator object to read NRRD header from
+    custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
+        Dictionary used for parsing custom field types where the key is the custom field name and the value is a
+        string identifying datatype for the custom field.
+
+    Returns
+    -------
+    header : :class:`dict` (:class:`str`, :obj:`Object`)
+        Dictionary containing the header fields and their corresponding parsed value
+
+    See Also
+    --------
+    :meth:`read`, :meth:`read_data`
     """
 
     # If the file is a filename rather than the file handle, then open the file and call this function again with the
@@ -268,12 +267,34 @@ def read_header(file, custom_field_map=None):
     return header
 
 
-def read_data(header, fh, filename=None):
-    """Read the NRRD data from a file object into a numpy structure.
+def read_data(header, fh=None, filename=None):
+    """Read data from file into :class:`numpy.ndarray`
 
-    File handle is is assumed to point to the first byte of the data. That is,
-    in case of an attached header, assumed to point to the first byte after the
-    '\n\n' line.
+    The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
+    specify both. The file handle (:obj:`fh`) is necessary if the header is attached with the NRRD data. However, if
+    the NRRD data is detached from the header, then the :obj:`filename` parameter is required to obtain the absolute
+    path to the data file.
+
+    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
+
+    Parameters
+    ----------
+    header : :class:`dict` (:class:`str`, :obj:`Object`)
+        Parsed fields/values obtained from :meth:`read_header` function
+    fh : file-object, optional
+        File object pointing to first byte of data. Only necessary if data is attached to header.
+    filename : :class:`str`, optional
+        Filename of the header file. Only necessary if data is detached from the header. This is used to get the
+        absolute data path.
+
+    Returns
+    -------
+    data : :class:`numpy.ndarray`
+        Data read from NRRD file
+
+    See Also
+    --------
+    :meth:`read`, :meth:`read_header`
     """
 
     # Check that the required fields are in the header
@@ -367,6 +388,30 @@ def read_data(header, fh, filename=None):
 
 
 def read(filename, custom_field_map=None):
+    """Read a NRRD file and return the header and data
+
+    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
+
+    Parameters
+    ----------
+    filename : :class:`str`
+        Filename of the NRRD file
+    custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
+        Dictionary used for parsing custom field types where the key is the custom field name and the value is a
+        string identifying datatype for the custom field.
+
+    Returns
+    -------
+    data : :class:`numpy.ndarray`
+        Data read from NRRD file
+    header : :class:`dict` (:class:`str`, :obj:`Object`)
+        Dictionary containing the header fields and their corresponding parsed value
+
+    See Also
+    --------
+    :meth:`write`, :meth:`read_header`, :meth:`read_data`
+    """
+
     """Read a NRRD file and return a tuple (data, header)."""
 
     with open(filename, 'rb') as fh:

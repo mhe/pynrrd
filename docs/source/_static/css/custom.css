@@ -1,0 +1,18 @@
+.field-list p {
+	margin: 1em 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Trebuchet MS', sans-serif;
+    background-color: #f2f2f2;
+    font-weight: normal;
+    color: #20435c;
+    border-bottom: 1px solid #ccc;
+    margin: 20px -20px 10px -20px;
+    padding: 3px 0 3px 10px;
+}
+
+.rst-content table.field-list th, .rst-content table.field-list td {
+	padding: 5px 0 0 0;
+	font-size: 100%;
+}

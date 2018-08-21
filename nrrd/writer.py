@@ -95,14 +95,39 @@ def _format_field_value(value, field_type):
 
 
 def write(filename, data, header={}, detached_header=False, custom_field_map=None):
-    """Write the numpy data to a NRRD file. The NRRD header values to use are
-    inferred from from the data. Additional options can be passed in the
-    options dictionary. See the read() function for the structure of this
-    dictionary.
+    """Write :class:`numpy.ndarray` to NRRD file
 
-    To set data samplings, use e.g. `options['spacings'] = [s1, s2, s3]` for
-    3d data with sampling deltas `s1`, `s2`, and `s3` in each dimension.
+    The :obj:`filename` parameter specifies the absolute or relative filename to write the NRRD file to. If the
+    :obj:`filename` extension is .nhdr, then the :obj:`detached_header` parameter is set to true automatically. If the
+    :obj:`detached_header` parameter is set to :obj:`True` and the :obj:`filename` ends in .nrrd, then the header file
+    will have the same path and base name as the :obj:`filename` but with an extension of .nhdr. In all other cases,
+    the header and data are saved in the same file.
 
+    :obj:`header` is an optional parameter containing the fields and values to be added to the NRRD header.
+
+    .. note::
+            The following fields are automatically generated based on the :obj:`data` parameter ignoring these values in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'.
+
+    .. note::
+            The default encoding field used if not specified in :obj:`header` is 'gzip'.
+
+    See :ref:`user-guide:Writing NRRD files` for more information on writing NRRD files.
+
+    Parameters
+    ----------
+    filename : :class:`str`
+        Filename of the NRRD file
+    data : :class:`numpy.ndarray`
+        Data to save to the NRRD file
+    detached_header : :obj:`bool`, optional
+        Whether the header and data should be saved in separate files. Defaults to :obj:`False`
+    custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
+        Dictionary used for parsing custom field types where the key is the custom field name and the value is a
+        string identifying datatype for the custom field.
+
+    See Also
+    --------
+    :meth:`read`, :meth:`read_header`, :meth:`read_data`
     """
 
     # Infer a number of fields from the NumPy array and overwrite values in the header dictionary.
