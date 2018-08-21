@@ -6,6 +6,7 @@ Welcome to pynrrd's documentation!
    :caption: Contents:
 
    README
+   user-guide
    pynrrd
 
 

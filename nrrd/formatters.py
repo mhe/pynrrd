@@ -40,8 +40,10 @@ def format_vector(x):
     """Format a 1D Numpy array into NRRD vector string
 
     Function converts a 1D Numpy array into a string using NRRD vector format.
-    A NRRD vector is structured as follows:
-        * (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+
+    NRRD Vector:
+    **Syntax:** (<Number 1>, <Number 2>, <Number 3>, ... <Number N>)
+    **Example:** (1, 2, 3, 4)
 
     Parameters
     ----------
@@ -124,6 +126,8 @@ def format_optional_matrix(x):
        [  7.,   8.,   9.]])
 
     will return
+
+      none (1, 2, 3) (4, 5, 6) (7, 8, 9)
 
     Parameters
     ----------
