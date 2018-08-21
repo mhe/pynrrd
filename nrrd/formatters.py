@@ -113,7 +113,7 @@ def format_optional_matrix(x):
     See :ref:`user-guide:double matrix` for more information on the format.
 
     .. note::
-            :obj:`x` must have a datatype of Float because NaN's are only defined for floating point numbers.
+            :obj:`x` must have a datatype of float because NaN's are only defined for floating point numbers.
 
     Parameters
     ----------
