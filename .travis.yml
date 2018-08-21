@@ -10,7 +10,7 @@ install:
   - pip install codecov
 
 # Command to run tests
-script: python -m unittest discover -v nrrd/tests
+script: coverage -m unittest discover -v nrrd/tests
 
 # Command to deploy releases to PyPi
 deploy:

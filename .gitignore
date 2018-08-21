@@ -7,3 +7,6 @@ MANIFEST
 
 # Sphinx documentation
 docs/build/
+
+# coverage.py files
+.coverage
