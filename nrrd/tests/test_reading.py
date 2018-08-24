@@ -116,7 +116,7 @@ class TestReadingFunctions(unittest.TestCase):
             header = nrrd.read_header(header_txt_tuple)
 
             self.assertEqual(len(w), 1)
-            self.assertTrue("Duplicate header field: 'type'" == str(w[0].message))
+            self.assertTrue("Duplicate header field:" in str(w[0].message))
 
             self.assertEqual(expected_header, header)
 
