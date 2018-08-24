@@ -3,6 +3,7 @@ import bz2
 import os
 import re
 import zlib
+import warnings
 from collections import OrderedDict
 
 from nrrd.parsers import *
@@ -14,6 +15,10 @@ from nrrd.parsers import *
 _READ_CHUNKSIZE = 2 ** 20
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
+
+# Duplicated fields are prohibited by the spec, but do occur in the wild.
+# Set True to allow duplicate fields, with a warning.
+_NRRD_ALLOW_DUPLICATE_FIELD = False
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
@@ -250,7 +255,12 @@ def read_header(file, custom_field_map=None):
 
         # Check if the field has been added already
         if field in header.keys():
-            raise NRRDError('Duplicate header field: %s' % repr(field))
+            dup_message = 'Duplicate header field: %s' % repr(field)
+
+            if not _NRRD_ALLOW_DUPLICATE_FIELD:
+                raise NRRDError(dup_message)
+
+            warnings.warn(dup_message)
 
         # Get the datatype of the field based on it's field name and custom field map
         field_type = _get_field_type(field, custom_field_map)
