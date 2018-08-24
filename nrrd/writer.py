@@ -14,6 +14,10 @@ from nrrd.reader import _get_field_type
 # further. The following two values define the size of the chunks.
 _WRITE_CHUNKSIZE = 2 ** 20
 
+# Controls zlib compression level when saving.
+# valid levels are -1 to 9 (see zlib module documentation)
+_ZLIB_LEVEL = 9
+
 _NRRD_FIELD_ORDER = [
     'type',
     'dimension',
@@ -66,7 +70,6 @@ _NUMPY2NRRD_ENDIAN_MAP = {
     '>': 'big',
     'B': 'big'
 }
-
 
 def _format_field_value(value, field_type):
     if field_type == 'int':
@@ -263,7 +266,7 @@ def _write_data(data, fh, header):
 
         # Construct the compressor object based on encoding
         if header['encoding'] in ['gzip', 'gz']:
-            compressobj = zlib.compressobj(9, zlib.DEFLATED, zlib.MAX_WBITS | 16)
+            compressobj = zlib.compressobj(_ZLIB_LEVEL, zlib.DEFLATED, zlib.MAX_WBITS | 16)
         elif header['encoding'] in ['bzip2', 'bz2']:
             compressobj = bz2.BZ2Compressor()
         else:
