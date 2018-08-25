@@ -18,7 +18,7 @@ _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
 # Duplicated fields are prohibited by the spec, but do occur in the wild.
 # Set True to allow duplicate fields, with a warning.
-_NRRD_ALLOW_DUPLICATE_FIELD = False
+ALLOW_DUPLICATE_FIELD = False
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
@@ -257,7 +257,7 @@ def read_header(file, custom_field_map=None):
         if field in header.keys():
             dup_message = "Duplicate header field: '%s'" % str(field)
 
-            if not _NRRD_ALLOW_DUPLICATE_FIELD:
+            if not ALLOW_DUPLICATE_FIELD:
                 raise NRRDError(dup_message)
 
             warnings.warn(dup_message)

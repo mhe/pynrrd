@@ -124,8 +124,8 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
     custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
-    compression_level : int
-        Int specifying compression level, when applicable.
+    compression_level : :class:`int`
+        Int specifying compression level, when using a compressed encoding (.gz, .bz2).
         - For zlib (.gz): 1-9 set low to high compression; 0 disables; -1 uses zlib default.
         - For bzip2 (.bz2): 1-9 set low to high compression.
 
@@ -269,7 +269,7 @@ def _write_data(data, fh, header, compression_level = 9):
         if header['encoding'] in ['gzip', 'gz']:
             compressobj = zlib.compressobj(compression_level, zlib.DEFLATED, zlib.MAX_WBITS | 16)
         elif header['encoding'] in ['bzip2', 'bz2']:
-            compressobj = bz2.BZ2Compressor()
+            compressobj = bz2.BZ2Compressor(compression_level)
         else:
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 

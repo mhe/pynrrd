@@ -109,7 +109,7 @@ class TestReadingFunctions(unittest.TestCase):
 
         import warnings
         with warnings.catch_warnings(record=True) as w:
-            nrrd.reader._NRRD_ALLOW_DUPLICATE_FIELD = True
+            nrrd.reader.ALLOW_DUPLICATE_FIELD = True
             header = nrrd.read_header(header_txt_tuple)
 
             self.assertTrue("Duplicate header field: 'type'" in str(w[0].message))
