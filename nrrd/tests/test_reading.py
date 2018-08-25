@@ -100,6 +100,23 @@ class TestReadingFunctions(unittest.TestCase):
         header = nrrd.read_header(('NRRD0005', 'my extra info:=my : colon-separated : values'))
         np.testing.assert_equal(expected_header, header)
 
+    def test_read_dup_field_error_and_warn(self):
+        expected_header = {u'type': 'float', u'dimension': 3}
+        header_txt_tuple = ('NRRD0005', 'type: float', 'dimension: 3', 'type: float')
+
+        with self.assertRaisesRegex(nrrd.NRRDError, "Duplicate header field: 'type'"):
+            header = nrrd.read_header(header_txt_tuple)
+
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            nrrd.reader.ALLOW_DUPLICATE_FIELD = True
+            header = nrrd.read_header(header_txt_tuple)
+
+            self.assertTrue("Duplicate header field: 'type'" in str(w[0].message))
+
+            self.assertEqual(expected_header, header)
+            nrrd.reader._NRRD_ALLOW_DUPLICATE_FIELD = False
+
     def test_read_header_and_ascii_1d_data(self):
         expected_header = {u'dimension': 1,
                            u'encoding': 'ASCII',
