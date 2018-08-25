@@ -255,7 +255,7 @@ def read_header(file, custom_field_map=None):
 
         # Check if the field has been added already
         if field in header.keys():
-            dup_message = 'Duplicate header field: %s' % repr(field)
+            dup_message = "Duplicate header field: '%s'" % str(field)
 
             if not _NRRD_ALLOW_DUPLICATE_FIELD:
                 raise NRRDError(dup_message)
