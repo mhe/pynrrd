@@ -17,14 +17,17 @@ class TestWritingFunctions(unittest.TestCase):
         with open(RAW_DATA_FILE_PATH, 'rb') as f:
             self.expected_data = f.read()
 
-    def write_and_read_back_with_encoding(self, encoding):
-        output_filename = os.path.join(self.temp_write_dir, 'testfile_%s.nrrd' % encoding)
-        nrrd.write(output_filename, self.data_input, {u'encoding': encoding})
+    def write_and_read_back_with_encoding(self, encoding, level=9):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_{}_{}.nrrd'.format(encoding, str(level)))
+        nrrd.write(output_filename, self.data_input, {u'encoding': encoding},
+                   compression_level=level)
 
         # Read back the same file
         data, header = nrrd.read(output_filename)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
         self.assertEqual(header['encoding'], encoding)
+
+        return output_filename
 
     def test_write_raw(self):
         self.write_and_read_back_with_encoding(u'raw')
@@ -32,8 +35,21 @@ class TestWritingFunctions(unittest.TestCase):
     def test_write_gz(self):
         self.write_and_read_back_with_encoding(u'gzip')
 
-    def test_write_bz2(self):
+    def test_write_bzip2(self):
         self.write_and_read_back_with_encoding(u'bzip2')
+
+    def test_write_gz_level1(self):
+        import os
+        fn = self.write_and_read_back_with_encoding(u'gzip', level=1)
+
+        self.assertLess(os.path.getsize(GZ_NRRD_FILE_PATH), os.path.getsize(fn))
+
+    def test_write_bzip2_level1(self):
+        fn = self.write_and_read_back_with_encoding(u'bzip2', level=1)
+
+        # note: we don't currently assert reduction here, because with the binary ball test data,
+        #       the output size does not change at different bz2 levels.
+        # self.assertLess(os.path.getsize(BZ2_NRRD_FILE_PATH), os.path.getsize(fn))
 
     def test_write_ascii_1d(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_1d.nrrd')

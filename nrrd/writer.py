@@ -248,7 +248,7 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
             _write_data(data, data_fh, header, compression_level=compression_level)
 
 
-def _write_data(data, fh, header, compression_level = 9):
+def _write_data(data, fh, header, compression_level = None):
     if header['encoding'] == 'raw':
         # Convert the data into a string
         raw_data = data.tostring(order='F')
