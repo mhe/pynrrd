@@ -14,10 +14,6 @@ from nrrd.reader import _get_field_type
 # further. The following two values define the size of the chunks.
 _WRITE_CHUNKSIZE = 2 ** 20
 
-# Controls zlib compression level when saving.
-# valid levels are -1 to 9 (see zlib module documentation)
-_ZLIB_LEVEL = 9
-
 _NRRD_FIELD_ORDER = [
     'type',
     'dimension',
@@ -97,7 +93,8 @@ def _format_field_value(value, field_type):
         raise NRRDError('Invalid field type given: %s' % field_type)
 
 
-def write(filename, data, header={}, detached_header=False, custom_field_map=None):
+def write(filename, data, header={}, detached_header=False, custom_field_map=None,
+                          compression_level = 9):
     """Write :class:`numpy.ndarray` to NRRD file
 
     The :obj:`filename` parameter specifies the absolute or relative filename to write the NRRD file to. If the
@@ -127,6 +124,10 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
     custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
+    compression_level : int
+        Int specifying compression level, when applicable.
+        - For zlib (.gz): 1-9 set low to high compression; 0 disables; -1 uses zlib default.
+        - For bzip2 (.bz2): 1-9 set low to high compression.
 
     See Also
     --------
@@ -239,15 +240,15 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
 
         # If header & data in the same file is desired, write data in the file
         if not detached_header:
-            _write_data(data, fh, header)
+            _write_data(data, fh, header, compression_level=compression_level)
 
     # If detached header desired, write data to different file
     if detached_header:
         with open(data_filename, 'wb') as data_fh:
-            _write_data(data, data_fh, header)
+            _write_data(data, data_fh, header, compression_level=compression_level)
 
 
-def _write_data(data, fh, header):
+def _write_data(data, fh, header, compression_level = 9):
     if header['encoding'] == 'raw':
         # Convert the data into a string
         raw_data = data.tostring(order='F')
@@ -266,7 +267,7 @@ def _write_data(data, fh, header):
 
         # Construct the compressor object based on encoding
         if header['encoding'] in ['gzip', 'gz']:
-            compressobj = zlib.compressobj(_ZLIB_LEVEL, zlib.DEFLATED, zlib.MAX_WBITS | 16)
+            compressobj = zlib.compressobj(compression_level, zlib.DEFLATED, zlib.MAX_WBITS | 16)
         elif header['encoding'] in ['bzip2', 'bz2']:
             compressobj = bz2.BZ2Compressor()
         else:
