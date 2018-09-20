@@ -54,6 +54,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
     def test_read_detached_header_and_data(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
@@ -62,6 +65,9 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_header_and_gz_compressed_data(self):
         expected_header = self.expected_header
@@ -72,6 +78,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
     def test_read_header_and_bz2_compressed_data(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'bzip2'
@@ -80,6 +89,9 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_header_and_gz_compressed_data_with_lineskip3(self):
         expected_header = self.expected_header
@@ -90,6 +102,9 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_raw_header(self):
         expected_header = {u'type': 'float', u'dimension': 3}
@@ -131,6 +146,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(data.dtype, np.uint8)
         np.testing.assert_equal(data, np.arange(1, 28))
 
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
     def test_read_header_and_ascii_2d_data(self):
         expected_header = {u'dimension': 2,
                            u'encoding': 'ASCII',
@@ -144,6 +162,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.uint16)
         np.testing.assert_equal(data, np.arange(1, 28).reshape(3, 9, order='F'))
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_simple_4d_nrrd(self):
         expected_header = {'type': 'double',
@@ -165,6 +186,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.float64)
         np.testing.assert_equal(data, np.array([[[[0.76903426]]]]))
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_custom_fields_without_field_map(self):
         expected_header = {u'dimension': 1,
