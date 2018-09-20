@@ -4,6 +4,7 @@ build/*
 *.egg-info/*
 MANIFEST
 .idea/*
+.cache
 
 # Sphinx documentation
 docs/build/
