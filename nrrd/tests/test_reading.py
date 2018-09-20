@@ -146,6 +146,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(data.dtype, np.uint8)
         np.testing.assert_equal(data, np.arange(1, 28))
 
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
     def test_read_header_and_ascii_2d_data(self):
         expected_header = {u'dimension': 2,
                            u'encoding': 'ASCII',
@@ -159,6 +162,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.uint16)
         np.testing.assert_equal(data, np.arange(1, 28).reshape(3, 9, order='F'))
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_simple_4d_nrrd(self):
         expected_header = {'type': 'double',
@@ -180,6 +186,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.float64)
         np.testing.assert_equal(data, np.array([[[[0.76903426]]]]))
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_custom_fields_without_field_map(self):
         expected_header = {u'dimension': 1,
