@@ -54,6 +54,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
     def test_read_detached_header_and_data(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
@@ -62,6 +65,9 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_header_and_gz_compressed_data(self):
         expected_header = self.expected_header
@@ -72,6 +78,9 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
     def test_read_header_and_bz2_compressed_data(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'bzip2'
@@ -80,6 +89,9 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_header_and_gz_compressed_data_with_lineskip3(self):
         expected_header = self.expected_header
@@ -90,6 +102,9 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
+
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_raw_header(self):
         expected_header = {u'type': 'float', u'dimension': 3}
