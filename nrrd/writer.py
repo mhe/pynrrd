@@ -231,7 +231,7 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
 
             # Custom fields are written as key/value pairs with a := instead of : delimeter
             if x >= custom_field_start_index:
-                fh.write(('%s:= %s\n' % (field, value_str)).encode('ascii'))
+                fh.write(('%s:=%s\n' % (field, value_str)).encode('ascii'))
             else:
                 fh.write(('%s: %s\n' % (field, value_str)).encode('ascii'))
 
