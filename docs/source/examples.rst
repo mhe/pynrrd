@@ -62,3 +62,20 @@ Example with fields and custom fields
        [0., 1., 0.],
        [0., 0., 1.]])), ('kinds', ['domain', 'domain', 'domain']), ('encoding', 'ASCII'), ('spacings', array([1.0458, 1.0458, 2.5   ])), ('units', ['mm', 'mm', 'mm']), ('custom_field_here1', 24.34), ('custom_field_here2', array([1, 2, 3, 4]))])
 
+Example reading NRRD file with duplicated header
+-------------
+.. code-block:: python
+
+    import nrrd
+
+    # set this field to True to enable the reading of files with duplicated header
+    nrrd.reader.ALLOW_DUPLICATE_FIELD = True
+
+    #name of the file you want to read with a duplicated header
+    filename = "filename.nrrd"
+
+    #read the file
+    # filedata = numpy array
+    # fileheader = header of the NRRD file
+    filedata, fileheader = nrrd.read(filename)
+    >>> UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)

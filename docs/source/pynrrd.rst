@@ -11,6 +11,7 @@ Reading NRRD files
     nrrd.read
     nrrd.read_header
     nrrd.read_data
+    nrrd.reader.ALLOW_DUPLICATE_FIELD
 
 Writing NRRD files
 ~~~~~~~~~~~~~~~~~~

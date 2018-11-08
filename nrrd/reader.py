@@ -19,6 +19,25 @@ _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 # Duplicated fields are prohibited by the spec, but do occur in the wild.
 # Set True to allow duplicate fields, with a warning.
 ALLOW_DUPLICATE_FIELD = False
+"""
+When there are duplicated fields on a 'NRRD' file header, pynrrd throws an error by default.
+Setting this field as 'True' will instead show a warning.
+
+Example:
+    Reading a NRRD file with duplicated header 'space'.
+
+    >>> filedata, fileheader = nrrd.read(filename_duplicatedheader.nrrd)
+    nrrd.errors.NRRDError: Duplicate header field: 'space'
+
+    Set the field as True to receive a warning.
+
+    >>> nrrd.reader.ALLOW_DUPLICATE_FIELD = True
+    >>> filedata, fileheader = nrrd.read(filename_duplicatedheader.nrrd)
+    UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)
+
+Note:
+    Duplicated fields are prohibited by NRRD file specification
+"""
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
