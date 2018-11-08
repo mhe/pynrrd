@@ -68,10 +68,10 @@ Example reading NRRD file with duplicated header
 
     import nrrd
 
-    # set this field to True to enable the reading of files with duplicated header
+    # set this field to True to enable the reading of files with duplicated header fields
     nrrd.reader.ALLOW_DUPLICATE_FIELD = True
 
-    #name of the file you want to read with a duplicated header
+    #name of the file you want to read with a duplicated header field
     filename = "filename.nrrd"
 
     #read the file

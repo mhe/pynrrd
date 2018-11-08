@@ -24,7 +24,7 @@ When there are duplicated fields on a 'NRRD' file header, pynrrd throws an error
 Setting this field as 'True' will instead show a warning.
 
 Example:
-    Reading a NRRD file with duplicated header 'space'.
+    Reading a NRRD file with duplicated header field 'space'.
 
     >>> filedata, fileheader = nrrd.read(filename_duplicatedheader.nrrd)
     nrrd.errors.NRRDError: Duplicate header field: 'space'
