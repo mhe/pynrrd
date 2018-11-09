@@ -68,14 +68,15 @@ Example reading NRRD file with duplicated header field
 
     import nrrd
 
-    # set this field to True to enable the reading of files with duplicated header fields
+    # Set this field to True to enable the reading of files with duplicated header fields
     nrrd.reader.ALLOW_DUPLICATE_FIELD = True
 
-    #name of the file you want to read with a duplicated header field
+    # Name of the file you want to read with a duplicated header field
     filename = "filename.nrrd"
 
-    #read the file
+    # Read the file
     # filedata = numpy array
     # fileheader = header of the NRRD file
+    # A warning is now received about duplicate headers rather than an error being thrown
     filedata, fileheader = nrrd.read(filename)
     >>> UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)

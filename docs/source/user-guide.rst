@@ -188,7 +188,7 @@ The :obj:`file` parameter of :meth:`read_header` accepts a filename or a string 
 
 The :meth:`read_data` will not typically be used besides within the :meth:`read` function because the header is a required parameter (:obj:`header`) to this function. The remaining two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to specify both. The file handle (:obj:`fh`) is necessary if the header contains the NRRD data as well (AKA it is not a detached file). However, if the NRRD data is detached from the header, then the :obj:`filename` parameter is required to obtain the absolute path to the data file. The :meth:`read_data` function returns a :class:`numpy.ndarray` of the data.
 
-Some NRRD files, while prohibited by specification, may contain duplicated reader fields preventing the proper reading of the file. Changing :const:`ALLOW_DUPLICATE_FIELD` to 'True' will show a warning instead of an error while trying to read the file.
+Some NRRD files, while prohibited by specification, may contain duplicated reader fields preventing the proper reading of the file. Changing :data:`nrrd.reader.ALLOW_DUPLICATE_FIELD` to :obj:`True` will show a warning instead of an error while trying to read the file.
 
 Writing NRRD files
 ------------------

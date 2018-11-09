@@ -2,8 +2,8 @@
 import bz2
 import os
 import re
-import zlib
 import warnings
+import zlib
 from collections import OrderedDict
 
 from nrrd.parsers import *
@@ -16,27 +16,26 @@ _READ_CHUNKSIZE = 2 ** 20
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
-# Duplicated fields are prohibited by the spec, but do occur in the wild.
-# Set True to allow duplicate fields, with a warning.
 ALLOW_DUPLICATE_FIELD = False
-"""
-When there are duplicated fields on a 'NRRD' file header, pynrrd throws an error by default.
-Setting this field as 'True' will instead show a warning.
+"""Allow duplicate header fields when reading NRRD files
+
+When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as 
+:obj:`True` will instead show a warning.
 
 Example:
-    Reading a NRRD file with duplicated header field 'space'.
+    Reading a NRRD file with duplicated header field 'space' with field set to :obj:`False`.
 
-    >>> filedata, fileheader = nrrd.read(filename_duplicatedheader.nrrd)
+    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
     nrrd.errors.NRRDError: Duplicate header field: 'space'
 
-    Set the field as True to receive a warning.
+    Set the field as :obj:`True` to receive a warning instead.
 
     >>> nrrd.reader.ALLOW_DUPLICATE_FIELD = True
-    >>> filedata, fileheader = nrrd.read(filename_duplicatedheader.nrrd)
+    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
     UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)
 
 Note:
-    Duplicated fields are prohibited by NRRD file specification
+    Duplicated fields are prohibited by the NRRD file specification.
 """
 
 _TYPEMAP_NRRD2NUMPY = {

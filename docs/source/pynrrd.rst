@@ -48,3 +48,5 @@ NRRD Module
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. autodata:: nrrd.reader.ALLOW_DUPLICATE_FIELD
