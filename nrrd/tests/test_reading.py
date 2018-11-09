@@ -130,7 +130,7 @@ class TestReadingFunctions(unittest.TestCase):
             self.assertTrue("Duplicate header field: 'type'" in str(w[0].message))
 
             self.assertEqual(expected_header, header)
-            nrrd.reader._NRRD_ALLOW_DUPLICATE_FIELD = False
+            nrrd.reader.ALLOW_DUPLICATE_FIELD = False
 
     def test_read_header_and_ascii_1d_data(self):
         expected_header = {u'dimension': 1,
