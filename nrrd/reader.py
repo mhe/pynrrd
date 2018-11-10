@@ -341,85 +341,48 @@ def read_data(header, fh=None, filename=None):
 
     # Skip the number of lines requested
     for _ in range(line_skip):
-        fh.readline()
-
-    if byte_skip>=0:
-    
-        # If a compression encoding is used, then byte skip AFTER decompressing
-        if header['encoding'] == 'raw':
-            # Skip the requested number of bytes and then parse the data using NumPy
-            fh.seek(byte_skip, os.SEEK_CUR)
-            data = np.fromfile(fh, dtype)
-        elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-            # Skip the requested number of bytes and then parse the data using NumPy
-            fh.seek(byte_skip, os.SEEK_CUR)
-            data = np.fromfile(fh, dtype, sep=' ')
-        else:
-            # Handle compressed data now
-            # Construct the decompression object based on encoding
-            if header['encoding'] in ['gzip', 'gz']:
-                decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
-            elif header['encoding'] in ['bzip2', 'bz2']:
-                decompobj = bz2.BZ2Decompressor()
-            else:
-                raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
-
-            # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
-            decompressed_data = b''
-            while True:
-                chunk = fh.read(_READ_CHUNKSIZE)
-
-                # If chunk is None, then file is at end, break out of loop
-                if not chunk:
-                    break
-
-                # Decompress the data and add it to the decompressed data
-                decompressed_data += decompobj.decompress(chunk)
-
-            # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
-            # NumPy
-            # data = np.frombuffer(decompressed_data[byte_skip:], dtype)
-            data = np.frombuffer(decompressed_data[byte_skip:], dtype)
-      
-    elif byte_skip==-1:
+        fh.readline()    
             
-            # If a compression encoding is used, then byte skip AFTER decompressing
-            if header['encoding'] == 'raw':
-                # Skip the requested number of bytes and then parse the data using NumPy
-                fh.seek(-dtype.itemsize * total_data_points, os.SEEK_END)
-                data = np.fromfile(fh, dtype)
-            elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-                # Skip the requested number of bytes and then parse the data using NumPy
-                fh.seek(-dtype.itemsize * total_data_points, os.SEEK_END)
-                data = np.fromfile(fh, dtype, sep=' ')
-            else:
-                # Handle compressed data now
-                # Construct the decompression object based on encoding
-                if header['encoding'] in ['gzip', 'gz']:
-                    decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
-                elif header['encoding'] in ['bzip2', 'bz2']:
-                    decompobj = bz2.BZ2Decompressor()
-                else:
-                    raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
-
-                # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
-                decompressed_data=b''
-                while True:
-                    chunk = fh.read(_READ_CHUNKSIZE)
-                   
-                    # If chunk is None, then file is at end, break out of loop
-                    if not chunk:
-                        break
-
-                    # Decompress the data and add it to the decompressed data
-                    decompressed_data += decompobj.decompress(chunk)
-
-                # Byte skip is applied AFTER the decompression. Since byte_skip==-1, read only the bytes for image data towards the end of file
-                # Parse the data NumPy
-                data = np.frombuffer(decompressed_data[-dtype.itemsize*total_data_points: ], dtype)
+    # Skip the requested number of bytes or seek backward, and then parse the data using NumPy
+    if byte_skip < -1:
+        raise Exception('Invalid byteskip, allowed values are greater than or equal to -1')
+    elif byte_skip >= 0:
+        fh.seek(byte_skip, os.SEEK_CUR)
+    elif byte_skip == -1 and header['encoding'] not in ['gzip', 'gz', 'bzip2', 'bz2']:
+        fh.seek(-dtype.itemsize * total_data_points, os.SEEK_END)
+    else: # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
+        byte_skip = -dtype.itemsize*total_data_points
+        
+    # If a compression encoding is used, then byte skip AFTER decompressing
+    if header['encoding'] == 'raw':             
+        data = np.fromfile(fh, dtype)
+    elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
+        data = np.fromfile(fh, dtype, sep=' ')
     else:
-        raise Exception('Invalid byteskip, allowed values are either -1 or non negative')
-            
+        # Handle compressed data now
+        # Construct the decompression object based on encoding
+        if header['encoding'] in ['gzip', 'gz']:
+            decompobj = zlib.decompressobj(zlib.MAX_WBITS | 16)
+        elif header['encoding'] in ['bzip2', 'bz2']:
+            decompobj = bz2.BZ2Decompressor()
+        else:
+            raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
+
+        # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
+        decompressed_data = b''
+        while True:
+            chunk = fh.read(_READ_CHUNKSIZE)
+
+            # If chunk is None, then file is at end, break out of loop
+            if not chunk:
+                break
+
+            # Decompress the data and add it to the decompressed data
+            decompressed_data += decompobj.decompress(chunk)
+
+        # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
+        # NumPy
+        data = np.frombuffer(decompressed_data[byte_skip:], dtype)           
 
     # Close the file
     # Even if opened using with keyword, closing it does not hurt
@@ -466,4 +429,4 @@ def read(filename, custom_field_map=None):
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename)
 
-        return data, header
+        return data, header 
