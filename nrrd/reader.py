@@ -382,7 +382,7 @@ def read_data(header, fh=None, filename=None):
 
         # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
         # NumPy
-        data = np.frombuffer(decompressed_data[byte_skip:], dtype)           
+        data = np.fromstring(decompressed_data[byte_skip:], dtype)           
 
     # Close the file
     # Even if opened using with keyword, closing it does not hurt
@@ -429,4 +429,4 @@ def read(filename, custom_field_map=None):
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename)
 
-        return data, header 
+        return data, header
