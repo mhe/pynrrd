@@ -353,7 +353,7 @@ def read_data(header, fh=None, filename=None):
     else:
         # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
         byte_skip = -dtype.itemsize * total_data_points
-        
+         
     # If a compression encoding is used, then byte skip AFTER decompressing
     if header['encoding'] == 'raw':             
         data = np.fromfile(fh, dtype)
