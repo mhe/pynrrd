@@ -345,13 +345,14 @@ def read_data(header, fh=None, filename=None):
             
     # Skip the requested number of bytes or seek backward, and then parse the data using NumPy
     if byte_skip < -1:
-        raise Exception('Invalid byteskip, allowed values are greater than or equal to -1')
+        raise NRRDError('Invalid byteskip, allowed values are greater than or equal to -1')
     elif byte_skip >= 0:
         fh.seek(byte_skip, os.SEEK_CUR)
     elif byte_skip == -1 and header['encoding'] not in ['gzip', 'gz', 'bzip2', 'bz2']:
         fh.seek(-dtype.itemsize * total_data_points, os.SEEK_END)
-    else: # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
-        byte_skip = -dtype.itemsize*total_data_points
+    else:
+        # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
+        byte_skip = -dtype.itemsize * total_data_points
         
     # If a compression encoding is used, then byte skip AFTER decompressing
     if header['encoding'] == 'raw':             
