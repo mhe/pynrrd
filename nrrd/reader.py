@@ -357,22 +357,30 @@ def read_data(header, fh=None, filename=None):
     # Get the total number of data points by multiplying the size of each dimension together
     total_data_points = header['sizes'].prod()
 
-    # If encoding is raw and byte skip is -1, then seek backwards to the data
-    # Otherwise skip the number of lines requested
-    if header['encoding'] == 'raw' and byte_skip == -1:
-        fh.seek(-dtype.itemsize * total_data_points, 2)
-    else:
+    # Skip the number of lines requested when line_skip >= 0
+    # Irrespective of the NRRD file having attached/detached header
+    # Lines are skipped before getting to the beginning of the data
+    if line_skip >= 0:
         for _ in range(line_skip):
             fh.readline()
-
-    # If a compression encoding is used, then byte skip AFTER decompressing
-    if header['encoding'] == 'raw':
-        # Skip the requested number of bytes and then parse the data using NumPy
+    else:
+        raise NRRDError('Invalid lineskip, allowed values are greater than or equal to 0')
+        
+    # Skip the requested number of bytes or seek backward, and then parse the data using NumPy
+    if byte_skip < -1:
+        raise NRRDError('Invalid byteskip, allowed values are greater than or equal to -1')
+    elif byte_skip >= 0:
         fh.seek(byte_skip, os.SEEK_CUR)
+    elif byte_skip == -1 and header['encoding'] not in ['gzip', 'gz', 'bzip2', 'bz2']:
+        fh.seek(-dtype.itemsize * total_data_points, os.SEEK_END)
+    else:
+        # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
+        byte_skip = -dtype.itemsize * total_data_points
+        
+    # If a compression encoding is used, then byte skip AFTER decompressing
+    if header['encoding'] == 'raw':             
         data = np.fromfile(fh, dtype)
     elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-        # Skip the requested number of bytes and then parse the data using NumPy
-        fh.seek(byte_skip, os.SEEK_CUR)
         data = np.fromfile(fh, dtype, sep=' ')
     else:
         # Handle compressed data now
@@ -441,7 +449,6 @@ def read(filename, custom_field_map=None):
     """
 
     """Read a NRRD file and return a tuple (data, header)."""
-
     with open(filename, 'rb') as fh:
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename)

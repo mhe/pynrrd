@@ -68,6 +68,46 @@ class TestReadingFunctions(unittest.TestCase):
 
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
+        
+    def test_read_detached_header_and_data_with_byteskip_minus1(self):
+        expected_header = self.expected_header
+        expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+        expected_header[u'byte skip'] = -1
+
+        data, header = nrrd.read(RAW_BYTESKIP_NHDR_FILE_PATH)
+        
+        np.testing.assert_equal(self.expected_header, header)
+        np.testing.assert_equal(data, self.expected_data)
+        
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
+    def test_read_detached_header_and_nifti_data_with_byteskip_minus1(self):
+        expected_header = self.expected_header
+        expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+        expected_header[u'byte skip'] = -1
+        expected_header[u'encoding'] = 'gzip'
+        expected_header[u'data file'] = 'BallBinary30x30x30.nii.gz'
+
+        data, header = nrrd.read(GZ_BYTESKIP_NIFTI_NHDR_FILE_PATH)
+        
+        np.testing.assert_equal(self.expected_header, header)
+        np.testing.assert_equal(data, self.expected_data)
+        
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+
+    def test_read_detached_header_and_nifti_data(self):
+        
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Size of the data does not equal '
+            + 'the product of all the dimensions: 27000-27176=-176'):
+            nrrd.read(GZ_NIFTI_NHDR_FILE_PATH)
+            
+    def test_read_detached_header_and_data_with_byteskip_minus5(self):
+        
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid byteskip, allowed values '
+            +'are greater than or equal to -1'):
+            nrrd.read(RAW_INVALID_BYTESKIP_NHDR_FILE_PATH)
 
     def test_read_header_and_gz_compressed_data(self):
         expected_header = self.expected_header
@@ -78,6 +118,20 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
 
+        # Test that the data read is able to be edited
+        self.assertTrue(data.flags['WRITEABLE'])
+        
+    def test_read_header_and_gz_compressed_data_with_byteskip_minus1(self):
+        expected_header = self.expected_header
+        expected_header[u'encoding'] = 'gzip'
+        expected_header[u'type'] = 'int16'
+        expected_header[u'byte skip'] = -1
+
+        data, header = nrrd.read(GZ_BYTESKIP_NRRD_FILE_PATH)
+
+        np.testing.assert_equal(self.expected_header, header)
+        np.testing.assert_equal(data, self.expected_data)
+        
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
 
