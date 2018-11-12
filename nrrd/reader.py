@@ -339,10 +339,15 @@ def read_data(header, fh=None, filename=None):
     # Get the total number of data points by multiplying the size of each dimension together
     total_data_points = header['sizes'].prod()
 
-    # Skip the number of lines requested
-    for _ in range(line_skip):
-        fh.readline()    
-            
+    # Skip the number of lines requested when line_skip >= 0
+    # Irrespective of the NRRD file having attached/detached header
+    # Lines are skipped before getting to the beginning of the data
+    if line_skip >= 0:
+        for _ in range(line_skip):
+            fh.readline()
+    else:
+        raise NRRDError('Invalid lineskip, allowed values are greater than or equal to 0')
+        
     # Skip the requested number of bytes or seek backward, and then parse the data using NumPy
     if byte_skip < -1:
         raise NRRDError('Invalid byteskip, allowed values are greater than or equal to -1')
@@ -353,7 +358,7 @@ def read_data(header, fh=None, filename=None):
     else:
         # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
         byte_skip = -dtype.itemsize * total_data_points
-         
+        
     # If a compression encoding is used, then byte skip AFTER decompressing
     if header['encoding'] == 'raw':             
         data = np.fromfile(fh, dtype)
