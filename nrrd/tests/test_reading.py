@@ -7,6 +7,7 @@ import numpy as np
 from nrrd.tests.util import *
 import nrrd
 
+np.set_printoptions(suppress=True, precision=8, floatmode='maxprec')
 
 class TestReadingFunctions(unittest.TestCase):
     def setUp(self):
@@ -231,14 +232,16 @@ class TestReadingFunctions(unittest.TestCase):
                                                          [np.NaN, np.NaN, np.NaN]]),
                            'endian': 'little',
                            'encoding': 'raw',
-                           'measurement frame': np.array([[1., 0., 0.],
-                                                          [0., 1., 0.],
-                                                          [0., 0., 1.]])}
+                           'measurement frame': np.array([[1.0001,         0.,      0.],
+                                                          [0., 1.0000000006,      0.],
+                                                          [0., 0., 1.000000000000009]])}
+
 
         data, header = nrrd.read(RAW_4D_NRRD_FILE_PATH)
 
         np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.float64)
+        np.testing.assert_equal(header['measurement frame'].dtype, np.float64)
         np.testing.assert_equal(data, np.array([[[[0.76903426]]]]))
 
         # Test that the data read is able to be edited
