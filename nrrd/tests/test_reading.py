@@ -7,8 +7,6 @@ import numpy as np
 from nrrd.tests.util import *
 import nrrd
 
-np.set_printoptions(suppress=True, precision=8, floatmode='maxprec')
-
 class TestReadingFunctions(unittest.TestCase):
     def setUp(self):
         self.expected_header = {u'dimension': 3,
