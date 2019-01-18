@@ -101,7 +101,7 @@ def _get_field_type(field, custom_field_map):
     elif field in ['space origin']:
         return 'double vector'
     elif field in ['measurement frame']:
-        return 'int matrix'
+        return 'double matrix'
     elif field in ['space directions']:
         return 'double matrix'
     else:
