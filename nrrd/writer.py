@@ -121,6 +121,9 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
         Data to save to the NRRD file
     detached_header : :obj:`bool`, optional
         Whether the header and data should be saved in separate files. Defaults to :obj:`False`
+    relative_data_path : :class:`bool`
+        whether the data file name in detached_header is saved with relative path
+        or absolute path. Defaults to :obj:`True`
     custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
