@@ -14,8 +14,8 @@ class TestWritingFunctions(unittest.TestCase):
         self.temp_write_dir = tempfile.mkdtemp('nrrdtest')
         self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH)
 
-        with open(RAW_DATA_FILE_PATH, 'rb') as f:
-            self.expected_data = f.read()
+        with open(RAW_DATA_FILE_PATH, 'rb') as fh:
+            self.expected_data = fh.read()
 
     def write_and_read_back_with_encoding(self, encoding, level=9):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_{}_{}.nrrd'.format(encoding, str(level)))
