@@ -78,8 +78,8 @@ def _get_field_type(field, custom_field_map):
         return 'double list'
     elif field in ['kinds', 'labels', 'units', 'space units', 'centerings']:
         return 'string list'
-    elif field in []:
-        return 'int vector'
+    # elif field in []:
+    #     return 'int vector'
     elif field in ['space origin']:
         return 'double vector'
     elif field in ['measurement frame']:
