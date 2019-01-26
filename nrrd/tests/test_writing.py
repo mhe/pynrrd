@@ -267,18 +267,6 @@ class TestWritingFunctions(unittest.TestCase):
         self.assertFalse('space dimension' in header)
         np.testing.assert_equal(data, x)
 
-    def test_write_detached_gz_xxx(self):
-        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
-        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.raw.gz')
-
-        nrrd.write(output_filename, self.data_input, {u'encoding': 'gz'}, detached_header=False)
-
-        # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
-        self.assertEqual(header['encoding'], 'gz')
-        self.assertEqual(header['data file'], output_data_filename)
-
 
 if __name__ == '__main__':
     unittest.main()
