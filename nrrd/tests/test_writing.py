@@ -19,8 +19,7 @@ class TestWritingFunctions(unittest.TestCase):
 
     def write_and_read_back_with_encoding(self, encoding, level=9):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_{}_{}.nrrd'.format(encoding, str(level)))
-        nrrd.write(output_filename, self.data_input, {u'encoding': encoding},
-                   compression_level=level)
+        nrrd.write(output_filename, self.data_input, {u'encoding': encoding}, compression_level=level)
 
         # Read back the same file
         data, header = nrrd.read(output_filename)
@@ -39,13 +38,12 @@ class TestWritingFunctions(unittest.TestCase):
         self.write_and_read_back_with_encoding(u'bzip2')
 
     def test_write_gz_level1(self):
-        import os
-        fn = self.write_and_read_back_with_encoding(u'gzip', level=1)
+        filename = self.write_and_read_back_with_encoding(u'gzip', level=1)
 
-        self.assertLess(os.path.getsize(GZ_NRRD_FILE_PATH), os.path.getsize(fn))
+        self.assertLess(os.path.getsize(GZ_NRRD_FILE_PATH), os.path.getsize(filename))
 
     def test_write_bzip2_level1(self):
-        fn = self.write_and_read_back_with_encoding(u'bzip2', level=1)
+        _ = self.write_and_read_back_with_encoding(u'bzip2', level=1)
 
         # note: we don't currently assert reduction here, because with the binary ball test data,
         #       the output size does not change at different bz2 levels.
