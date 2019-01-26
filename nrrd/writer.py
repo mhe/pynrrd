@@ -94,7 +94,7 @@ def _format_field_value(value, field_type):
 
 
 def write(filename, data, header={}, detached_header=False, custom_field_map=None,
-                          compression_level = 9):
+                          compression_level=9):
     """Write :class:`numpy.ndarray` to NRRD file
 
     The :obj:`filename` parameter specifies the absolute or relative filename to write the NRRD file to. If the
@@ -106,7 +106,8 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
     :obj:`header` is an optional parameter containing the fields and values to be added to the NRRD header.
 
     .. note::
-            The following fields are automatically generated based on the :obj:`data` parameter ignoring these values in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'.
+            The following fields are automatically generated based on the :obj:`data` parameter ignoring these values
+            in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'.
 
     .. note::
             The default encoding field used if not specified in :obj:`header` is 'gzip'.
@@ -248,7 +249,7 @@ def write(filename, data, header={}, detached_header=False, custom_field_map=Non
             _write_data(data, data_fh, header, compression_level=compression_level)
 
 
-def _write_data(data, fh, header, compression_level = None):
+def _write_data(data, fh, header, compression_level=None):
     if header['encoding'] == 'raw':
         # Convert the data into a string
         raw_data = data.tostring(order='F')
