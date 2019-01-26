@@ -177,17 +177,6 @@ class TestWritingFunctions(unittest.TestCase):
         self.assertEqual(header['encoding'], 'raw')
         self.assertEqual('data file' in header, False)
 
-    def test_write_detached_raw_odd_extension(self):
-        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nrrd2')
-
-        nrrd.write(output_data_filename, self.data_input, {u'encoding': 'raw'}, detached_header=True)
-
-        # Read back the same file
-        data, header = nrrd.read(output_data_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
-        self.assertEqual(header['encoding'], 'raw')
-        self.assertEqual('data file' in header, False)
-
     def test_write_fake_encoding(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
 
