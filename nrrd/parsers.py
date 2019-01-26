@@ -192,6 +192,8 @@ def parse_number_list(x, dtype=None):
     if dtype is None:
         number_list_trunc = number_list.astype(int)
 
+        # If there is no difference between the truncated number list and the number list, then that means that the
+        # number list was all integers and we can just return that
         if np.all((number_list - number_list_trunc) == 0):
             number_list = number_list_trunc
     elif dtype == int:
