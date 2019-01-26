@@ -291,11 +291,22 @@ class TestReadingFunctions(unittest.TestCase):
             header = nrrd.read_header(fh)
             np.testing.assert_equal(self.expected_header, header)
 
-            # Make the number of dimensions wrong
+            # Set the encoding to be incorrect
             header['encoding'] = 'fake'
 
             with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
                 nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_seek_backwards_raw(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set byte skip to be -1 to seek backwards
+            header['byte skip'] = -1
+
+            data = nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+            np.testing.assert_equal(data, self.expected_data)
 
 
 if __name__ == '__main__':
