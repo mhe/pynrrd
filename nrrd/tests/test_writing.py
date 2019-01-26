@@ -185,6 +185,7 @@ class TestWritingFunctions(unittest.TestCase):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
         output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.raw.gz')
 
+        # Data & header are still detached even though detached_header is False because the filename is .nhdr
         nrrd.write(output_filename, self.data_input, {u'encoding': 'gz'}, detached_header=False)
 
         # Read back the same file
@@ -197,6 +198,7 @@ class TestWritingFunctions(unittest.TestCase):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
         output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.raw.bz2')
 
+        # Data & header are still detached even though detached_header is False because the filename is .nhdr
         nrrd.write(output_filename, self.data_input, {u'encoding': 'bz2'}, detached_header=False)
 
         # Read back the same file
@@ -209,6 +211,7 @@ class TestWritingFunctions(unittest.TestCase):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
         output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.txt')
 
+        # Data & header are still detached even though detached_header is False because the filename is .nhdr
         nrrd.write(output_filename, self.data_input, {u'encoding': 'txt'}, detached_header=False)
 
         # Read back the same file
