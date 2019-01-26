@@ -122,8 +122,8 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
     detached_header : :obj:`bool`, optional
         Whether the header and data should be saved in separate files. Defaults to :obj:`False`
     relative_data_path : :class:`bool`
-        whether the data file name in detached_header is saved with relative path
-        or absolute path. Defaults to :obj:`True`
+        Whether the data file name in detached header is saved with a relative path or absolute path.
+        This parameter is ignored if there is no detached header. Defaults to :obj:`True`
     custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
@@ -186,12 +186,14 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
             else:
                 raise NRRDError('Invalid encoding specification while writing NRRD file: %s' % header['encoding'])
 
-            header['data file'] = os.path.basename(data_filename) if relative_data_path else os.path.abspath(data_filename)
+            header['data file'] = os.path.basename(data_filename) \
+                if relative_data_path else os.path.abspath(data_filename)
         else:
             data_filename = header['data file']
     elif filename.endswith('.nrrd') and detached_header:
         data_filename = filename
-        header['data file'] = os.path.basename(data_filename) if relative_data_path else os.path.abspath(data_filename)
+        header['data file'] = os.path.basename(data_filename) \
+            if relative_data_path else os.path.abspath(data_filename)
         filename = '%s.nhdr' % os.path.splitext(filename)[0]
     else:
         # Write header & data as one file
