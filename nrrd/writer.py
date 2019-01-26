@@ -122,7 +122,7 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
     detached_header : :obj:`bool`, optional
         Whether the header and data should be saved in separate files. Defaults to :obj:`False`
     relative_data_path : :class:`bool`
-        Whether the data file name in detached header is saved with a relative path or absolute path.
+        Whether the data filename in detached header is saved with a relative path or absolute path.
         This parameter is ignored if there is no detached header. Defaults to :obj:`True`
     custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
