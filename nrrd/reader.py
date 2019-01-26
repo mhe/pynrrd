@@ -157,6 +157,8 @@ def _determine_datatype(fields):
             np_typestring = '>' + np_typestring
         elif fields['endian'] == 'little':
             np_typestring = '<' + np_typestring
+        else:
+            raise NRRDError('Invalid endian value in header: "%s"' % fields['endian'])
 
     return np.dtype(np_typestring)
 

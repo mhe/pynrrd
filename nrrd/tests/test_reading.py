@@ -397,6 +397,17 @@ class TestReadingFunctions(unittest.TestCase):
             data = nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
             np.testing.assert_equal(data, self.expected_data.byteswap())
 
+    def test_invalid_endian(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set endianness to fake value
+            header['endian'] = 'fake'
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid endian value in header: "fake"'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
 
 if __name__ == '__main__':
     unittest.main()
