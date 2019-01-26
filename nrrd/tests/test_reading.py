@@ -107,8 +107,8 @@ class TestReadingFunctions(unittest.TestCase):
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_raw_header(self):
-        expected_header = {u'type': 'float', u'dimension': 3}
-        header = nrrd.read_header(('NRRD0005', 'type: float', 'dimension: 3'))
+        expected_header = {u'type': 'float', u'dimension': 3, u'min': 0, u'max': 35.4}
+        header = nrrd.read_header(('NRRD0005', 'type: float', 'dimension: 3', 'min: 0', 'max: 35.4'))
         self.assertEqual(expected_header, header)
 
         expected_header = {u'my extra info': u'my : colon-separated : values'}
