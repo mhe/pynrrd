@@ -244,6 +244,18 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(header, expected_header)
 
+    def test_invalid_custom_field(self):
+        expected_header = {u'dimension': 1,
+                           u'encoding': 'ASCII',
+                           u'sizes': [27],
+                           u'int': 24,
+                           u'type': 'unsigned char'}
+
+        custom_field_map = {'int': 'fake'}
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid field type given: fake'):
+            header = nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
+
 
 if __name__ == '__main__':
     unittest.main()
