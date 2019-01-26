@@ -350,6 +350,18 @@ class TestReadingFunctions(unittest.TestCase):
             with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
                 nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
+    def test_detached_header_no_filename(self):
+        self.expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+
+        with open(RAW_NHDR_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # No filename is specified for read_data
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Filename parameter must be specified when a relative data file'
+                                                        ' path is given'):
+                nrrd.read_data(header, fh)
+
 
 if __name__ == '__main__':
     unittest.main()
