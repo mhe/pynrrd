@@ -7,6 +7,7 @@ import numpy as np
 from nrrd.tests.util import *
 import nrrd
 
+
 class TestReadingFunctions(unittest.TestCase):
     def setUp(self):
         self.expected_header = {u'dimension': 3,
@@ -67,17 +68,17 @@ class TestReadingFunctions(unittest.TestCase):
 
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
-        
+
     def test_read_detached_header_and_data_with_byteskip_minus1(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
         expected_header[u'byte skip'] = -1
 
         data, header = nrrd.read(RAW_BYTESKIP_NHDR_FILE_PATH)
-        
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
-        
+
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
 
@@ -89,23 +90,21 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header[u'data file'] = 'BallBinary30x30x30.nii.gz'
 
         data, header = nrrd.read(GZ_BYTESKIP_NIFTI_NHDR_FILE_PATH)
-        
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
-        
+
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_detached_header_and_nifti_data(self):
-        
         with self.assertRaisesRegex(nrrd.NRRDError, 'Size of the data does not equal '
-            + 'the product of all the dimensions: 27000-27176=-176'):
+                                                    + 'the product of all the dimensions: 27000-27176=-176'):
             nrrd.read(GZ_NIFTI_NHDR_FILE_PATH)
-            
+
     def test_read_detached_header_and_data_with_byteskip_minus5(self):
-        
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid byteskip, allowed values '
-            +'are greater than or equal to -1'):
+                                                    + 'are greater than or equal to -1'):
             nrrd.read(RAW_INVALID_BYTESKIP_NHDR_FILE_PATH)
 
     def test_read_header_and_gz_compressed_data(self):
@@ -119,7 +118,7 @@ class TestReadingFunctions(unittest.TestCase):
 
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
-        
+
     def test_read_header_and_gz_compressed_data_with_byteskip_minus1(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'gzip'
@@ -130,7 +129,7 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
-        
+
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
 
@@ -230,10 +229,9 @@ class TestReadingFunctions(unittest.TestCase):
                                                          [np.NaN, np.NaN, np.NaN]]),
                            'endian': 'little',
                            'encoding': 'raw',
-                           'measurement frame': np.array([[1.0001,         0.,      0.],
-                                                          [0., 1.0000000006,      0.],
+                           'measurement frame': np.array([[1.0001, 0., 0.],
+                                                          [0., 1.0000000006, 0.],
                                                           [0., 0., 1.000000000000009]])}
-
 
         data, header = nrrd.read(RAW_4D_NRRD_FILE_PATH)
 
@@ -310,7 +308,7 @@ class TestReadingFunctions(unittest.TestCase):
             nrrd.read_header(('invalid magic line', 'my extra info:=my : colon-separated : values'))
 
     def test_invalid_magic_line2(self):
-        with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported NRRD file version \\(version: 2000\\). This library ' 
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported NRRD file version \\(version: 2000\\). This library '
                                                     'only supports v5 and below.'):
             nrrd.read_header(('NRRD2000', 'my extra info:=my : colon-separated : values'))
 
@@ -351,17 +349,6 @@ class TestReadingFunctions(unittest.TestCase):
 
             with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
                 nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
-
-    def test_seek_backwards_raw(self):
-        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
-            header = nrrd.read_header(fh)
-            np.testing.assert_equal(self.expected_header, header)
-
-            # Set byte skip to be -1 to seek backwards
-            header['byte skip'] = -1
-
-            data = nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
-            np.testing.assert_equal(data, self.expected_data)
 
 
 if __name__ == '__main__':
