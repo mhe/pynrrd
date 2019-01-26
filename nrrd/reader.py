@@ -2,8 +2,8 @@
 import bz2
 import os
 import re
-import zlib
 import warnings
+import zlib
 from collections import OrderedDict
 
 from nrrd.parsers import *
@@ -168,7 +168,7 @@ def _validate_magic_line(line):
             raise NRRDError('Unsupported NRRD file version (version: %i). This library only supports v%i and below.'
                             % (version, 5))
     except ValueError:
-        raise NRRDError('Invalid NRRD magic line: %s' % (line,))
+        raise NRRDError('Invalid NRRD magic line: %s' % line)
 
     return len(line)
 
@@ -314,7 +314,8 @@ def read_data(header, fh=None, filename=None):
             raise NRRDError('Header is missing required field: "%s".' % field)
 
     if header['dimension'] != len(header['sizes']):
-        raise NRRDError('Number of elements in sizes does not match dimension')
+        raise NRRDError('Number of elements in sizes does not match dimension. Dimension: %i, len(sizes): %i' % (
+            header['dimension'], len(header['sizes'])))
 
     # Determine the data type from the header
     dtype = _determine_datatype(header)

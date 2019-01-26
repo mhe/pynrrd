@@ -250,6 +250,53 @@ class TestReadingFunctions(unittest.TestCase):
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid field type given: fake'):
             nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
 
+    def test_invalid_magic_line(self):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid NRRD magic line. Is this an NRRD file?'):
+            nrrd.read_header(('invalid magic line', 'my extra info:=my : colon-separated : values'))
+
+    def test_invalid_magic_line2(self):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported NRRD file version \\(version: 2000\\). This library ' 
+                                                    'only supports v5 and below.'):
+            nrrd.read_header(('NRRD2000', 'my extra info:=my : colon-separated : values'))
+
+    def test_invalid_magic_line3(self):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid NRRD magic line: NRRDnono'):
+            nrrd.read_header(('NRRDnono', 'my extra info:=my : colon-separated : values'))
+
+    def test_missing_required_field(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Delete required field
+            del header['type']
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: "type".'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_wrong_sizes(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Make the number of dimensions wrong
+            header['dimension'] = 2
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Number of elements in sizes does not match dimension. '
+                                                        'Dimension: 2, len\\(sizes\\): 3'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_invalid_encoding(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Make the number of dimensions wrong
+            header['encoding'] = 'fake'
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
 
 if __name__ == '__main__':
     unittest.main()
