@@ -362,6 +362,41 @@ class TestReadingFunctions(unittest.TestCase):
                                                         ' path is given'):
                 nrrd.read_data(header, fh)
 
+    def test_invalid_lineskip(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set the line skip to be incorrect
+            header['line skip'] = -1
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid lineskip, allowed values are greater than or equal to'
+                                                        ' 0'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_missing_endianness(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Delete the endian field from header
+            # Since our data is short (itemsize = 2), we should receive an error
+            del header['endian']
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: "endian".'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_big_endian(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set endianness to big to verify it is doing correctly
+            header['endian'] = 'big'
+
+            data = nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+            np.testing.assert_equal(data, self.expected_data.byteswap())
+
 
 if __name__ == '__main__':
     unittest.main()
