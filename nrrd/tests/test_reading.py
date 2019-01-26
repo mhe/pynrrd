@@ -254,7 +254,7 @@ class TestReadingFunctions(unittest.TestCase):
         custom_field_map = {'int': 'fake'}
 
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid field type given: fake'):
-            header = nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
+            nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
 
 
 if __name__ == '__main__':
