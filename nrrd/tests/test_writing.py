@@ -267,6 +267,13 @@ class TestWritingFunctions(unittest.TestCase):
         self.assertFalse('space dimension' in header)
         np.testing.assert_equal(data, x)
 
+    def test_unsupported_encoding(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_unsupported_encoding.nrrd')
+        header = {'encoding': 'fake'}
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
+            nrrd.write(output_filename, np.zeros((3, 9)), header)
+
 
 if __name__ == '__main__':
     unittest.main()
