@@ -16,9 +16,27 @@ _READ_CHUNKSIZE = 2 ** 20
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
-# Duplicated fields are prohibited by the spec, but do occur in the wild.
-# Set True to allow duplicate fields, with a warning.
 ALLOW_DUPLICATE_FIELD = False
+"""Allow duplicate header fields when reading NRRD files
+
+When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as 
+:obj:`True` will instead show a warning.
+
+Example:
+    Reading a NRRD file with duplicated header field 'space' with field set to :obj:`False`.
+
+    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
+    nrrd.errors.NRRDError: Duplicate header field: 'space'
+
+    Set the field as :obj:`True` to receive a warning instead.
+
+    >>> nrrd.reader.ALLOW_DUPLICATE_FIELD = True
+    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
+    UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)
+
+Note:
+    Duplicated fields are prohibited by the NRRD file specification.
+"""
 
 _TYPEMAP_NRRD2NUMPY = {
     'signed char': 'i1',
@@ -84,7 +102,7 @@ def _get_field_type(field, custom_field_map):
     elif field in ['space origin']:
         return 'double vector'
     elif field in ['measurement frame']:
-        return 'int matrix'
+        return 'double matrix'
     elif field in ['space directions']:
         return 'double matrix'
     else:
@@ -341,22 +359,30 @@ def read_data(header, fh=None, filename=None):
     # Get the total number of data points by multiplying the size of each dimension together
     total_data_points = header['sizes'].prod()
 
-    # If encoding is raw and byte skip is -1, then seek backwards to the data
-    # Otherwise skip the number of lines requested
-    if header['encoding'] == 'raw' and byte_skip == -1:
-        fh.seek(-dtype.itemsize * total_data_points, 2)
-    else:
+    # Skip the number of lines requested when line_skip >= 0
+    # Irrespective of the NRRD file having attached/detached header
+    # Lines are skipped before getting to the beginning of the data
+    if line_skip >= 0:
         for _ in range(line_skip):
             fh.readline()
-
-    # If a compression encoding is used, then byte skip AFTER decompressing
-    if header['encoding'] == 'raw':
-        # Skip the requested number of bytes and then parse the data using NumPy
+    else:
+        raise NRRDError('Invalid lineskip, allowed values are greater than or equal to 0')
+        
+    # Skip the requested number of bytes or seek backward, and then parse the data using NumPy
+    if byte_skip < -1:
+        raise NRRDError('Invalid byteskip, allowed values are greater than or equal to -1')
+    elif byte_skip >= 0:
         fh.seek(byte_skip, os.SEEK_CUR)
+    elif byte_skip == -1 and header['encoding'] not in ['gzip', 'gz', 'bzip2', 'bz2']:
+        fh.seek(-dtype.itemsize * total_data_points, os.SEEK_END)
+    else:
+        # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
+        byte_skip = -dtype.itemsize * total_data_points
+        
+    # If a compression encoding is used, then byte skip AFTER decompressing
+    if header['encoding'] == 'raw':             
         data = np.fromfile(fh, dtype)
     elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-        # Skip the requested number of bytes and then parse the data using NumPy
-        fh.seek(byte_skip, os.SEEK_CUR)
         data = np.fromfile(fh, dtype, sep=' ')
     else:
         # Handle compressed data now
@@ -425,7 +451,6 @@ def read(filename, custom_field_map=None):
     """
 
     """Read a NRRD file and return a tuple (data, header)."""
-
     with open(filename, 'rb') as fh:
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename)
