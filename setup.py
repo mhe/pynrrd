@@ -7,8 +7,8 @@ from nrrd._version import __version__
 currentPath = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(os.path.join(currentPath, 'README.rst'), 'r') as f:
-    longDescription = f.read()
+with open(os.path.join(currentPath, 'README.rst'), 'r') as fh:
+    longDescription = fh.read()
 
 longDescription = '\n' + longDescription
 

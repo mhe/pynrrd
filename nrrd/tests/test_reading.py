@@ -22,8 +22,8 @@ class TestReadingFunctions(unittest.TestCase):
         self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30), order='F')
 
     def test_read_header_only(self):
-        with open(RAW_NRRD_FILE_PATH, 'rb') as f:
-            header = nrrd.read_header(f)
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
 
         # np.testing.assert_equal is used to compare the headers because it will appropriately handle each
         # value in the structure. Since some of the values can be Numpy arrays inside the headers, this must be
@@ -42,8 +42,8 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
 
-        with open(RAW_NHDR_FILE_PATH, 'rb') as f:
-            header = nrrd.read_header(f)
+        with open(RAW_NHDR_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
 
         np.testing.assert_equal(self.expected_header, header)
 
