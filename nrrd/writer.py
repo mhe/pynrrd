@@ -190,6 +190,7 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
             header['data file'] = os.path.basename(data_filename) \
                 if relative_data_path else os.path.abspath(data_filename)
         else:
+            # TODO This will cause issues for relative data files because it will not save in the correct spot
             data_filename = header['data file']
     elif filename.endswith('.nrrd') and detached_header:
         data_filename = filename

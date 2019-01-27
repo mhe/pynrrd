@@ -7,6 +7,7 @@ import numpy as np
 from nrrd.tests.util import *
 import nrrd
 
+
 class TestReadingFunctions(unittest.TestCase):
     def setUp(self):
         self.expected_header = {u'dimension': 3,
@@ -67,17 +68,17 @@ class TestReadingFunctions(unittest.TestCase):
 
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
-        
+
     def test_read_detached_header_and_data_with_byteskip_minus1(self):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
         expected_header[u'byte skip'] = -1
 
         data, header = nrrd.read(RAW_BYTESKIP_NHDR_FILE_PATH)
-        
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
-        
+
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
 
@@ -89,23 +90,21 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header[u'data file'] = 'BallBinary30x30x30.nii.gz'
 
         data, header = nrrd.read(GZ_BYTESKIP_NIFTI_NHDR_FILE_PATH)
-        
+
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
-        
+
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_detached_header_and_nifti_data(self):
-        
         with self.assertRaisesRegex(nrrd.NRRDError, 'Size of the data does not equal '
-            + 'the product of all the dimensions: 27000-27176=-176'):
+                                                    + 'the product of all the dimensions: 27000-27176=-176'):
             nrrd.read(GZ_NIFTI_NHDR_FILE_PATH)
-            
+
     def test_read_detached_header_and_data_with_byteskip_minus5(self):
-        
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid byteskip, allowed values '
-            +'are greater than or equal to -1'):
+                                                    + 'are greater than or equal to -1'):
             nrrd.read(RAW_INVALID_BYTESKIP_NHDR_FILE_PATH)
 
     def test_read_header_and_gz_compressed_data(self):
@@ -119,7 +118,7 @@ class TestReadingFunctions(unittest.TestCase):
 
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
-        
+
     def test_read_header_and_gz_compressed_data_with_byteskip_minus1(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'gzip'
@@ -130,7 +129,7 @@ class TestReadingFunctions(unittest.TestCase):
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
-        
+
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
 
@@ -160,8 +159,8 @@ class TestReadingFunctions(unittest.TestCase):
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_raw_header(self):
-        expected_header = {u'type': 'float', u'dimension': 3}
-        header = nrrd.read_header(('NRRD0005', 'type: float', 'dimension: 3'))
+        expected_header = {u'type': 'float', u'dimension': 3, u'min': 0, u'max': 35.4}
+        header = nrrd.read_header(('NRRD0005', 'type: float', 'dimension: 3', 'min: 0', 'max: 35.4'))
         self.assertEqual(expected_header, header)
 
         expected_header = {u'my extra info': u'my : colon-separated : values'}
@@ -230,10 +229,9 @@ class TestReadingFunctions(unittest.TestCase):
                                                          [np.NaN, np.NaN, np.NaN]]),
                            'endian': 'little',
                            'encoding': 'raw',
-                           'measurement frame': np.array([[1.0001,         0.,      0.],
-                                                          [0., 1.0000000006,      0.],
+                           'measurement frame': np.array([[1.0001, 0., 0.],
+                                                          [0., 1.0000000006, 0.],
                                                           [0., 0., 1.000000000000009]])}
-
 
         data, header = nrrd.read(RAW_4D_NRRD_FILE_PATH)
 
@@ -298,6 +296,117 @@ class TestReadingFunctions(unittest.TestCase):
         header = nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
 
         np.testing.assert_equal(header, expected_header)
+
+    def test_invalid_custom_field(self):
+        custom_field_map = {'int': 'fake'}
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid field type given: fake'):
+            nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
+
+    def test_invalid_magic_line(self):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid NRRD magic line. Is this an NRRD file?'):
+            nrrd.read_header(('invalid magic line', 'my extra info:=my : colon-separated : values'))
+
+    def test_invalid_magic_line2(self):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported NRRD file version \\(version: 2000\\). This library '
+                                                    'only supports v5 and below.'):
+            nrrd.read_header(('NRRD2000', 'my extra info:=my : colon-separated : values'))
+
+    def test_invalid_magic_line3(self):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid NRRD magic line: NRRDnono'):
+            nrrd.read_header(('NRRDnono', 'my extra info:=my : colon-separated : values'))
+
+    def test_missing_required_field(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Delete required field
+            del header['type']
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: "type".'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_wrong_sizes(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Make the number of dimensions wrong
+            header['dimension'] = 2
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Number of elements in sizes does not match dimension. '
+                                                        'Dimension: 2, len\\(sizes\\): 3'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_invalid_encoding(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set the encoding to be incorrect
+            header['encoding'] = 'fake'
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_detached_header_no_filename(self):
+        self.expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+
+        with open(RAW_NHDR_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # No filename is specified for read_data
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Filename parameter must be specified when a relative data file'
+                                                        ' path is given'):
+                nrrd.read_data(header, fh)
+
+    def test_invalid_lineskip(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set the line skip to be incorrect
+            header['line skip'] = -1
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid lineskip, allowed values are greater than or equal to'
+                                                        ' 0'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_missing_endianness(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Delete the endian field from header
+            # Since our data is short (itemsize = 2), we should receive an error
+            del header['endian']
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: "endian".'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+    def test_big_endian(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set endianness to big to verify it is doing correctly
+            header['endian'] = 'big'
+
+            data = nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+            np.testing.assert_equal(data, self.expected_data.byteswap())
+
+    def test_invalid_endian(self):
+        with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+            header = nrrd.read_header(fh)
+            np.testing.assert_equal(self.expected_header, header)
+
+            # Set endianness to fake value
+            header['endian'] = 'fake'
+
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid endian value in header: "fake"'):
+                nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
 
 if __name__ == '__main__':

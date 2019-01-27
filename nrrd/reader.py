@@ -96,8 +96,9 @@ def _get_field_type(field, custom_field_map):
         return 'double list'
     elif field in ['kinds', 'labels', 'units', 'space units', 'centerings']:
         return 'string list'
-    elif field in []:
-        return 'int vector'
+    # No int vector fields as of now
+    # elif field in []:
+    #     return 'int vector'
     elif field in ['space origin']:
         return 'double vector'
     elif field in ['measurement frame']:
@@ -156,6 +157,8 @@ def _determine_datatype(fields):
             np_typestring = '>' + np_typestring
         elif fields['endian'] == 'little':
             np_typestring = '<' + np_typestring
+        else:
+            raise NRRDError('Invalid endian value in header: "%s"' % fields['endian'])
 
     return np.dtype(np_typestring)
 
@@ -185,7 +188,7 @@ def _validate_magic_line(line):
             raise NRRDError('Unsupported NRRD file version (version: %i). This library only supports v%i and below.'
                             % (version, 5))
     except ValueError:
-        raise NRRDError('Invalid NRRD magic line: %s' % (line,))
+        raise NRRDError('Invalid NRRD magic line: %s' % line)
 
     return len(line)
 
@@ -331,7 +334,8 @@ def read_data(header, fh=None, filename=None):
             raise NRRDError('Header is missing required field: "%s".' % field)
 
     if header['dimension'] != len(header['sizes']):
-        raise NRRDError('Number of elements in sizes does not match dimension')
+        raise NRRDError('Number of elements in sizes does not match dimension. Dimension: %i, len(sizes): %i' % (
+            header['dimension'], len(header['sizes'])))
 
     # Determine the data type from the header
     dtype = _determine_datatype(header)
