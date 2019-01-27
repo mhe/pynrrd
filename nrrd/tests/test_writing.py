@@ -156,7 +156,8 @@ class TestWritingFunctions(unittest.TestCase):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
         output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nrrd')
 
-        nrrd.write(output_data_filename, self.data_input, {u'encoding': 'raw'}, detached_header=True)
+        nrrd.write(output_data_filename, self.data_input, {u'encoding': 'raw'}, detached_header=True,
+                   relative_data_path=False)
 
         # Read back the same file
         data, header = nrrd.read(output_filename)
@@ -186,7 +187,8 @@ class TestWritingFunctions(unittest.TestCase):
         output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.raw.gz')
 
         # Data & header are still detached even though detached_header is False because the filename is .nhdr
-        nrrd.write(output_filename, self.data_input, {u'encoding': 'gz'}, detached_header=False)
+        nrrd.write(output_filename, self.data_input, {u'encoding': 'gz'}, detached_header=False,
+                   relative_data_path=False)
 
         # Read back the same file
         data, header = nrrd.read(output_filename)
@@ -196,7 +198,6 @@ class TestWritingFunctions(unittest.TestCase):
 
     def test_write_detached_bz2(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
-        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.raw.bz2')
 
         # Data & header are still detached even though detached_header is False because the filename is .nhdr
         nrrd.write(output_filename, self.data_input, {u'encoding': 'bz2'}, detached_header=False)
@@ -205,11 +206,10 @@ class TestWritingFunctions(unittest.TestCase):
         data, header = nrrd.read(output_filename)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
         self.assertEqual(header['encoding'], 'bz2')
-        self.assertEqual(header['data file'], output_data_filename)
+        self.assertEqual(header['data file'], 'testfile_detached_raw.raw.bz2')
 
     def test_write_detached_ascii(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
-        output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.txt')
 
         # Data & header are still detached even though detached_header is False because the filename is .nhdr
         nrrd.write(output_filename, self.data_input, {u'encoding': 'txt'}, detached_header=False)
@@ -218,7 +218,7 @@ class TestWritingFunctions(unittest.TestCase):
         data, header = nrrd.read(output_filename)
         self.assertEqual(self.expected_data, data.tostring(order='F'))
         self.assertEqual(header['encoding'], 'txt')
-        self.assertEqual(header['data file'], output_data_filename)
+        self.assertEqual(header['data file'], 'testfile_detached_raw.txt')
 
 
 if __name__ == '__main__':
