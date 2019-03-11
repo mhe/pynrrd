@@ -93,7 +93,7 @@ def _format_field_value(value, field_type):
         raise NRRDError('Invalid field type given: %s' % field_type)
 
 
-def write(filename, data, header={}, detached_header=False, relative_data_path=True, custom_field_map=None,
+def write(filename, data, header=None, detached_header=False, relative_data_path=True, custom_field_map=None,
                           compression_level=9):
     """Write :class:`numpy.ndarray` to NRRD file
 
@@ -137,6 +137,9 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
     --------
     :meth:`read`, :meth:`read_header`, :meth:`read_data`
     """
+
+    if header is None:
+        header = {}
 
     # Infer a number of fields from the NumPy array and overwrite values in the header dictionary.
     # Get type string identifier from the NumPy datatype
