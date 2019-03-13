@@ -107,7 +107,9 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 
     .. note::
             The following fields are automatically generated based on the :obj:`data` parameter ignoring these values
-            in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'.
+            in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'. In addition, the generated fields will be
+            added to the given :obj:`header`. Thus, one can check the generated fields by viewing the passed
+            :obj:`header`.
 
     .. note::
             The default encoding field used if not specified in :obj:`header` is 'gzip'.
