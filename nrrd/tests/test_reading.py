@@ -8,7 +8,7 @@ from nrrd.tests.util import *
 import nrrd
 
 
-class TestReadingFunctions(unittest.TestCase):
+class TestReadingFunctions(object):
     def setUp(self):
         self.expected_header = {u'dimension': 3,
                                 u'encoding': 'raw',
@@ -20,7 +20,7 @@ class TestReadingFunctions(unittest.TestCase):
                                 u'space origin': np.array([0, 0, 0]),
                                 u'type': 'short'}
 
-        self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30), order='F')
+        self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30), order=self.index_order)
 
     def test_read_header_only(self):
         with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
@@ -49,7 +49,7 @@ class TestReadingFunctions(unittest.TestCase):
         np.testing.assert_equal(self.expected_header, header)
 
     def test_read_header_and_data_filename(self):
-        data, header = nrrd.read(RAW_NRRD_FILE_PATH)
+        data, header = nrrd.read(RAW_NRRD_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -61,7 +61,7 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header = self.expected_header
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
 
-        data, header = nrrd.read(RAW_NHDR_FILE_PATH)
+        data, header = nrrd.read(RAW_NHDR_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -74,7 +74,7 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
         expected_header[u'byte skip'] = -1
 
-        data, header = nrrd.read(RAW_BYTESKIP_NHDR_FILE_PATH)
+        data, header = nrrd.read(RAW_BYTESKIP_NHDR_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -89,7 +89,7 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header[u'encoding'] = 'gzip'
         expected_header[u'data file'] = 'BallBinary30x30x30.nii.gz'
 
-        data, header = nrrd.read(GZ_BYTESKIP_NIFTI_NHDR_FILE_PATH)
+        data, header = nrrd.read(GZ_BYTESKIP_NIFTI_NHDR_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -100,18 +100,18 @@ class TestReadingFunctions(unittest.TestCase):
     def test_read_detached_header_and_nifti_data(self):
         with self.assertRaisesRegex(nrrd.NRRDError, 'Size of the data does not equal '
                                                     + 'the product of all the dimensions: 27000-27176=-176'):
-            nrrd.read(GZ_NIFTI_NHDR_FILE_PATH)
+            nrrd.read(GZ_NIFTI_NHDR_FILE_PATH, index_order=self.index_order)
 
     def test_read_detached_header_and_data_with_byteskip_minus5(self):
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid byteskip, allowed values '
                                                     + 'are greater than or equal to -1'):
-            nrrd.read(RAW_INVALID_BYTESKIP_NHDR_FILE_PATH)
+            nrrd.read(RAW_INVALID_BYTESKIP_NHDR_FILE_PATH, index_order=self.index_order)
 
     def test_read_header_and_gz_compressed_data(self):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'gzip'
 
-        data, header = nrrd.read(GZ_NRRD_FILE_PATH)
+        data, header = nrrd.read(GZ_NRRD_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -125,7 +125,7 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header[u'type'] = 'int16'
         expected_header[u'byte skip'] = -1
 
-        data, header = nrrd.read(GZ_BYTESKIP_NRRD_FILE_PATH)
+        data, header = nrrd.read(GZ_BYTESKIP_NRRD_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -137,7 +137,7 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header = self.expected_header
         expected_header[u'encoding'] = 'bzip2'
 
-        data, header = nrrd.read(BZ2_NRRD_FILE_PATH)
+        data, header = nrrd.read(BZ2_NRRD_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -150,7 +150,7 @@ class TestReadingFunctions(unittest.TestCase):
         expected_header[u'encoding'] = 'gzip'
         expected_header[u'line skip'] = 3
 
-        data, header = nrrd.read(GZ_LINESKIP_NRRD_FILE_PATH)
+        data, header = nrrd.read(GZ_LINESKIP_NRRD_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(self.expected_header, header)
         np.testing.assert_equal(data, self.expected_data)
@@ -192,7 +192,7 @@ class TestReadingFunctions(unittest.TestCase):
                            u'spacings': [1.0458000000000001],
                            u'type': 'unsigned char'}
 
-        data, header = nrrd.read(ASCII_1D_NRRD_FILE_PATH)
+        data, header = nrrd.read(ASCII_1D_NRRD_FILE_PATH, index_order=self.index_order)
 
         self.assertEqual(header, expected_header)
         np.testing.assert_equal(data.dtype, np.uint8)
@@ -209,11 +209,13 @@ class TestReadingFunctions(unittest.TestCase):
                            u'spacings': [1.0458000000000001, 2],
                            u'type': 'unsigned short'}
 
-        data, header = nrrd.read(ASCII_2D_NRRD_FILE_PATH)
+        data, header = nrrd.read(ASCII_2D_NRRD_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.uint16)
-        np.testing.assert_equal(data, np.arange(1, 28).reshape(3, 9, order='F'))
+
+        expected_shape = (3, 9) if self.index_order == 'F' else (9, 3)
+        np.testing.assert_equal(data, np.arange(1, 28).reshape(expected_shape, order=self.index_order))
 
         # Test that the data read is able to be edited
         self.assertTrue(data.flags['WRITEABLE'])
@@ -233,7 +235,7 @@ class TestReadingFunctions(unittest.TestCase):
                                                           [0., 1.0000000006, 0.],
                                                           [0., 0., 1.000000000000009]])}
 
-        data, header = nrrd.read(RAW_4D_NRRD_FILE_PATH)
+        data, header = nrrd.read(RAW_4D_NRRD_FILE_PATH, index_order=self.index_order)
 
         np.testing.assert_equal(header, expected_header)
         np.testing.assert_equal(data.dtype, np.float64)
@@ -408,6 +410,12 @@ class TestReadingFunctions(unittest.TestCase):
             with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid endian value in header: "fake"'):
                 nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
+
+class TestWritingFunctionsFortran(TestReadingFunctions, unittest.TestCase):
+    index_order = 'F'
+
+class TestWritingFunctionsC(TestReadingFunctions, unittest.TestCase):
+    index_order = 'C'
 
 if __name__ == '__main__':
     unittest.main()
