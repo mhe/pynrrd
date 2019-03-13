@@ -411,10 +411,10 @@ class TestReadingFunctions(object):
                 nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
 
-class TestWritingFunctionsFortran(TestReadingFunctions, unittest.TestCase):
+class TestReadingFunctionsFortran(TestReadingFunctions, unittest.TestCase):
     index_order = 'F'
 
-class TestWritingFunctionsC(TestReadingFunctions, unittest.TestCase):
+class TestReadingFunctionsC(TestReadingFunctions, unittest.TestCase):
     index_order = 'C'
 
 if __name__ == '__main__':
