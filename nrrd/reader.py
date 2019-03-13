@@ -298,7 +298,7 @@ def read_header(file, custom_field_map=None):
     return header
 
 
-def read_data(header, fh=None, filename=None):
+def read_data(header, fh=None, filename=None, index_order='F'):
     """Read data from file into :class:`numpy.ndarray`
 
     The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
@@ -317,6 +317,8 @@ def read_data(header, fh=None, filename=None):
     filename : :class:`str`, optional
         Filename of the header file. Only necessary if data is detached from the header. This is used to get the
         absolute data path.
+    index_order : :class:`str`, optional
+        Specifies the index ordering of the outputted array, either 'F' (Fortran order) or 'C' (C order).
 
     Returns
     -------
@@ -327,6 +329,9 @@ def read_data(header, fh=None, filename=None):
     --------
     :meth:`read`, :meth:`read_header`
     """
+
+    if index_order not in ['F', 'C']:
+        raise NRRDError('Invalid index order')
 
     # Check that the required fields are in the header
     for field in _NRRD_REQUIRED_FIELDS:
@@ -420,14 +425,21 @@ def read_data(header, fh=None, filename=None):
         raise NRRDError('Size of the data does not equal the product of all the dimensions: {0}-{1}={2}'
                         .format(total_data_points, data.size, total_data_points - data.size))
 
-    # Eliminate need to reverse order of dimensions. NRRD's data layout is the same as what Numpy calls 'Fortran'
-    # order, where the first index is the one that changes fastest and last index changes slowest
-    data = np.reshape(data, tuple(header['sizes']), order='F')
+    # In the NRRD header, the fields are specified in Fortran order, i.e, the first index is the one that changes
+    # fastest and last index changes slowest. This needs to be taken into consideration since numpy uses C-order
+    # indexing.
+    
+    # The array shape from NRRD (x,y,z) needs to be reversed as numpy expects (z,y,x).
+    data = np.reshape(data, tuple(header['sizes'][::-1]))
+
+    # Transpose data to enable Fortran indexing if requested.
+    if index_order == 'F':
+        data = data.T
 
     return data
 
 
-def read(filename, custom_field_map=None):
+def read(filename, custom_field_map=None, index_order='F'):
     """Read a NRRD file and return the header and data
 
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
@@ -439,6 +451,8 @@ def read(filename, custom_field_map=None):
     custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
+    index_order : :class: `str`, optional
+        Specifies the index ordering of the outputted array, either 'F' (Fortran order) or 'C' (C order).
 
     Returns
     -------
@@ -455,6 +469,6 @@ def read(filename, custom_field_map=None):
     """Read a NRRD file and return a tuple (data, header)."""
     with open(filename, 'rb') as fh:
         header = read_header(fh, custom_field_map)
-        data = read_data(header, fh, filename)
+        data = read_data(header, fh, filename, index_order)
 
         return data, header
