@@ -159,9 +159,15 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     if 'space' in header.keys() and 'space dimension' in header.keys():
         del header['space dimension']
 
-    # Update the dimension and sizes fields in the header based on the data
+    # Update the dimension and sizes fields in the header based on the data. Since NRRD expects meta data to be in
+    # Fortran order we are required to reverse the shape in the case of the array being in C order. E.g., data was read
+    # using index_order='C'.
     header['dimension'] = data.ndim
-    header['sizes'] = list(data.shape)
+
+    if np.isfortran(data):
+        header['sizes'] = list(data.shape)
+    else:
+        header['sizes'] = list(data.shape[::-1])
 
     # The default encoding is 'gzip'
     if 'encoding' not in header:
@@ -263,19 +269,17 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 def _write_data(data, fh, header, compression_level=None):
     if header['encoding'] == 'raw':
         # Convert the data into a string
-        raw_data = data.tostring(order='F')
+        raw_data = data.tostring(order='A')
 
         # Write the raw data directly to the file
         fh.write(raw_data)
     elif header['encoding'].lower() in ['ascii', 'text', 'txt']:
-        # savetxt only works for 1D and 2D arrays, so reshape any > 2 dim arrays into one long 1D array
-        if data.ndim > 2:
-            np.savetxt(fh, data.ravel(order='F'), '%.17g')
-        else:
-            np.savetxt(fh, data.T, '%.17g')
+        # Always save ASCII as a single contiguous array to avoid problems with ordering.
+        # Ravel will order the elements depending on the underlying order of the array.
+        np.savetxt(fh, data.ravel(order='A'), '%.17g')
     else:
         # Convert the data into a string
-        raw_data = data.tostring(order='F')
+        raw_data = data.tostring(order='A')
 
         # Construct the compressor object based on encoding
         if header['encoding'] in ['gzip', 'gz']:

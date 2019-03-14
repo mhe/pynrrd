@@ -9,10 +9,10 @@ from nrrd.tests.util import *
 import nrrd
 
 
-class TestWritingFunctions(unittest.TestCase):
+class TestWritingFunctions(object):
     def setUp(self):
         self.temp_write_dir = tempfile.mkdtemp('nrrdtest')
-        self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH)
+        self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH, index_order=self.index_order)
 
         with open(RAW_DATA_FILE_PATH, 'rb') as fh:
             self.expected_data = fh.read()
@@ -22,8 +22,8 @@ class TestWritingFunctions(unittest.TestCase):
         nrrd.write(output_filename, self.data_input, {u'encoding': encoding}, compression_level=level)
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
         self.assertEqual(header['encoding'], encoding)
 
         return output_filename
@@ -33,8 +33,8 @@ class TestWritingFunctions(unittest.TestCase):
         nrrd.write(output_filename, self.data_input)
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
 
     def test_write_raw(self):
         self.write_and_read_back_with_encoding(u'raw')
@@ -64,36 +64,36 @@ class TestWritingFunctions(unittest.TestCase):
         nrrd.write(output_filename, x, {u'encoding': 'ascii'})
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
         self.assertEqual(header['encoding'], 'ascii')
         np.testing.assert_equal(data, x)
 
     def test_write_ascii_2d(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_2d.nrrd')
 
-        x = np.arange(1, 28).reshape(3, 9, order='F')
+        x = np.arange(1, 28).reshape(3, 9, order=self.index_order)
         nrrd.write(output_filename, x, {u'encoding': 'ascii'})
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
         self.assertEqual(header['encoding'], 'ascii')
         np.testing.assert_equal(data, x)
 
     def test_write_ascii_3d(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_3d.nrrd')
 
-        x = np.arange(1, 28).reshape(3, 3, 3, order='F')
+        x = np.arange(1, 28).reshape(3, 3, 3, order=self.index_order)
         nrrd.write(output_filename, x, {u'encoding': 'ascii'})
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
         self.assertEqual(header['encoding'], 'ascii')
         np.testing.assert_equal(x, data)
 
     def test_write_custom_fields_without_custom_field_map(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_custom_fields.nrrd')
 
-        data, header = nrrd.read(ASCII_1D_CUSTOM_FIELDS_FILE_PATH)
+        data, header = nrrd.read(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, index_order=self.index_order)
         nrrd.write(output_filename, data, header)
 
         with open(output_filename, 'r') as fh:
@@ -133,7 +133,7 @@ class TestWritingFunctions(unittest.TestCase):
                             'int matrix': 'int matrix',
                             'double matrix': 'double matrix'}
 
-        data, header = nrrd.read(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map)
+        data, header = nrrd.read(ASCII_1D_CUSTOM_FIELDS_FILE_PATH, custom_field_map, index_order=self.index_order)
         nrrd.write(output_filename, data, header, custom_field_map=custom_field_map)
 
         with open(output_filename, 'r') as fh:
@@ -168,8 +168,8 @@ class TestWritingFunctions(unittest.TestCase):
                    relative_data_path=False)
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
         self.assertEqual(header['encoding'], 'raw')
         self.assertEqual(header['data file'], output_data_filename)
 
@@ -179,8 +179,8 @@ class TestWritingFunctions(unittest.TestCase):
         nrrd.write(output_data_filename, self.data_input, {u'encoding': 'raw'}, detached_header=True)
 
         # Read back the same file
-        data, header = nrrd.read(output_data_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_data_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
         self.assertEqual(header['encoding'], 'raw')
         self.assertEqual('data file' in header, False)
 
@@ -198,8 +198,8 @@ class TestWritingFunctions(unittest.TestCase):
         nrrd.write(output_filename, self.data_input, {u'encoding': 'raw'}, detached_header=False)
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
         self.assertEqual(header['encoding'], 'raw')
         self.assertEqual(header['data file'], 'testfile_detached_raw.raw')
 
@@ -213,8 +213,8 @@ class TestWritingFunctions(unittest.TestCase):
                    relative_data_path=False)
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
         self.assertEqual(header['encoding'], 'gz')
         self.assertEqual(header['data file'], output_data_filename)
 
@@ -226,8 +226,8 @@ class TestWritingFunctions(unittest.TestCase):
         nrrd.write(output_filename, self.data_input, {u'encoding': 'bz2'}, detached_header=False)
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
         self.assertEqual(header['encoding'], 'bz2')
         self.assertEqual(header['data file'], 'testfile_detached_raw.raw.bz2')
 
@@ -239,8 +239,8 @@ class TestWritingFunctions(unittest.TestCase):
         nrrd.write(output_filename, self.data_input, {u'encoding': 'txt'}, detached_header=False)
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
-        self.assertEqual(self.expected_data, data.tostring(order='F'))
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
         self.assertEqual(header['encoding'], 'txt')
         self.assertEqual(header['data file'], 'testfile_detached_raw.txt')
 
@@ -260,7 +260,7 @@ class TestWritingFunctions(unittest.TestCase):
                                         'space dimension': 3})
 
         # Read back the same file
-        data, header = nrrd.read(output_filename)
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
         self.assertEqual(header['encoding'], 'ascii')
 
         # Check for endian and space dimension, both of these should have been removed from the header
@@ -276,6 +276,11 @@ class TestWritingFunctions(unittest.TestCase):
         with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
             nrrd.write(output_filename, np.zeros((3, 9)), header)
 
+class TestWritingFunctionsFortran(TestWritingFunctions, unittest.TestCase):
+    index_order = 'F'
+
+class TestWritingFunctionsC(TestWritingFunctions, unittest.TestCase):
+    index_order = 'C'
 
 if __name__ == '__main__':
     unittest.main()
