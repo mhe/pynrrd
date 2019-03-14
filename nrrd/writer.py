@@ -272,6 +272,9 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 
 
 def _write_data(data, fh, header, compression_level=None, index_order='A'):
+    if index_order not in ['F', 'C', 'A']:
+        raise NRRDError('Invalid index order')
+
     if header['encoding'] == 'raw':
         # Convert the data into a string
         raw_data = data.tostring(order=index_order)
