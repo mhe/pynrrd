@@ -94,7 +94,7 @@ def _format_field_value(value, field_type):
 
 
 def write(filename, data, header=None, detached_header=False, relative_data_path=True, custom_field_map=None,
-                          compression_level=9):
+                          compression_level=9, index_order='A'):
     """Write :class:`numpy.ndarray` to NRRD file
 
     The :obj:`filename` parameter specifies the absolute or relative filename to write the NRRD file to. If the
@@ -134,6 +134,11 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
         Int specifying compression level, when using a compressed encoding (.gz, .bz2).
         - For zlib (.gz): 1-9 set low to high compression; 0 disables; -1 uses zlib default.
         - For bzip2 (.bz2): 1-9 set low to high compression.
+    index_order : :class: `str`, optional
+        Specifies the order in which to write the data to file. Could be either 'C', 'F', or 'A'. With 'C' the array
+        will be written in C-style order (last axis index changing the fastest) and for 'F' the array will be
+        written in Fortran-style order (first axis index being the fastest). 'A' will use 'C'-order unless the array
+        is flagged as Fortran contiguous in memory, then it will use 'F'-order.
 
     See Also
     --------
@@ -164,7 +169,7 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     # using index_order='C'.
     header['dimension'] = data.ndim
 
-    if np.isfortran(data):
+    if (index_order == 'A' and np.isfortran(data)) or index_order == 'F':
         header['sizes'] = list(data.shape)
     else:
         header['sizes'] = list(data.shape[::-1])
@@ -258,28 +263,28 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 
         # If header & data in the same file is desired, write data in the file
         if not detached_header:
-            _write_data(data, fh, header, compression_level=compression_level)
+            _write_data(data, fh, header, compression_level=compression_level, index_order=index_order)
 
     # If detached header desired, write data to different file
     if detached_header:
         with open(data_filename, 'wb') as data_fh:
-            _write_data(data, data_fh, header, compression_level=compression_level)
+            _write_data(data, data_fh, header, compression_level=compression_level, index_order=index_order)
 
 
-def _write_data(data, fh, header, compression_level=None):
+def _write_data(data, fh, header, compression_level=None, index_order='A'):
     if header['encoding'] == 'raw':
         # Convert the data into a string
-        raw_data = data.tostring(order='A')
+        raw_data = data.tostring(order=index_order)
 
         # Write the raw data directly to the file
         fh.write(raw_data)
     elif header['encoding'].lower() in ['ascii', 'text', 'txt']:
         # Always save ASCII as a single contiguous array to avoid problems with ordering.
         # Ravel will order the elements depending on the underlying order of the array.
-        np.savetxt(fh, data.ravel(order='A'), '%.17g')
+        np.savetxt(fh, data.ravel(order=index_order), '%.17g')
     else:
         # Convert the data into a string
-        raw_data = data.tostring(order='A')
+        raw_data = data.tostring(order=index_order)
 
         # Construct the compressor object based on encoding
         if header['encoding'] in ['gzip', 'gz']:
