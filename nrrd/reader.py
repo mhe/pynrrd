@@ -444,6 +444,9 @@ def read(filename, custom_field_map=None, index_order='F'):
 
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
 
+    .. note::
+            Users should be aware that the `index_order` argument needs to be consistent between `nrrd.read` and `nrrd.write`. I.e., reading an array with `index_order='F'` will result in a transposed version of the original data and hence the writer needs to be aware of this.
+
     Parameters
     ----------
     filename : :class:`str`
@@ -452,7 +455,7 @@ def read(filename, custom_field_map=None, index_order='F'):
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
     index_order : :class: `str`, optional
-        Specifies the index ordering of the outputted array, either 'F' (Fortran order) or 'C' (C order).
+        Specifies the index ordering of the outputted array, either 'F' (Fortran order) or 'C' (C order). Using 'F' (default) the image will be transposed, providing an index ordering in this manneri; `data[x][y][z]`. However, Numpy generally uses 'C' order, (e.g. `data[z][y][x]`) and 'C' order is therefore adviced to keep consistent with other libraries. 
 
     Returns
     -------
