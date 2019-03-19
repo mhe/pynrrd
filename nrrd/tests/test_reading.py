@@ -20,7 +20,9 @@ class TestReadingFunctions(object):
                                 u'space origin': np.array([0, 0, 0]),
                                 u'type': 'short'}
 
-        self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30), order=self.index_order)
+        self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30))
+        if self.index_order == 'F':
+            self.expected_data = self.expected_data.T
 
     def test_read_header_only(self):
         with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
