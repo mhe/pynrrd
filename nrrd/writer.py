@@ -281,9 +281,12 @@ def _write_data(data, fh, header, compression_level=None, index_order='F'):
         # Write the raw data directly to the file
         fh.write(raw_data)
     elif header['encoding'].lower() in ['ascii', 'text', 'txt']:
-        # Always save ASCII as a single contiguous array to avoid problems with ordering.
-        # Ravel will order the elements depending on the underlying order of the array.
-        np.savetxt(fh, data.ravel(order=index_order), '%.17g')
+        # savetxt only works for 1D and 2D arrays, so reshape any > 2 dim arrays into one long 1D array
+        if data.ndim > 2:
+            np.savetxt(fh, data.ravel(order=index_order), '%.17g')
+        else:
+            np.savetxt(fh, data if index_order == 'C' else data.T, '%.17g')
+
     else:
         # Convert the data into a string
         raw_data = data.tostring(order=index_order)
