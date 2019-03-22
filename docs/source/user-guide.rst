@@ -182,6 +182,8 @@ Reading NRRD files
 ------------------
 There are three functions that are used to read NRRD files: :meth:`read`, :meth:`read_header` and :meth:`read_data`. :meth:`read` is a convenience function that opens the file located at :obj:`filename` and calls :meth:`read_header` and :meth:`read_data` in succession and returns the data and header.
 
+Reading NRRD files using :meth:`read` or :meth:`read_data` will by default return arrays being indexed in Fortran order, i.e array elements are accessed by `data[x,y,z]`. This differs to the C-order, i.e. `data[z,y,x]`, which is more common in numpy. The :obj:`index_order` parameter can be used to specify which index ordering should be used on the returned array ('C' or 'F'). The :obj:`index_order` parameter needs to be consistent with the parameter of same name in :meth:`write`.
+
 The :meth:`read` and :meth:`read_header` methods accept an optional parameter :obj:`custom_field_map` for parsing custom field types not listed in `Supported Fields`_ of the header. It is a :class:`dict` where the key is the custom field name and the value is a string identifying datatype for the custom field. See `Header datatypes`_ for a list of supported datatypes.
 
 The :obj:`file` parameter of :meth:`read_header` accepts a filename or a string iterator object to read the header from. If a filename is specified, then the file will be opened and closed after the header is read from it. If not specifying a filename, the :obj:`file` parameter can be any sort of iterator that returns a string each time :meth:`next` is called. The two common objects that meet these requirements are file objects and a list of strings. The :meth:`read_header` function returns a :class:`dict` with the field and parsed values as keys and values to the dictionary.
@@ -194,7 +196,7 @@ Writing NRRD files
 ------------------
 Writing to NRRD files can be done with the single function :meth:`write`. The :obj:`filename` parameter to the function specifies the absolute or relative filename to write the NRRD file. If the :obj:`filename` extension is .nhdr, then the :obj:`detached_header` parameter is set to true automatically. If the :obj:`detached_header` parameter is set to :obj:`True` and the :obj:`filename` ends in .nrrd, then the header file will have the same path and base name as the :obj:`filename` but with an extension of .nhdr. In all other cases, the header and data are saved in the same file.
 
-The :obj:`data` parameter is a :class:`numpy.ndarray` of data to be saved. :obj:`header` is an optional parameter of type :class:`dict` containing the field/values to be saved to the NRRD file. 
+The :obj:`data` parameter is a :class:`numpy.ndarray` of data to be saved. :obj:`header` is an optional parameter of type :class:`dict` containing the field/values to be saved to the NRRD file. :obj:`index_order` specifies the index order of the array :obj:`data`, this should be consistent with the argument of the same name in :meth:`read`.
 
 .. note::
 
@@ -203,3 +205,7 @@ The :obj:`data` parameter is a :class:`numpy.ndarray` of data to be saved. :obj:
 .. note::
 
     The default encoding field used if not specified in :obj:`header` is 'gzip'.
+
+.. note::
+
+    The :obj:`index_order` parameter must be consistent with the parameter of the same name used in :meth:`read`. Specifying an image to be in 'C' order when reading and than writing it as an 'F' order image will cause the image data to be transposed in the written NRRD file.
