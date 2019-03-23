@@ -63,7 +63,7 @@ Example with fields and custom fields
        [0., 0., 1.]])), ('kinds', ['domain', 'domain', 'domain']), ('encoding', 'ASCII'), ('spacings', array([1.0458, 1.0458, 2.5   ])), ('units', ['mm', 'mm', 'mm']), ('custom_field_here1', 24.34), ('custom_field_here2', array([1, 2, 3, 4]))])
 
 Example reading NRRD file with duplicated header field
--------------
+------------------------------------------------------
 .. code-block:: python
 
     import nrrd

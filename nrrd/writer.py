@@ -93,7 +93,7 @@ def _format_field_value(value, field_type):
         raise NRRDError('Invalid field type given: %s' % field_type)
 
 
-def write(filename, data, header={}, detached_header=False, relative_data_path=True, custom_field_map=None,
+def write(filename, data, header=None, detached_header=False, relative_data_path=True, custom_field_map=None,
                           compression_level=9):
     """Write :class:`numpy.ndarray` to NRRD file
 
@@ -107,7 +107,9 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
 
     .. note::
             The following fields are automatically generated based on the :obj:`data` parameter ignoring these values
-            in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'.
+            in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'. In addition, the generated fields will be
+            added to the given :obj:`header`. Thus, one can check the generated fields by viewing the passed
+            :obj:`header`.
 
     .. note::
             The default encoding field used if not specified in :obj:`header` is 'gzip'.
@@ -137,6 +139,9 @@ def write(filename, data, header={}, detached_header=False, relative_data_path=T
     --------
     :meth:`read`, :meth:`read_header`, :meth:`read_data`
     """
+
+    if header is None:
+        header = {}
 
     # Infer a number of fields from the NumPy array and overwrite values in the header dictionary.
     # Get type string identifier from the NumPy datatype

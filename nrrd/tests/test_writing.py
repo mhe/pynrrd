@@ -28,6 +28,14 @@ class TestWritingFunctions(unittest.TestCase):
 
         return output_filename
 
+    def test_write_default_header(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_default_header.nrrd')
+        nrrd.write(output_filename, self.data_input)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename)
+        self.assertEqual(self.expected_data, data.tostring(order='F'))
+
     def test_write_raw(self):
         self.write_and_read_back_with_encoding(u'raw')
 
