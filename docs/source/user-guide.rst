@@ -16,15 +16,15 @@ The general structure of the NRRD file format is as follows::
     <field>: <value>
     ...
     <field>: <value>
-    <custom field>:= <value>
-    <custom field>:= <value>
+    <custom field>:=<value>
+    <custom field>:=<value>
     ...
-    <custom field>:= <value>
-    # Comments are identified with a pound sign
+    <custom field>:=<value>
+    # Comments are identified with a # symbol
 
     <data here if stored in same file, otherwise stored in detached file>
 
-As with most file formats, the file begins with a magic line that uniquely identifies the file as a NRRD file. Along with the magic line is a version that identifies what revision of the NRRD specification is used. As of today, the latest NRRD version is 5. Line comments can be specified by starting the line with a # symbol. Following the magic line is the header which is written in ASCII with the structure <field>: <value> or <field>:= <value> in the case of a custom field. The header is finished reading once a blank line has been read. If the data is stored in the same file (based on whether the header contains a datafile field), then the data will follow the header.
+As with most file formats, the file begins with a magic line that uniquely identifies the file as a NRRD file. Along with the magic line is a version that identifies what revision of the NRRD specification is used. As of today, the latest NRRD version is 5. Line comments can be specified by starting the line with a # symbol. Following the magic line is the header which is written in ASCII with the structure :code:`<field>: <value>` or :code:`<field>:=<value>` in the case of a custom field. The header is finished reading once a blank line has been read. If the data is stored in the same file (based on whether the header contains a datafile field), then the data will follow the header.
 
 More information on the NRRD file format can be found `here <http://teem.sourceforge.net/nrrd/index.html>`_.
 
@@ -74,9 +74,9 @@ string list
 :Python Datatype: :class:`list` of :class:`str`
 :Python Example: ['this', 'is', 'string', 'separated']
 
-A limitation to the string list is that any strings containing a space in them will be incorrectly separated. In the future, escaping the space could be a useful technique to prevent unwanted separation.
+A limitation to the string list is that any strings containing a space in them will be incorrectly separated. Future work could include handling an escaped space to prevent unwanted separation.
 
-A few fields that are string lists in the NRRD specification are defined with a syntax where there are quotation marks around the strings along with the space delimeter (e.g. "<s>" "<s>" ... "<s>"). The fields that use this style are 'space units', 'units' and 'labels'. The quotation marks seem to be optional but currently they are not handled by the pynrrd library.
+The string list fields 'space units', 'units', and 'labels' are specified to have quotation marks around the strings along with the space delimiter (e.g. "<s>" "<s>" ... "<s>"). At this time, the pynrrd library does not handle quotation marks in string list fields.
 
 int vector
 ~~~~~~~~~~~~~
@@ -85,7 +85,7 @@ int vector
 :Python Datatype: (N,) :class:`numpy.ndarray` of :class:`int`
 :Python Example: np.array([1, 2, 3, 4])
 
-The NRRD specification does not explicitly state that spaces are allowed in the comma delineated vector, such as (1, 2, 3, 4). However, the pynrrd library does correctly parse any vectors that contain spaces after the commas. When saving the NRRD file back, the spaces will be removed from the vector.
+pynrrd will correctly handle vectors with or without spaces between the comma-delimiter. Saving the NRRD file back will remove all spaces between the comma-delimiters.
 
 double vector
 ~~~~~~~~~~~~~
@@ -94,7 +94,7 @@ double vector
 :Python Datatype: (N,) :class:`numpy.ndarray` of :class:`float`
 :Python Example: np.array([1.2, 2.3, 3.4, 4.5])
 
-The NRRD specification does not explicitly state that spaces are allowed in the comma delineated vector, such as (1, 2, 3, 4). However, the pynrrd library does correctly parse any vectors that contain spaces after the commas. When saving the NRRD file back, the spaces will be removed from the vector.
+pynrrd will correctly handle vectors with or without spaces between the comma-delimiter. Saving the NRRD file back will remove all spaces between the comma-delimiters.
 
 int matrix
 ~~~~~~~~~~
