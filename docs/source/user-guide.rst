@@ -103,7 +103,7 @@ int matrix
 :Python Datatype: (M,N) :class:`numpy.ndarray` of :class:`int`
 :Python Example: np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-All rows of the matrix are required, unlike that of the `double matrix`_. If some of the rows need to be 'none', then please use a `double matrix`_ instead. The reason is that empty rows (contain 'none') are represented as a row of NaN's and NaN's are only available for floating point numbers.
+All rows of the matrix are required, unlike that of the `double matrix`_. If some of the rows need to be 'none', then use a `double matrix`_ instead. The reason is that empty rows (i.e. containing 'none') are represented as a row of NaN's, and NaN's are only available for floating point numbers.
 
 double matrix
 ~~~~~~~~~~~~~
@@ -112,10 +112,12 @@ double matrix
 :Python Datatype: (M,N) :class:`numpy.ndarray` of :class:`float`
 :Python Example: np.array([[2.54, 1.3, 0.0], [3.14, 0.3, 3.3], [np.nan, np.nan, np.nan], [0.0, -12.3, -3.3]])
 
-This datatype has the additional feature where certain rows can be defined as empty or none. In the NRRD specification, instead of the row, the 'none' keyword is used in it's place. This is represented in the Python NumPy array as a row of all NaN's (NaN's are only defined for floating point numbers). An example use case for this optional row matrix is for the 'space directions' field where one row may be empty because it is not a domain type. 
+This datatype has the added feature where rows can be defined as empty by setting the vector as :code:`none`. In the NRRD specification, instead of the row, the :code:`none` keyword is used in it's place. This is represented in the Python NumPy array as a row of all NaN's. An example use case for this optional row matrix is for the 'space directions' field where one row may be empty because it is not a domain type.
 
 Supported Fields
 ----------------
+A list of supported fields, according to the NRRD specification, and its corresponding datatype can be seen below. Each field has a link to the NRRD specification providing a detailed description of the field.
+
 ========================  ================
 Field                     NRRD Datatype
 ========================  ================
@@ -180,9 +182,12 @@ space_                    `string`_
 
 Reading NRRD files
 ------------------
-There are three functions that are used to read NRRD files: :meth:`read`, :meth:`read_header` and :meth:`read_data`. :meth:`read` is a convenience function that opens the file located at :obj:`filename` and calls :meth:`read_header` and :meth:`read_data` in succession and returns the data and header.
+There are three functions that are used to read NRRD files: :meth:`read`, :meth:`read_header`, and :meth:`read_data`. :meth:`read` is a convenience function that opens the specified filepath and calls :meth:`read_header` and :meth:`read_data` in succession to return the NRRD header and data.
 
 The :meth:`read` and :meth:`read_header` methods accept an optional parameter :obj:`custom_field_map` for parsing custom field types not listed in `Supported Fields`_ of the header. It is a :class:`dict` where the key is the custom field name and the value is a string identifying datatype for the custom field. See `Header datatypes`_ for a list of supported datatypes.
+
+
+
 
 The :obj:`file` parameter of :meth:`read_header` accepts a filename or a string iterator object to read the header from. If a filename is specified, then the file will be opened and closed after the header is read from it. If not specifying a filename, the :obj:`file` parameter can be any sort of iterator that returns a string each time :meth:`next` is called. The two common objects that meet these requirements are file objects and a list of strings. The :meth:`read_header` function returns a :class:`dict` with the field and parsed values as keys and values to the dictionary.
 
