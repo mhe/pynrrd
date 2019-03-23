@@ -186,14 +186,9 @@ There are three functions that are used to read NRRD files: :meth:`read`, :meth:
 
 The :meth:`read` and :meth:`read_header` methods accept an optional parameter :obj:`custom_field_map` for parsing custom field types not listed in `Supported Fields`_ of the header. It is a :class:`dict` where the key is the custom field name and the value is a string identifying datatype for the custom field. See `Header datatypes`_ for a list of supported datatypes.
 
+The :meth:`read_data` will typically be called in conjunction with :meth:`read_header` because header information is required in order to read the data. The function returns a :class:`numpy.ndarray` of the data saved in the given NRRD file.
 
-
-
-The :obj:`file` parameter of :meth:`read_header` accepts a filename or a string iterator object to read the header from. If a filename is specified, then the file will be opened and closed after the header is read from it. If not specifying a filename, the :obj:`file` parameter can be any sort of iterator that returns a string each time :meth:`next` is called. The two common objects that meet these requirements are file objects and a list of strings. The :meth:`read_header` function returns a :class:`dict` with the field and parsed values as keys and values to the dictionary.
-
-The :meth:`read_data` will not typically be used besides within the :meth:`read` function because the header is a required parameter (:obj:`header`) to this function. The remaining two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to specify both. The file handle (:obj:`fh`) is necessary if the header contains the NRRD data as well (AKA it is not a detached file). However, if the NRRD data is detached from the header, then the :obj:`filename` parameter is required to obtain the absolute path to the data file. The :meth:`read_data` function returns a :class:`numpy.ndarray` of the data.
-
-Some NRRD files, while prohibited by specification, may contain duplicated reader fields preventing the proper reading of the file. Changing :data:`nrrd.reader.ALLOW_DUPLICATE_FIELD` to :obj:`True` will show a warning instead of an error while trying to read the file.
+Some NRRD files, while prohibited by specification, may contain duplicated header fields preventing the proper reading of the file. Changing :data:`nrrd.reader.ALLOW_DUPLICATE_FIELD` to :obj:`True` will show a warning instead of an error while trying to read the file.
 
 Writing NRRD files
 ------------------
