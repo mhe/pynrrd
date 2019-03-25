@@ -208,4 +208,4 @@ The :obj:`data` parameter is a :class:`numpy.ndarray` of data to be saved. :obj:
 
 .. note::
 
-    The :obj:`index_order` parameter must be consistent with the parameter of the same name used in :meth:`read`. Specifying an image to be in 'C' order when reading and than writing it as an 'F' order image will cause the image data to be transposed in the written NRRD file.
+    The :obj:`index_order` parameter must be consistent with the index order specified in :meth:`read`. Reading an NRRD file in C-order and then writing as Fortran-order or vice versa will result in the data being transposed in the NRRD file.
