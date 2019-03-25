@@ -317,7 +317,7 @@ def read_data(header, fh=None, filename=None, index_order='F'):
     filename : :class:`str`, optional
         Filename of the header file. Only necessary if data is detached from the header. This is used to get the
         absolute data path.
-    index_order : :class:`str`, optional
+    index_order : {'C', 'F'}, optional
         Specifies the index ordering of the outputted array, either 'F' (Fortran order) or 'C' (C order).
 
     Returns
