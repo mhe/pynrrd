@@ -454,7 +454,7 @@ def read(filename, custom_field_map=None, index_order='F'):
     custom_field_map : :class:`dict` (:class:`str`, :class:`str`), optional
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
-    index_order : :class: `str`, optional
+    index_order : {'C', 'F'}, optional
         Specifies the index ordering of the outputted array, either 'F' (Fortran order) or 'C' (C order). Using 'F' (default) the image will be transposed, providing an index ordering in this manneri; `data[x][y][z]`. However, Numpy generally uses 'C' order, (e.g. `data[z][y][x]`) and 'C' order is therefore adviced to keep consistent with other libraries. 
 
     Returns
