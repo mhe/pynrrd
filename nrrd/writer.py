@@ -134,10 +134,12 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
         Int specifying compression level, when using a compressed encoding (.gz, .bz2).
         - For zlib (.gz): 1-9 set low to high compression; 0 disables; -1 uses zlib default.
         - For bzip2 (.bz2): 1-9 set low to high compression.
-    index_order : :class: `str`, optional
+    index_order : {'C', 'F'}, optional
         Specifies the order in which to write the data to file. Could be either 'C' or 'F'. With 'C' the array
         will be written in C-style order (last axis index changing the fastest) and for 'F' the array will be
-        written in Fortran-style order (first axis index being the fastest).
+        Specifies the index order used for writing. Either 'C' (C-order) where the dimensions are ordered from
+        slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are ordered
+        from fastest-varying to slowest-varying (e.g. (x, y, z)).
 
     See Also
     --------
