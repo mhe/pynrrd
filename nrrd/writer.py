@@ -114,6 +114,11 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     .. note::
             The default encoding field used if not specified in :obj:`header` is 'gzip'.
 
+    .. note::
+            The :obj:`index_order` parameter must be consistent with the index order specified in :meth:`read`.
+            Reading an NRRD file in C-order and then writing as Fortran-order or vice versa will result in the data
+            being transposed in the NRRD file.
+
     See :ref:`user-guide:Writing NRRD files` for more information on writing NRRD files.
 
     Parameters
@@ -135,8 +140,6 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
         - For zlib (.gz): 1-9 set low to high compression; 0 disables; -1 uses zlib default.
         - For bzip2 (.bz2): 1-9 set low to high compression.
     index_order : {'C', 'F'}, optional
-        Specifies the order in which to write the data to file. Could be either 'C' or 'F'. With 'C' the array
-        will be written in C-style order (last axis index changing the fastest) and for 'F' the array will be
         Specifies the index order used for writing. Either 'C' (C-order) where the dimensions are ordered from
         slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are ordered
         from fastest-varying to slowest-varying (e.g. (x, y, z)).
@@ -169,11 +172,7 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     # Fortran order we are required to reverse the shape in the case of the array being in C order. E.g., data was read
     # using index_order='C'.
     header['dimension'] = data.ndim
-
-    if index_order == 'F':
-        header['sizes'] = list(data.shape)
-    else:
-        header['sizes'] = list(data.shape[::-1])
+    header['sizes'] = list(data.shape) if index_order == 'F' else list(data.shape[::-1])
 
     # The default encoding is 'gzip'
     if 'encoding' not in header:
