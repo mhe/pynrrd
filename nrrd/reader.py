@@ -457,4 +457,4 @@ def read(filename, custom_field_map=None):
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename)
 
-        return data, header
+    return data, header
