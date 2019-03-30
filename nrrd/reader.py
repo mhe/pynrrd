@@ -397,7 +397,7 @@ def read_data(header, fh=None, filename=None):
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 
         # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
-        decompressed_data = b''
+        decompressed_data = bytearray()
         while True:
             chunk = fh.read(_READ_CHUNKSIZE)
 
@@ -410,7 +410,7 @@ def read_data(header, fh=None, filename=None):
 
         # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
         # NumPy
-        data = np.fromstring(decompressed_data[byte_skip:], dtype)
+        data = np.frombuffer(decompressed_data[byte_skip:], dtype)
 
     # Close the file
     # Even if opened using with keyword, closing it does not hurt
