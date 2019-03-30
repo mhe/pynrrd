@@ -176,6 +176,9 @@ class TestReadingFunctions(unittest.TestCase):
 
         import warnings
         with warnings.catch_warnings(record=True) as w:
+            # Enable all warnings
+            warnings.simplefilter("always")
+
             nrrd.reader.ALLOW_DUPLICATE_FIELD = True
             header = nrrd.read_header(header_txt_tuple)
 
