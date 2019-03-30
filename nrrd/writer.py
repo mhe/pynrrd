@@ -132,8 +132,8 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
         string identifying datatype for the custom field.
     compression_level : :class:`int`
         Int specifying compression level, when using a compressed encoding (.gz, .bz2).
-        - For zlib (.gz): 1-9 set low to high compression; 0 disables; -1 uses zlib default.
-        - For bzip2 (.bz2): 1-9 set low to high compression.
+        - 1: Fastest and compresses data the least
+        - 9: Slowest and compresses data the most
 
     See Also
     --------
