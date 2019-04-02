@@ -8,11 +8,11 @@ from collections import OrderedDict
 
 from nrrd.parsers import *
 
-# Reading and writing gzipped data directly gives problems when the uncompressed
-# data is larger than 4GB (2^32). Therefore we'll read and write the data in
-# chunks. How this affects speed and/or memory usage is something to be analyzed
-# further. The following two values define the size of the chunks.
-_READ_CHUNKSIZE = 2 ** 20
+# Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
+# version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks.
+# Chunk size is set to be large at 1GB to improve performance. If issues arise decompressing larger files, try to reduce
+# this value
+_READ_CHUNKSIZE = 2 ** 32
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
@@ -374,7 +374,7 @@ def read_data(header, fh=None, filename=None):
         fh.close()
 
         raise NRRDError('Invalid lineskip, allowed values are greater than or equal to 0')
-        
+
     # Skip the requested number of bytes or seek backward, and then parse the data using NumPy
     if byte_skip < -1:
         # Must close the file because if the file was opened above from detached filename, there is no "with" block to
@@ -389,9 +389,9 @@ def read_data(header, fh=None, filename=None):
     else:
         # The only case left should be: byte_skip == -1 and header['encoding'] == 'gzip'
         byte_skip = -dtype.itemsize * total_data_points
-        
+
     # If a compression encoding is used, then byte skip AFTER decompressing
-    if header['encoding'] == 'raw':             
+    if header['encoding'] == 'raw':
         data = np.fromfile(fh, dtype)
     elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
         data = np.fromfile(fh, dtype, sep=' ')
@@ -410,20 +410,33 @@ def read_data(header, fh=None, filename=None):
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 
         # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
-        decompressed_data = b''
-        while True:
-            chunk = fh.read(_READ_CHUNKSIZE)
+        decompressed_data = bytearray()
 
-            # If chunk is None, then file is at end, break out of loop
-            if not chunk:
-                break
+        # Read all of the remaining data from the file
+        # Obtain the length of the compressed data since we will be using it repeatedly, more efficient
+        compressed_data = fh.read()
+        compressed_data_len = len(compressed_data)
+        start_index = 0
 
-            # Decompress the data and add it to the decompressed data
-            decompressed_data += decompobj.decompress(chunk)
+        # Loop through data and decompress it chunk by chunk
+        while start_index < compressed_data_len:
+            # Calculate the end index = start index plus chunk size
+            # Set to the string length to read the remaining chunk at the end
+            end_index = min(start_index + _READ_CHUNKSIZE, compressed_data_len)
+
+            # Decompress and append data
+            decompressed_data += decompobj.decompress(compressed_data[start_index:end_index])
+
+            # Update start index
+            start_index = end_index
+
+        # Delete the compressed data since we do not need it anymore
+        # This could potentially be using a lot of memory
+        del compressed_data
 
         # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
         # NumPy
-        data = np.fromstring(decompressed_data[byte_skip:], dtype)
+        data = np.frombuffer(decompressed_data[byte_skip:], dtype)
 
     # Close the file, even if opened using "with" block, closing it manually does not hurt
     fh.close()
