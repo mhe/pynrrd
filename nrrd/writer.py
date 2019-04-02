@@ -8,10 +8,10 @@ from nrrd.errors import NRRDError
 from nrrd.formatters import *
 from nrrd.reader import _get_field_type
 
-# Reading and writing gzipped data directly gives problems when the uncompressed
-# data is larger than 4GB (2^32). Therefore we'll read and write the data in
-# chunks. How this affects speed and/or memory usage is something to be analyzed
-# further. The following two values define the size of the chunks.
+# Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
+# version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks. The
+# chunk size is set to be small here at 1MB since performance did not vary much based on the chunk size. A smaller chunk
+# size has the benefit of using less RAM at once.
 _WRITE_CHUNKSIZE = 2 ** 20
 
 _NRRD_FIELD_ORDER = [
@@ -67,6 +67,7 @@ _NUMPY2NRRD_ENDIAN_MAP = {
     'B': 'big'
 }
 
+
 def _format_field_value(value, field_type):
     if field_type == 'int':
         return format_number(value)
@@ -94,7 +95,7 @@ def _format_field_value(value, field_type):
 
 
 def write(filename, data, header=None, detached_header=False, relative_data_path=True, custom_field_map=None,
-                          compression_level=9, index_order='F'):
+          compression_level=9, index_order='F'):
     """Write :class:`numpy.ndarray` to NRRD file
 
     The :obj:`filename` parameter specifies the absolute or relative filename to write the NRRD file to. If the
@@ -136,9 +137,9 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
     compression_level : :class:`int`
-        Int specifying compression level, when using a compressed encoding (.gz, .bz2).
-        - For zlib (.gz): 1-9 set low to high compression; 0 disables; -1 uses zlib default.
-        - For bzip2 (.bz2): 1-9 set low to high compression.
+        Integer between 1 to 9 specifying the compression level when using a compressed encoding (gzip or bzip). A value
+        of :obj:`1` compresses the data the least amount and is the fastest, while a value of :obj:`9` compresses the
+        data the most and is the slowest.
     index_order : {'C', 'F'}, optional
         Specifies the index order used for writing. Either 'C' (C-order) where the dimensions are ordered from
         slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are ordered
@@ -301,16 +302,15 @@ def _write_data(data, fh, header, compression_level=None, index_order='F'):
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 
         # Write the data in chunks (see _WRITE_CHUNKSIZE declaration for more information why)
+        # Obtain the length of the data since we will be using it repeatedly, more efficient
         start_index = 0
+        raw_data_len = len(raw_data)
 
         # Loop through the data and write it by chunk
-        while start_index < len(raw_data):
+        while start_index < raw_data_len:
             # End index is start index plus the chunk size
-            end_index = start_index + _WRITE_CHUNKSIZE
-
-            # If the end index is past the data size, then clamp it to the data size
-            if end_index > len(raw_data):
-                end_index = len(raw_data)
+            # Set to the string length to read the remaining chunk at the end
+            end_index = min(start_index + _WRITE_CHUNKSIZE, raw_data_len)
 
             # Write the compressed data
             fh.write(compressobj.compress(raw_data[start_index:end_index]))
