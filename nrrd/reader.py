@@ -356,6 +356,7 @@ def read_data(header, fh=None, filename=None):
             data_filename = os.path.join(os.path.dirname(filename), data_filename)
 
         # Override the fh parameter with the data filename
+        # Note that this is opened without a "with" block, thus it must be closed manually in all circumstances
         fh = open(data_filename, 'rb')
 
     # Get the total number of data points by multiplying the size of each dimension together
@@ -368,10 +369,18 @@ def read_data(header, fh=None, filename=None):
         for _ in range(line_skip):
             fh.readline()
     else:
+        # Must close the file because if the file was opened above from detached filename, there is no "with" block to
+        # close it for us
+        fh.close()
+
         raise NRRDError('Invalid lineskip, allowed values are greater than or equal to 0')
         
     # Skip the requested number of bytes or seek backward, and then parse the data using NumPy
     if byte_skip < -1:
+        # Must close the file because if the file was opened above from detached filename, there is no "with" block to
+        # close it for us
+        fh.close()
+
         raise NRRDError('Invalid byteskip, allowed values are greater than or equal to -1')
     elif byte_skip >= 0:
         fh.seek(byte_skip, os.SEEK_CUR)
@@ -394,6 +403,10 @@ def read_data(header, fh=None, filename=None):
         elif header['encoding'] in ['bzip2', 'bz2']:
             decompobj = bz2.BZ2Decompressor()
         else:
+            # Must close the file because if the file was opened above from detached filename, there is no "with" block
+            # to close it for us
+            fh.close()
+
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 
         # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
@@ -412,8 +425,7 @@ def read_data(header, fh=None, filename=None):
         # NumPy
         data = np.fromstring(decompressed_data[byte_skip:], dtype)
 
-    # Close the file
-    # Even if opened using with keyword, closing it does not hurt
+    # Close the file, even if opened using "with" block, closing it manually does not hurt
     fh.close()
 
     if total_data_points != data.size:
@@ -457,4 +469,4 @@ def read(filename, custom_field_map=None):
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename)
 
-        return data, header
+    return data, header
