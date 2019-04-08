@@ -66,6 +66,14 @@ or, for the last line, instead use:
 to install in 'develop' or 'editable' mode, where changes can be made to the local working code and Python will use
 the updated pynrrd code.
 
+**Tests**
+
+The tests can be run via the following command from the base directory:
+
+.. code-block:: bash
+
+    python -m unittest discover -v nrrd/tests
+
 Example usage
 -------------
 .. code-block:: python
@@ -86,13 +94,6 @@ Example usage
     print(header)
 
 
-Tests
------
-Run the following command in the base directory to run the tests:
-
-.. code-block:: bash
-
-    python -m unittest discover -v nrrd/tests
 
 Next Steps
 ----------
