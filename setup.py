@@ -23,9 +23,6 @@ setup(name='pynrrd',
       license='MIT License',
       install_requires=['numpy>=1.11.1'],
       packages=find_packages(),
-      package_data={
-          'nrrd': ['tests/*']
-      },
       keywords='nrrd teem image processing file format',
       classifiers=[
           'License :: OSI Approved :: MIT License',
