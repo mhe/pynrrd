@@ -95,7 +95,7 @@ def _format_field_value(value, field_type):
 
 
 def write(filename, data, header=None, detached_header=False, relative_data_path=True, custom_field_map=None,
-          compression_level=9):
+          compression_level=9, index_order='F'):
     """Write :class:`numpy.ndarray` to NRRD file
 
     The :obj:`filename` parameter specifies the absolute or relative filename to write the NRRD file to. If the
@@ -114,6 +114,11 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 
     .. note::
             The default encoding field used if not specified in :obj:`header` is 'gzip'.
+
+    .. note::
+            The :obj:`index_order` parameter must be consistent with the index order specified in :meth:`read`.
+            Reading an NRRD file in C-order and then writing as Fortran-order or vice versa will result in the data
+            being transposed in the NRRD file.
 
     See :ref:`user-guide:Writing NRRD files` for more information on writing NRRD files.
 
@@ -135,6 +140,10 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
         Integer between 1 to 9 specifying the compression level when using a compressed encoding (gzip or bzip). A value
         of :obj:`1` compresses the data the least amount and is the fastest, while a value of :obj:`9` compresses the
         data the most and is the slowest.
+    index_order : {'C', 'F'}, optional
+        Specifies the index order used for writing. Either 'C' (C-order) where the dimensions are ordered from
+        slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are ordered
+        from fastest-varying to slowest-varying (e.g. (x, y, z)).
 
     See Also
     --------
@@ -160,9 +169,11 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     if 'space' in header.keys() and 'space dimension' in header.keys():
         del header['space dimension']
 
-    # Update the dimension and sizes fields in the header based on the data
+    # Update the dimension and sizes fields in the header based on the data. Since NRRD expects meta data to be in
+    # Fortran order we are required to reverse the shape in the case of the array being in C order. E.g., data was read
+    # using index_order='C'.
     header['dimension'] = data.ndim
-    header['sizes'] = list(data.shape)
+    header['sizes'] = list(data.shape) if index_order == 'F' else list(data.shape[::-1])
 
     # The default encoding is 'gzip'
     if 'encoding' not in header:
@@ -253,30 +264,34 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 
         # If header & data in the same file is desired, write data in the file
         if not detached_header:
-            _write_data(data, fh, header, compression_level=compression_level)
+            _write_data(data, fh, header, compression_level=compression_level, index_order=index_order)
 
     # If detached header desired, write data to different file
     if detached_header:
         with open(data_filename, 'wb') as data_fh:
-            _write_data(data, data_fh, header, compression_level=compression_level)
+            _write_data(data, data_fh, header, compression_level=compression_level, index_order=index_order)
 
 
-def _write_data(data, fh, header, compression_level=None):
+def _write_data(data, fh, header, compression_level=None, index_order='F'):
+    if index_order not in ['F', 'C']:
+        raise NRRDError('Invalid index order')
+
     if header['encoding'] == 'raw':
         # Convert the data into a string
-        raw_data = data.tostring(order='F')
+        raw_data = data.tostring(order=index_order)
 
         # Write the raw data directly to the file
         fh.write(raw_data)
     elif header['encoding'].lower() in ['ascii', 'text', 'txt']:
         # savetxt only works for 1D and 2D arrays, so reshape any > 2 dim arrays into one long 1D array
         if data.ndim > 2:
-            np.savetxt(fh, data.ravel(order='F'), '%.17g')
+            np.savetxt(fh, data.ravel(order=index_order), '%.17g')
         else:
-            np.savetxt(fh, data.T, '%.17g')
+            np.savetxt(fh, data if index_order == 'C' else data.T, '%.17g')
+
     else:
         # Convert the data into a string
-        raw_data = data.tostring(order='F')
+        raw_data = data.tostring(order=index_order)
 
         # Construct the compressor object based on encoding
         if header['encoding'] in ['gzip', 'gz']:
