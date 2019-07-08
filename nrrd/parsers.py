@@ -229,3 +229,34 @@ def parse_number_auto_dtype(x):
         value = int(value)
 
     return value
+
+
+def parse_quoted_string_list(value):
+    """Parse list of quoted strings.
+
+    This reader expects the strings to be double-quoted, but accepts strings that are not
+    double-quoted.
+
+    At the time of writing, the NRRD at specification at teem.sourceforge.net/nrrd/format.html
+    specifies that labels and units should be text strings delimited by double quotes. The
+    previous implementation of the associated writer did not quote those strings, so this
+    implementation accepts non-quoted strings for backward compatibility.
+
+    This implementation does not support escaped double-quotes.
+
+    Parameters
+    ----------
+    value : :class:`str`
+        String representation of a list of quoted strings.
+
+    Returns
+    -------
+    result : :class:`list` of `str`
+        Vector of strings.
+    """
+    string_list = [str(x) for x in value.split()]
+    for entry_index in range(len(string_list)):
+        entry = string_list[entry_index]
+        if entry.startswith('"') and entry.endswith('"') and (len(entry) >= 2):
+            string_list[entry_index] = entry[1:-1]
+    return string_list

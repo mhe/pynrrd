@@ -80,8 +80,13 @@ def _format_field_value(value, field_type):
     elif field_type == 'double list':
         return format_number_list(value)
     elif field_type == 'string list':
-        # TODO Handle cases where the user wants quotation marks around the items
         return ' '.join(value)
+    elif field_type == 'quoted string list':
+        return format_quoted_string_list(value)
+        if len(value) > 0:
+            return '"' + '" "'.join(value) + '"'
+        else:
+            return ''
     elif field_type == 'int vector':
         return format_vector(value)
     elif field_type == 'double vector':
