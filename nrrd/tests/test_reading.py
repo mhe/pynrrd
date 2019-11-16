@@ -416,6 +416,48 @@ class TestReadingFunctions(object):
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid index order'):
             nrrd.read(RAW_NRRD_FILE_PATH, index_order=None)
 
+    def test_read_quoted_string_header(self):
+        header = nrrd.read_header([
+            'NRRD0004',
+            '# Complete NRRD file format specification at:',
+            '# http://teem.sourceforge.net/nrrd/format.html',
+            'type: double',
+            'dimension: 3',
+            'space dimension: 3',
+            'sizes: 32 40 16',
+            'encoding: raw',
+            'units: "mm" "cm" "in"',
+            'space units: "mm" "cm" "in"',
+            'labels: "X" "Y" "f(log(X, 10), Y)"',
+            'space origin: (-0.79487200000000002,-1,-0.38461499999999998)'
+        ])
+
+        # Check that the quoted values were appropriately parsed
+        self.assertEqual(['mm', 'cm', 'in'], header['units'])
+        self.assertEqual(['mm', 'cm', 'in'], header['space units'])
+        self.assertEqual(['X', 'Y', 'f(log(X, 10), Y)'], header['labels'])
+
+    def test_read_quoted_string_header_no_quotes(self):
+        header = nrrd.read_header([
+            'NRRD0004',
+            '# Complete NRRD file format specification at:',
+            '# http://teem.sourceforge.net/nrrd/format.html',
+            'type: double',
+            'dimension: 3',
+            'space dimension: 3',
+            'sizes: 32 40 16',
+            'encoding: raw',
+            'units: mm cm in',
+            'space units: mm cm in',
+            'labels: X Y f(log(X,10),Y)',
+            'space origin: (-0.79487200000000002,-1,-0.38461499999999998)'
+        ])
+
+        # Check that the quoted values were appropriately parsed
+        self.assertEqual(['mm', 'cm', 'in'], header['units'])
+        self.assertEqual(['mm', 'cm', 'in'], header['space units'])
+        self.assertEqual(['X', 'Y', 'f(log(X,10),Y)'], header['labels'])
+
 
 class TestReadingFunctionsFortran(TestReadingFunctions, unittest.TestCase):
     index_order = 'F'

@@ -72,7 +72,7 @@ class TestWritingFunctions(object):
     def test_write_ascii_2d(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_2d.nrrd')
 
-        x = np.arange(1, 28).reshape(3, 9, order=self.index_order)
+        x = np.arange(1, 28).reshape((3, 9), order=self.index_order)
         nrrd.write(output_filename, x, {u'encoding': 'ascii'}, index_order=self.index_order)
 
         # Read back the same file
@@ -83,7 +83,7 @@ class TestWritingFunctions(object):
     def test_write_ascii_3d(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_3d.nrrd')
 
-        x = np.arange(1, 28).reshape(3, 3, 3, order=self.index_order)
+        x = np.arange(1, 28).reshape((3, 3, 3), order=self.index_order)
         nrrd.write(output_filename, x, {u'encoding': 'ascii'}, index_order=self.index_order)
 
         # Read back the same file
@@ -288,11 +288,36 @@ class TestWritingFunctions(object):
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid index order'):
             nrrd.write(output_filename, np.zeros((3,9)), index_order=None)
 
+    def test_quoted_string_list_header(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_3d.nrrd')
+
+        x = np.arange(1, 28).reshape((3, 3, 3), order=self.index_order)
+        nrrd.write(output_filename, x, {
+            u'encoding': 'ascii',
+            u'units': ['mm', 'cm', 'in'],
+            u'space units': ['mm', 'cm', 'in'],
+            u'labels': ['X', 'Y', 'f(log(X, 10), Y)'],
+        }, index_order=self.index_order)
+
+        with open(output_filename, 'r') as fh:
+            lines = fh.readlines()
+
+            # Strip newline from end of line
+            lines = [line.rstrip() for line in lines]
+
+            # Note the order of the lines dont matter, we just want to verify theyre outputted correctly
+            self.assertTrue('units: "mm" "cm" "in"' in lines)
+            self.assertTrue('space units: "mm" "cm" "in"' in lines)
+            self.assertTrue('labels: "X" "Y" "f(log(X, 10), Y)"' in lines)
+
+
 class TestWritingFunctionsFortran(TestWritingFunctions, unittest.TestCase):
     index_order = 'F'
 
+
 class TestWritingFunctionsC(TestWritingFunctions, unittest.TestCase):
     index_order = 'C'
+
 
 if __name__ == '__main__':
     unittest.main()

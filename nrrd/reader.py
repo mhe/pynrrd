@@ -2,6 +2,7 @@
 import bz2
 import os
 import re
+import shlex
 import warnings
 import zlib
 from collections import OrderedDict
@@ -19,7 +20,7 @@ _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 ALLOW_DUPLICATE_FIELD = False
 """Allow duplicate header fields when reading NRRD files
 
-When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as 
+When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as
 :obj:`True` will instead show a warning.
 
 Example:
@@ -94,8 +95,10 @@ def _get_field_type(field, custom_field_map):
         return 'int list'
     elif field in ['spacings', 'thicknesses', 'axismins', 'axis mins', 'axismaxs', 'axis maxs']:
         return 'double list'
-    elif field in ['kinds', 'labels', 'units', 'space units', 'centerings']:
+    elif field in ['kinds', 'centerings']:
         return 'string list'
+    elif field in ['labels', 'units', 'space units']:
+        return 'quoted string list'
     # No int vector fields as of now
     # elif field in []:
     #     return 'int vector'
@@ -125,8 +128,9 @@ def _parse_field_value(value, field_type):
     elif field_type == 'double list':
         return parse_number_list(value, dtype=float)
     elif field_type == 'string list':
-        # TODO Handle cases where quotation marks are around the items
         return [str(x) for x in value.split()]
+    elif field_type == 'quoted string list':
+        return shlex.split(value)
     elif field_type == 'int vector':
         return parse_vector(value, dtype=int)
     elif field_type == 'double vector':
@@ -455,7 +459,7 @@ def read_data(header, fh=None, filename=None, index_order='F'):
     # In the NRRD header, the fields are specified in Fortran order, i.e, the first index is the one that changes
     # fastest and last index changes slowest. This needs to be taken into consideration since numpy uses C-order
     # indexing.
-    
+
     # The array shape from NRRD (x,y,z) needs to be reversed as numpy expects (z,y,x).
     data = np.reshape(data, tuple(header['sizes'][::-1]))
 
