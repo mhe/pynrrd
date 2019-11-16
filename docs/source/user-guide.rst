@@ -33,53 +33,56 @@ Header datatypes
 There are 10 possible datatypes that a value can have in the header. Below are the valid datatypes along with the datatype they are parsed into in Python and examples of the datatypes.
 
 int
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: <i>
 :NRRD Example: 12
 :Python Datatype: :class:`int`
 :Python Example: 12
 
 double
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: <d>
 :NRRD Example: 3.14
 :Python Datatype: :class:`float`
 :Python Example: 3.14
 
 string
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: <s>
 :NRRD Example: test
 :Python Datatype: :class:`str`
 :Python Example: 'test'
 
 int list
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: <i> <i> ... <i>
 :NRRD Example: 1 2 3 4
 :Python Datatype: :class:`numpy.ndarray` (1D, dtype=int)
 :Python Example: np.array([1, 2, 3, 4])
 
 double list
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: <d> <d> ... <d>
 :NRRD Example: 1.2 2.3 3.4 4.5
 :Python Datatype: :class:`numpy.ndarray` (1D, dtype=float)
 :Python Example: np.array([1.2, 2.3, 3.4, 4.5])
 
 string list
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: <s> <s> ... <s>
 :NRRD Example: this is space separated
 :Python Datatype: :class:`list` of :class:`str`
 :Python Example: ['this', 'is', 'string', 'separated']
 
-A limitation to the string list is that any strings containing a space in them will be incorrectly separated. Future work could include handling an escaped space to prevent unwanted separation.
-
-The string list fields 'space units', 'units', and 'labels' are specified to have quotation marks around the strings along with the space delimiter (e.g. "<s>" "<s>" ... "<s>"). At this time, the pynrrd library does not handle quotation marks in string list fields.
+quoted string list
+~~~~~~~~~~~~~~~~~~
+:NRRD Syntax: "<s>" "<s>" ... "<s>"
+:NRRD Example: "one item" "two items" "three" "four"
+:Python Datatype: :class:`list` of :class:`str`
+:Python Example: ['one item', 'two items', 'three', 'four']
 
 int vector
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: (<i>,<i>,...,<i>)
 :NRRD Example: (1,2,3,4)
 :Python Datatype: (N,) :class:`numpy.ndarray` of :class:`int`
@@ -88,7 +91,7 @@ int vector
 pynrrd will correctly handle vectors with or without spaces between the comma-delimiter. Saving the NRRD file back will remove all spaces between the comma-delimiters.
 
 double vector
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: (<d>,<d>,...,<d>)
 :NRRD Example: (1.2,2.3,3.4,4.5)
 :Python Datatype: (N,) :class:`numpy.ndarray` of :class:`float`
@@ -106,7 +109,7 @@ int matrix
 All rows of the matrix are required, unlike that of the `double matrix`_. If some of the rows need to be 'none', then use a `double matrix`_ instead. The reason is that empty rows (i.e. containing 'none') are represented as a row of NaN's, and NaN's are only available for floating point numbers.
 
 double matrix
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 :NRRD Syntax: (<d>,<d>,...,<d>) (<d>,<d>,...,<d>) ... (<d>,<d>,...,<d>)
 :NRRD Example: (2.54, 1.3, 0.0) (3.14, 0.3, 3.3) none (0.05, -12.3, -3.3)
 :Python Datatype: (M,N) :class:`numpy.ndarray` of :class:`float`
@@ -131,8 +134,8 @@ encoding_                 `string`_
 `byteskip or byte skip`_  `int`_
 content_                  `string`_
 kinds_                    `string list`_
-labels_                   `string list`_
-units_                    `string list`_
+labels_                   `quoted string list`_
+units_                    `quoted string list`_
 min_                      `double`_
 max_                      `double`_
 spacings_                 `double list`_
@@ -145,7 +148,7 @@ centerings_               `string list`_
 `sample units`_           `string`_
 space_                    `string`_
 `space dimension`_        `int`_
-`space units`_            `string list`_
+`space units`_            `quoted string list`_
 `space directions`_       `double matrix`_
 `space origin`_           `double vector`_
 `measurement frame`_      `int matrix`_
@@ -214,7 +217,7 @@ Writing NRRD files will by default index the :obj:`data` array in Fortran-order 
 
 Index Ordering
 --------------
-NRRD stores the image elements in [row-major ordering](https://en.wikipedia.org/wiki/Row-_and_column-major_order) where the row can be seen as the fastest-varying axis. The header fields of NRRD that describes the axes are always specified in the order from fastest-varying to slowest-varying, i.e., `sizes` will be equal to `(# rows, # columns)`. This is also applicable to images of higher dimensions.
+NRRD stores the image elements in `row-major ordering <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_ where the row can be seen as the fastest-varying axis. The header fields of NRRD that describes the axes are always specified in the order from fastest-varying to slowest-varying, i.e., `sizes` will be equal to `(# rows, # columns)`. This is also applicable to images of higher dimensions.
 
 Both the reading and writing functions in pynrrd include an :obj:`index_order` parameter that is used to specify whether the returned data array should be in C-order ('C') or Fortran-order ('F').
 
