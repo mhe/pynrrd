@@ -229,4 +229,3 @@ def parse_number_auto_dtype(x):
         value = int(value)
 
     return value
-
