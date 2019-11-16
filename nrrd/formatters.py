@@ -146,21 +146,3 @@ def format_number_list(x):
     """
 
     return ' '.join([format_number(y) for y in x])
-
-def format_quoted_string_list(value):
-    """Format a :class:`list` of `str` into a NRRD quoted string list
-
-    Parameters
-    ----------
-    value: :class:`list` of `str`
-        Vector to convert to string of quoted strings
-
-    Returns
-    -------
-    list : :class:`str`
-        String containing quoted string list
-    """
-    if len(value) > 0:
-        return '"' + '" "'.join(value) + '"'
-    else:
-        return ''

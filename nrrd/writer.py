@@ -82,11 +82,7 @@ def _format_field_value(value, field_type):
     elif field_type == 'string list':
         return ' '.join(value)
     elif field_type == 'quoted string list':
-        return format_quoted_string_list(value)
-        if len(value) > 0:
-            return '"' + '" "'.join(value) + '"'
-        else:
-            return ''
+        return ' '.join('"{0}"'.format(x) for x in value)
     elif field_type == 'int vector':
         return format_vector(value)
     elif field_type == 'double vector':

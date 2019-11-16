@@ -2,6 +2,7 @@
 import bz2
 import os
 import re
+import shlex
 import warnings
 import zlib
 from collections import OrderedDict
@@ -127,10 +128,9 @@ def _parse_field_value(value, field_type):
     elif field_type == 'double list':
         return parse_number_list(value, dtype=float)
     elif field_type == 'string list':
-        # TODO Handle cases where quotation marks are around the items
         return [str(x) for x in value.split()]
     elif field_type == 'quoted string list':
-        return parse_quoted_string_list(value)
+        return shlex.split(value)
     elif field_type == 'int vector':
         return parse_vector(value, dtype=int)
     elif field_type == 'double vector':
