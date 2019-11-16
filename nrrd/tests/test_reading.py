@@ -412,16 +412,18 @@ class TestReadingFunctions(object):
             with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid endian value in header: "fake"'):
                 nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
-
     def test_invalid_index_order(self):
         with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid index order'):
             nrrd.read(RAW_NRRD_FILE_PATH, index_order=None)
 
+
 class TestReadingFunctionsFortran(TestReadingFunctions, unittest.TestCase):
     index_order = 'F'
 
+
 class TestReadingFunctionsC(TestReadingFunctions, unittest.TestCase):
     index_order = 'C'
+
 
 if __name__ == '__main__':
     unittest.main()
