@@ -310,6 +310,26 @@ class TestWritingFunctions(object):
             self.assertTrue('space units: "mm" "cm" "in"' in lines)
             self.assertTrue('labels: "X" "Y" "f(log(X, 10), Y)"' in lines)
 
+    def test_write_detached_datafile_check(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
+
+        nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detached.gz'}, detached_header=True,
+                   index_order=self.index_order)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(header['data file'], 'testfile_detached.raw.gz')
+
+    def test_write_detached_datafile_check2(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
+
+        nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detached.gz'}, detached_header=True,
+                   index_order=self.index_order)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(header['data file'], 'testfile_detached.raw.gz')
+
 
 class TestWritingFunctionsFortran(TestWritingFunctions, unittest.TestCase):
     index_order = 'F'

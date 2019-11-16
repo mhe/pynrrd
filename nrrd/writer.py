@@ -180,6 +180,11 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     if 'encoding' not in header:
         header['encoding'] = 'gzip'
 
+    # If 'datafile' is specified, then we rename to 'data file'
+    # The standard seems to advocate for 'data file' OVER 'datafile'
+    if 'datafile' in header:
+        header['data file'] = header.pop('datafile')
+
     # A bit of magic in handling options here.
     # If *.nhdr filename provided, this overrides `detached_header=False`
     # If *.nrrd filename provided AND detached_header=True, separate header and data files written.
@@ -188,7 +193,9 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     if filename.endswith('.nhdr'):
         detached_header = True
 
-        if 'data file' not in header:
+        # TODO This will cause issues for relative data files because it will not save in the correct spot
+        data_filename = header.get('datafile', None)
+        if not data_filename:
             # Get the base filename without the extension
             base_filename = os.path.splitext(filename)[0]
 
@@ -207,9 +214,6 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 
             header['data file'] = os.path.basename(data_filename) \
                 if relative_data_path else os.path.abspath(data_filename)
-        else:
-            # TODO This will cause issues for relative data files because it will not save in the correct spot
-            data_filename = header['data file']
     elif filename.endswith('.nrrd') and detached_header:
         data_filename = filename
         header['data file'] = os.path.basename(data_filename) \
