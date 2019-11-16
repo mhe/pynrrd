@@ -109,9 +109,9 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
 
     .. note::
             The following fields are automatically generated based on the :obj:`data` parameter ignoring these values
-            in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes'. In addition, the generated fields will be
-            added to the given :obj:`header`. Thus, one can check the generated fields by viewing the passed
-            :obj:`header`.
+            in the :obj:`header`: 'type', 'endian', 'dimension', 'sizes', and 'data file'. In addition, the generated
+            fields will be added to the given :obj:`header`. Thus, one can check the generated fields by viewing the
+            passed :obj:`header`.
 
     .. note::
             The default encoding field used if not specified in :obj:`header` is 'gzip'.
@@ -129,8 +129,10 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
         Filename of the NRRD file
     data : :class:`numpy.ndarray`
         Data to save to the NRRD file
-    detached_header : :obj:`bool`, optional
-        Whether the header and data should be saved in separate files. Defaults to :obj:`False`
+    detached_header : :obj:`bool` or :obj:`str`, optional
+        Whether the header and data should be saved in separate files. Defaults to :obj:`False`. If a :obj:`str` is
+        given this specifies the path to the datafile. This path will ONLY be used if the given filename ends with nhdr
+        (i.e. the file is a header)
     relative_data_path : :class:`bool`
         Whether the data filename in detached header is saved with a relative path or absolute path.
         This parameter is ignored if there is no detached header. Defaults to :obj:`True`
@@ -180,22 +182,24 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
     if 'encoding' not in header:
         header['encoding'] = 'gzip'
 
-    # If 'datafile' is specified, then we rename to 'data file'
-    # The standard seems to advocate for 'data file' OVER 'datafile'
+    # Remove detached data filename from the header
     if 'datafile' in header:
-        header['data file'] = header.pop('datafile')
+        header.pop('datafile')
+
+    if 'data file' in header:
+        header.pop('data file')
 
     # A bit of magic in handling options here.
     # If *.nhdr filename provided, this overrides `detached_header=False`
     # If *.nrrd filename provided AND detached_header=True, separate header and data files written.
-    # If detached_header=True and data file is present, then write the files separately
     # For all other cases, header & data written to same file.
     if filename.endswith('.nhdr'):
-        detached_header = True
-
-        # TODO This will cause issues for relative data files because it will not save in the correct spot
-        data_filename = header.get('datafile', None)
-        if not data_filename:
+        if isinstance(detached_header, str):
+            # Utilize the detached_header if a string was given as the path
+            # Note: An absolute path is obtained and assumed to be relative to the current path of the running Python
+            # program
+            data_filename = os.path.abspath(detached_header)
+        else:
             # Get the base filename without the extension
             base_filename = os.path.splitext(filename)[0]
 
@@ -212,13 +216,17 @@ def write(filename, data, header=None, detached_header=False, relative_data_path
             else:
                 raise NRRDError('Invalid encoding specification while writing NRRD file: %s' % header['encoding'])
 
-            header['data file'] = os.path.basename(data_filename) \
-                if relative_data_path else os.path.abspath(data_filename)
-    elif filename.endswith('.nrrd') and detached_header:
-        data_filename = filename
+        # Update the data file field in the header with the path of the detached data
+        # TODO This will cause problems when the user specifies a relative data path and gives a custom path OUTSIDE
+        #  of the current directory.
         header['data file'] = os.path.basename(data_filename) \
             if relative_data_path else os.path.abspath(data_filename)
+        detached_header = True
+    elif filename.endswith('.nrrd') and detached_header:
+        data_filename = filename
         filename = '%s.nhdr' % os.path.splitext(filename)[0]
+        header['data file'] = os.path.basename(data_filename) \
+            if relative_data_path else os.path.abspath(data_filename)
     else:
         # Write header & data as one file
         data_filename = filename
