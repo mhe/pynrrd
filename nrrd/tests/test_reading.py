@@ -462,8 +462,10 @@ class TestReadingFunctions(object):
 class TestReadingFunctionsFortran(TestReadingFunctions, unittest.TestCase):
     index_order = 'F'
 
+
 class TestReadingFunctionsC(TestReadingFunctions, unittest.TestCase):
     index_order = 'C'
+
 
 if __name__ == '__main__':
     unittest.main()
