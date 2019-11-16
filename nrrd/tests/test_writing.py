@@ -313,7 +313,7 @@ class TestWritingFunctions(object):
     def test_write_detached_datafile_check(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
-        nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detached.gz'}, detached_header=True,
+        nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detachedWRONG.gz'}, detached_header=True,
                    index_order=self.index_order)
 
         # Read back the same file
@@ -323,12 +323,35 @@ class TestWritingFunctions(object):
     def test_write_detached_datafile_check2(self):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
-        nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detached.gz'}, detached_header=True,
+        nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detachedWRONG.gz'}, detached_header=True,
                    index_order=self.index_order)
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
         self.assertEqual(header['data file'], 'testfile_detached.raw.gz')
+
+    def test_write_detached_datafile_custom_name(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
+        # Specify a custom path to write the
+        output_header_filename = os.path.join(self.temp_write_dir, 'testfile_detachedDifferent.gz')
+
+        nrrd.write(output_filename, self.data_input, detached_header=output_header_filename,
+                   index_order=self.index_order)
+
+        # Read back the same file
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertEqual(header['data file'], 'testfile_detachedDifferent.gz')
+
+    def test_write_check_remove_datafile(self):
+        output_filename = os.path.join(self.temp_write_dir, 'testfile.nrrd')
+
+        nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detached.gz'}, detached_header=False,
+                   index_order=self.index_order)
+
+        # Read back the same file
+        # The 'data file' parameter should be missing since this is NOT a detached file
+        data, header = nrrd.read(output_filename, index_order=self.index_order)
+        self.assertFalse('data file' in header)
 
 
 class TestWritingFunctionsFortran(TestWritingFunctions, unittest.TestCase):
