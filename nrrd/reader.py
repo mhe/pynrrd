@@ -367,7 +367,7 @@ def read_data(header, fh=None, filename=None, index_order='F'):
         fh = open(data_filename, 'rb')
 
     # Get the total number of data points by multiplying the size of each dimension together
-    total_data_points = header['sizes'].prod()
+    total_data_points = header['sizes'].prod(dtype=np.int64)
 
     # Skip the number of lines requested when line_skip >= 0
     # Irrespective of the NRRD file having attached/detached header
