@@ -293,8 +293,24 @@ def _write_data(data, fh, header, compression_level=None, index_order='F'):
         # Convert the data into a string
         raw_data = data.tostring(order=index_order)
 
-        # Write the raw data directly to the file
-        fh.write(raw_data)
+        # Write the data in chunks (see _WRITE_CHUNKSIZE declaration for more information why)
+        # Obtain the length of the data since we will be using it repeatedly, more efficient
+        start_index = 0
+        raw_data_len = len(raw_data)
+        # Loop through the data and write it by chunk
+        while start_index < raw_data_len:
+            # End index is start index plus the chunk size
+            # Set to the string length to read the remaining chunk at the end
+            end_index = min(start_index + _WRITE_CHUNKSIZE, raw_data_len)
+
+            # Write the compressed data
+            fh.write(raw_data[start_index:end_index])
+
+            start_index = end_index
+
+        # Finish writing the data
+        fh.flush()
+
     elif header['encoding'].lower() in ['ascii', 'text', 'txt']:
         # savetxt only works for 1D and 2D arrays, so reshape any > 2 dim arrays into one long 1D array
         if data.ndim > 2:
