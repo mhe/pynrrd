@@ -291,7 +291,7 @@ def _write_data(data, fh, header, compression_level=None, index_order='F'):
 
     if header['encoding'] == 'raw':
         # Convert the data into a string
-        raw_data = data.tostring(order=index_order)
+        raw_data = data.tobytes(order=index_order)
 
         # Write the data in chunks (see _WRITE_CHUNKSIZE declaration for more information why)
         # Obtain the length of the data since we will be using it repeatedly, more efficient
@@ -320,7 +320,7 @@ def _write_data(data, fh, header, compression_level=None, index_order='F'):
 
     else:
         # Convert the data into a string
-        raw_data = data.tostring(order=index_order)
+        raw_data = data.tobytes(order=index_order)
 
         # Construct the compressor object based on encoding
         if header['encoding'] in ['gzip', 'gz']:
