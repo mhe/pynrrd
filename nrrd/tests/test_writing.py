@@ -24,7 +24,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
         self.assertEqual(header['encoding'], encoding)
 
         return output_filename
@@ -35,7 +35,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
 
     def test_write_raw(self):
         self.write_and_read_back_with_encoding(u'raw')
@@ -170,7 +170,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
         self.assertEqual(header['encoding'], 'raw')
         self.assertEqual(header['data file'], output_data_filename)
 
@@ -182,7 +182,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_data_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
         self.assertEqual(header['encoding'], 'raw')
         self.assertEqual('data file' in header, False)
 
@@ -202,7 +202,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
         self.assertEqual(header['encoding'], 'raw')
         self.assertEqual(header['data file'], 'testfile_detached_raw.raw')
 
@@ -217,7 +217,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
         self.assertEqual(header['encoding'], 'gz')
         self.assertEqual(header['data file'], output_data_filename)
 
@@ -231,7 +231,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
         self.assertEqual(header['encoding'], 'bz2')
         self.assertEqual(header['data file'], 'testfile_detached_raw.raw.bz2')
 
@@ -245,7 +245,7 @@ class TestWritingFunctions(object):
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tostring(order=self.index_order))
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
         self.assertEqual(header['encoding'], 'txt')
         self.assertEqual(header['data file'], 'testfile_detached_raw.txt')
 
