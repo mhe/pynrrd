@@ -1,11 +1,14 @@
 # encoding: utf-8
 import bz2
+import io
 import os
 import re
 import shlex
 import warnings
 import zlib
 from collections import OrderedDict
+
+import typing
 
 from nrrd.parsers import *
 
@@ -301,6 +304,31 @@ def read_header(file, custom_field_map=None):
 
     return header
 
+AnyFile = typing.Union[str, bytes, os.PathLike, io.IOBase]
+
+def numpy_fromfile(file: AnyFile, dtype, count: int = -1):
+    """numpy.fromfile() wrapper, handling io.BytesIO file-like streams.
+
+    Numpy requires open files to be actual files on disk, i.e., must support
+    file.fileno(), so it fails with file-like streams such as io.BytesIO().
+
+    If numpy.fromfile() fails due to no file.fileno() support, this wrapper
+    reads the required bytes from file and redirects the call to
+    numpy.frombuffer().
+
+    See https://github.com/numpy/numpy/issues/2230
+
+    Stolen from https://github.com/numpy/numpy/issues/2230
+    """
+    try:
+        return np.fromfile(file, dtype=dtype, count=count)
+    except io.UnsupportedOperation as e:
+        if not (e.args and e.args[0] == 'fileno' and isinstance(file, io.IOBase)):
+            raise  # Nothing I can do about it
+        dtype = np.dtype(dtype)
+        buffer = file.read(dtype.itemsize * count)
+        return np.frombuffer(buffer, dtype=dtype, count=count)
+
 
 def read_data(header, fh=None, filename=None, index_order='F'):
     """Read data from file into :class:`numpy.ndarray`
@@ -403,7 +431,7 @@ def read_data(header, fh=None, filename=None, index_order='F'):
 
     # If a compression encoding is used, then byte skip AFTER decompressing
     if header['encoding'] == 'raw':
-        data = np.fromfile(fh, dtype)
+        data = numpy_fromfile(file=fh, dtype=dtype)
     elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
         data = np.fromfile(fh, dtype, sep=' ')
     else:
