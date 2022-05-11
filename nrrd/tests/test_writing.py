@@ -1,3 +1,4 @@
+import io
 import os
 import sys
 
@@ -17,42 +18,40 @@ class TestWritingFunctions(object):
         with open(RAW_DATA_FILE_PATH, 'rb') as fh:
             self.expected_data = fh.read()
 
-    def write_and_read_back_with_encoding(self, encoding, level=9):
+    def write_and_read_back(self, encoding=None, level=9):
         output_filename = os.path.join(self.temp_write_dir, 'testfile_{}_{}.nrrd'.format(encoding, str(level)))
-        nrrd.write(output_filename, self.data_input, {u'encoding': encoding}, compression_level=level,
+        headers = {}
+        if encoding is not None:
+            headers[u'encoding'] = encoding
+        nrrd.write(output_filename, self.data_input, headers, compression_level=level,
                    index_order=self.index_order)
 
         # Read back the same file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
         self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
-        self.assertEqual(header['encoding'], encoding)
+        self.assertEqual(header.get('encoding'), encoding or 'gzip')  # default is gzip is not specified
 
         return output_filename
 
     def test_write_default_header(self):
-        output_filename = os.path.join(self.temp_write_dir, 'testfile_default_header.nrrd')
-        nrrd.write(output_filename, self.data_input, index_order=self.index_order)
-
-        # Read back the same file
-        data, header = nrrd.read(output_filename, index_order=self.index_order)
-        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+        self.write_and_read_back()
 
     def test_write_raw(self):
-        self.write_and_read_back_with_encoding(u'raw')
+        self.write_and_read_back(u'raw')
 
     def test_write_gz(self):
-        self.write_and_read_back_with_encoding(u'gzip')
+        self.write_and_read_back(u'gzip')
 
     def test_write_bzip2(self):
-        self.write_and_read_back_with_encoding(u'bzip2')
+        self.write_and_read_back(u'bzip2')
 
     def test_write_gz_level1(self):
-        filename = self.write_and_read_back_with_encoding(u'gzip', level=1)
+        filename = self.write_and_read_back(u'gzip', level=1)
 
         self.assertLess(os.path.getsize(GZ_NRRD_FILE_PATH), os.path.getsize(filename))
 
     def test_write_bzip2_level1(self):
-        _ = self.write_and_read_back_with_encoding(u'bzip2', level=1)
+        _ = self.write_and_read_back(u'bzip2', level=1)
 
         # note: we don't currently assert reduction here, because with the binary ball test data,
         #       the output size does not change at different bz2 levels.
@@ -352,6 +351,47 @@ class TestWritingFunctions(object):
         # The 'data file' parameter should be missing since this is NOT a detached file
         data, header = nrrd.read(output_filename, index_order=self.index_order)
         self.assertFalse('data file' in header)
+
+    def test_write_memory(self):
+        default_output_filename = os.path.join(self.temp_write_dir, 'testfile_default_filename.nrrd')
+        nrrd.write(default_output_filename, self.data_input, {}, index_order=self.index_order)
+
+        memory_nrrd = io.BytesIO()
+
+        nrrd.write(memory_nrrd, self.data_input, {}, index_order=self.index_order)
+
+        memory_nrrd.seek(0)
+
+        data, header = nrrd.read(default_output_filename, index_order=self.index_order)
+        memory_header = nrrd.read_header(memory_nrrd)
+        memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None, index_order=self.index_order)
+
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+        self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
+        self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
+        self.assertSequenceEqual(header, memory_header)
+
+    def test_write_memory_file_handle(self):
+        default_output_filename = os.path.join(self.temp_write_dir, 'testfile_default_filename.nrrd')
+        nrrd.write(default_output_filename, self.data_input, {}, index_order=self.index_order)
+
+        default_output_memory_filename = os.path.join(self.temp_write_dir, 'testfile_default_memory_filename.nrrd')
+
+        with open(default_output_memory_filename, mode='wb') as memory_nrrd:
+
+            nrrd.write(memory_nrrd, self.data_input, {}, index_order=self.index_order)
+
+        data, header = nrrd.read(default_output_filename, index_order=self.index_order)
+
+        with open(default_output_memory_filename, mode='rb') as memory_nrrd:
+            memory_header = nrrd.read_header(memory_nrrd)
+            memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None,
+                                         index_order=self.index_order)
+
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+        self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
+        self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
+        self.assertSequenceEqual(header, memory_header)
 
 
 class TestWritingFunctionsFortran(TestWritingFunctions, unittest.TestCase):
