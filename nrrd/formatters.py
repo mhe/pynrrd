@@ -31,7 +31,7 @@ def format_number(x):
         # floating point number.
         # The g option is used rather than f because g precision uses significant digits while f is just the number of
         # digits after the decimal. (NRRD C implementation uses g).
-        value = '{:.17g}'.format(x)
+        value = f"{x:.17g}"
     else:
         value = str(x)
 
@@ -54,7 +54,7 @@ def format_vector(x):
         String containing NRRD vector
     """
 
-    return '(' + ','.join([format_number(y) for y in x]) + ')'
+    return "(" + ",".join([format_number(y) for y in x]) + ")"
 
 
 def format_optional_vector(x):
@@ -79,7 +79,7 @@ def format_optional_vector(x):
     # If vector is None or all elements are NaN, then return none
     # Otherwise format the vector as normal
     if x is None or np.all(np.isnan(x)):
-        return 'none'
+        return "none"
     else:
         return format_vector(x)
 
@@ -100,7 +100,7 @@ def format_matrix(x):
         String containing NRRD matrix
     """
 
-    return ' '.join([format_vector(y) for y in x])
+    return " ".join([format_vector(y) for y in x])
 
 
 def format_optional_matrix(x):
@@ -126,7 +126,7 @@ def format_optional_matrix(x):
         String containing NRRD matrix
     """
 
-    return ' '.join([format_optional_vector(y) for y in x])
+    return " ".join([format_optional_vector(y) for y in x])
 
 
 def format_number_list(x):
@@ -145,4 +145,4 @@ def format_number_list(x):
         String containing NRRD list
     """
 
-    return ' '.join([format_number(y) for y in x])
+    return " ".join([format_number(y) for y in x])

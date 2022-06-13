@@ -25,7 +25,7 @@
 
 pynrrd
 ======
-pynrrd is a pure-Python module for reading and writing `NRRD <http://teem.sourceforge.net/nrrd/>`_ files into and 
+pynrrd is a pure-Python module for reading and writing `NRRD <http://teem.sourceforge.net/nrrd/>`_ files into and
 from numpy arrays.
 
 Dependencies
@@ -46,7 +46,7 @@ Install via pip and GitHub
 .. code-block:: bash
 
     pip install git+https://github.com/mhe/pynrrd.git
-    
+
 Install from source (recommended for contributing to pynrrd)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 For developers that want to contribute to pynrrd, you can clone the pynrrd repository and install it using the following commands:
@@ -74,20 +74,24 @@ The tests can be run via the following command from the base directory:
 
     python -m unittest discover -v nrrd/tests
 
+**Format and Lint code**
+
+This repository uses pre-commit hooks to run format and lint the code and they are enforced in CI. See [pre-commit](https://pre-commit.com)
+
 Example usage
 -------------
 .. code-block:: python
 
     import numpy as np
     import nrrd
-    
+
     # Some sample numpy data
     data = np.zeros((5,4,3,2))
     filename = 'testdata.nrrd'
-    
+
     # Write to a NRRD file
     nrrd.write(filename, data)
-    
+
     # Read the data back from file
     readdata, header = nrrd.read(filename)
     print(readdata.shape)
