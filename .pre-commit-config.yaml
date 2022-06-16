@@ -13,11 +13,6 @@ repos:
       -  id: pyupgrade
          args: [--py37-plus]
 
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-
   - repo: https://github.com/timothycrosley/isort
     rev: 5.10.1
     hooks:

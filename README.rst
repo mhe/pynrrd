@@ -76,7 +76,7 @@ The tests can be run via the following command from the base directory:
 
 **Format and Lint code**
 
-This repository uses pre-commit hooks to run format and lint the code and they are enforced in CI. See [pre-commit](https://pre-commit.com)
+ This repository uses pre-commit hooks to run format and lint the code and they are enforced in CI. See [pre-commit](https://pre-commit.com)
 
 Example usage
 -------------
