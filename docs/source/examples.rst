@@ -34,6 +34,31 @@ Example only reading header
     print(header)
     >>> OrderedDict([('type', 'double'), ('dimension', 1), ('sizes', array([50])), ('endian', 'little'), ('encoding', 'gzip')])
 
+Example write and read from memory
+-------------
+.. code-block:: python
+
+    import io
+    import numpy as np
+    import nrrd
+
+    memory_nrrd = io.BytesIO()
+
+    data = np.linspace(1, 50, 50)
+    nrrd.write(memory_nrrd, data)
+
+    memory_nrrd.seek(0)
+
+    header = nrrd.read_header(memory_nrrd)
+
+    print(header)
+    >>> OrderedDict([('type', 'double'), ('dimension', 1), ('sizes', array([50])), ('endian', 'little'), ('encoding', 'gzip')])
+
+    data2 = nrrd.read_data(header=header, fh=memory_nrrd)
+
+    print(np.all(data == data2))
+    >>> True
+
 Example with fields and custom fields
 -------------------------------------
 .. code-block:: python

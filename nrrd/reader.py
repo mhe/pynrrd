@@ -231,8 +231,7 @@ def read_header(file, custom_field_map=None):
     # file handle. Since read function uses a filename, it is easy to think read_header is the same syntax.
     if isinstance(file, str) and file.count('\n') == 0:
         with open(file, 'rb') as fh:
-            header = read_header(fh, custom_field_map)
-            return header
+            return read_header(fh, custom_field_map)
 
     # Collect number of bytes in the file header (for seeking below)
     header_size = 0
