@@ -83,7 +83,7 @@ def _format_field_value(value, field_type):
     elif field_type == 'string list':
         return ' '.join(value)
     elif field_type == 'quoted string list':
-        return ' '.join('"{0}"'.format(x) for x in value)
+        return ' '.join(f'"{x}"' for x in value)
     elif field_type == 'int vector':
         return format_vector(value)
     elif field_type == 'double vector':
@@ -169,9 +169,9 @@ def _write_header(file, header, custom_field_map=None):
 
         # Custom fields are written as key/value pairs with a := instead of : delimiter
         if x >= custom_field_start_index:
-            file.write(('%s:=%s\n' % (field, value_str)).encode('ascii'))
+            file.write((f'{field}:={value_str}\n').encode('ascii'))
         else:
-            file.write(('%s: %s\n' % (field, value_str)).encode('ascii'))
+            file.write((f'{field}: {value_str}\n').encode('ascii'))
 
     # Write the closing extra newline
     file.write(b'\n')
@@ -295,9 +295,9 @@ def write(file, data, header=None, detached_header=False, relative_data_path=Tru
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
     compression_level : :class:`int`
-        Integer between 1 and 9 specifying the compression level when using a compressed encoding (gzip or bzip). A value
-        of :obj:`1` compresses the data the least amount and is the fastest, while a value of :obj:`9` compresses the
-        data the most and is the slowest.
+        Integer between 1 and 9 specifying the compression level when using a compressed encoding (gzip or bzip).
+        A value of :obj:`1` compresses the data the least amount and is the fastest, while a value of :obj:`9`
+        compresses the data the most and is the slowest.
     index_order : {'C', 'F'}, optional
         Specifies the index order used for writing. Either 'C' (C-order) where the dimensions are ordered from
         slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are ordered

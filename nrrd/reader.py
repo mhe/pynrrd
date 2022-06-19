@@ -1,4 +1,3 @@
-# encoding: utf-8
 import bz2
 import os
 import re
@@ -321,9 +320,9 @@ def read_data(header, fh=None, filename=None, index_order='F'):
         Filename of the header file. Only necessary if data is detached from the header. This is used to get the
         absolute data path.
     index_order : {'C', 'F'}, optional
-        Specifies the index order of the resulting data array. Either 'C' (C-order) where the dimensions are ordered from
-        slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are ordered
-        from fastest-varying to slowest-varying (e.g. (x, y, z)).
+        Specifies the index order of the resulting data array. Either 'C' (C-order) where the dimensions are ordered
+        from slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are
+        ordered from fastest-varying to slowest-varying (e.g. (x, y, z)).
 
     Returns
     -------
@@ -452,8 +451,8 @@ def read_data(header, fh=None, filename=None, index_order='F'):
     fh.close()
 
     if total_data_points != data.size:
-        raise NRRDError('Size of the data does not equal the product of all the dimensions: {0}-{1}={2}'
-                        .format(total_data_points, data.size, total_data_points - data.size))
+        raise NRRDError(f'Size of the data does not equal the product of all the dimensions: '
+                        f'{total_data_points}-{data.size}={total_data_points - data.size}')
 
     # In the NRRD header, the fields are specified in Fortran order, i.e, the first index is the one that changes
     # fastest and last index changes slowest. This needs to be taken into consideration since numpy uses C-order
@@ -475,7 +474,9 @@ def read(filename, custom_field_map=None, index_order='F'):
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
 
     .. note::
-            Users should be aware that the `index_order` argument needs to be consistent between `nrrd.read` and `nrrd.write`. I.e., reading an array with `index_order='F'` will result in a transposed version of the original data and hence the writer needs to be aware of this.
+            Users should be aware that the `index_order` argument needs to be consistent between `nrrd.read` and
+            `nrrd.write`. I.e., reading an array with `index_order='F'` will result in a transposed version of the
+            original data and hence the writer needs to be aware of this.
 
     Parameters
     ----------
@@ -485,9 +486,9 @@ def read(filename, custom_field_map=None, index_order='F'):
         Dictionary used for parsing custom field types where the key is the custom field name and the value is a
         string identifying datatype for the custom field.
     index_order : {'C', 'F'}, optional
-        Specifies the index order of the resulting data array. Either 'C' (C-order) where the dimensions are ordered from
-        slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are ordered
-        from fastest-varying to slowest-varying (e.g. (x, y, z)).
+        Specifies the index order of the resulting data array. Either 'C' (C-order) where the dimensions are ordered
+        from slowest-varying to fastest-varying (e.g. (z, y, x)), or 'F' (Fortran-order) where the dimensions are
+        ordered from fastest-varying to slowest-varying (e.g. (x, y, z)).
 
     Returns
     -------
