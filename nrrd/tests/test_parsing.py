@@ -1,12 +1,7 @@
-import os
-import sys
-
 import numpy as np
 
 import nrrd
 from nrrd.tests.util import *
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 
 class TestFieldParsing(unittest.TestCase):

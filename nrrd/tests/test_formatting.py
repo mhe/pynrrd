@@ -1,13 +1,7 @@
-import os
-import sys
-
 import numpy as np
 
 import nrrd
 from nrrd.tests.util import *
-
-# Required specifically in each module so that searches happen at the parent directory for importing modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 
 class TestFieldFormatting(unittest.TestCase):
