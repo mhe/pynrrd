@@ -31,7 +31,7 @@ def format_number(x):
         # floating point number.
         # The g option is used rather than f because g precision uses significant digits while f is just the number of
         # digits after the decimal. (NRRD C implementation uses g).
-        value = '{:.17g}'.format(x)
+        value = f'{x:.17g}'
     else:
         value = str(x)
 

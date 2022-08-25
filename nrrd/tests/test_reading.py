@@ -1,24 +1,20 @@
-import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-
 import numpy as np
-from nrrd.tests.util import *
+
 import nrrd
+from nrrd.tests.util import *
 
 
-class TestReadingFunctions(object):
+class TestReadingFunctions:
     def setUp(self):
-        self.expected_header = {u'dimension': 3,
-                                u'encoding': 'raw',
-                                u'endian': 'little',
-                                u'kinds': ['domain', 'domain', 'domain'],
-                                u'sizes': np.array([30, 30, 30]),
-                                u'space': 'left-posterior-superior',
-                                u'space directions': np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
-                                u'space origin': np.array([0, 0, 0]),
-                                u'type': 'short'}
+        self.expected_header = {'dimension': 3,
+                                'encoding': 'raw',
+                                'endian': 'little',
+                                'kinds': ['domain', 'domain', 'domain'],
+                                'sizes': np.array([30, 30, 30]),
+                                'space': 'left-posterior-superior',
+                                'space directions': np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+                                'space origin': np.array([0, 0, 0]),
+                                'type': 'short'}
 
         self.expected_data = np.fromfile(RAW_DATA_FILE_PATH, np.int16).reshape((30, 30, 30))
         if self.index_order == 'F':
@@ -43,7 +39,7 @@ class TestReadingFunctions(object):
 
     def test_read_detached_header_only(self):
         expected_header = self.expected_header
-        expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+        expected_header['data file'] = os.path.basename(RAW_DATA_FILE_PATH)
 
         with open(RAW_NHDR_FILE_PATH, 'rb') as fh:
             header = nrrd.read_header(fh)
@@ -61,7 +57,7 @@ class TestReadingFunctions(object):
 
     def test_read_detached_header_and_data(self):
         expected_header = self.expected_header
-        expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+        expected_header['data file'] = os.path.basename(RAW_DATA_FILE_PATH)
 
         data, header = nrrd.read(RAW_NHDR_FILE_PATH, index_order=self.index_order)
 
@@ -73,8 +69,8 @@ class TestReadingFunctions(object):
 
     def test_read_detached_header_and_data_with_byteskip_minus1(self):
         expected_header = self.expected_header
-        expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
-        expected_header[u'byte skip'] = -1
+        expected_header['data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+        expected_header['byte skip'] = -1
 
         data, header = nrrd.read(RAW_BYTESKIP_NHDR_FILE_PATH, index_order=self.index_order)
 
@@ -86,10 +82,10 @@ class TestReadingFunctions(object):
 
     def test_read_detached_header_and_nifti_data_with_byteskip_minus1(self):
         expected_header = self.expected_header
-        expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
-        expected_header[u'byte skip'] = -1
-        expected_header[u'encoding'] = 'gzip'
-        expected_header[u'data file'] = 'BallBinary30x30x30.nii.gz'
+        expected_header['data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+        expected_header['byte skip'] = -1
+        expected_header['encoding'] = 'gzip'
+        expected_header['data file'] = 'BallBinary30x30x30.nii.gz'
 
         data, header = nrrd.read(GZ_BYTESKIP_NIFTI_NHDR_FILE_PATH, index_order=self.index_order)
 
@@ -100,18 +96,17 @@ class TestReadingFunctions(object):
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_detached_header_and_nifti_data(self):
-        with self.assertRaisesRegex(nrrd.NRRDError, 'Size of the data does not equal '
-                                                    + 'the product of all the dimensions: 27000-27176=-176'):
+        with self.assertRaisesRegex(
+                nrrd.NRRDError, 'Size of the data does not equal the product of all the dimensions: 27000-27176=-176'):
             nrrd.read(GZ_NIFTI_NHDR_FILE_PATH, index_order=self.index_order)
 
     def test_read_detached_header_and_data_with_byteskip_minus5(self):
-        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid byteskip, allowed values '
-                                                    + 'are greater than or equal to -1'):
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid byteskip, allowed values are greater than or equal to -1'):
             nrrd.read(RAW_INVALID_BYTESKIP_NHDR_FILE_PATH, index_order=self.index_order)
 
     def test_read_header_and_gz_compressed_data(self):
         expected_header = self.expected_header
-        expected_header[u'encoding'] = 'gzip'
+        expected_header['encoding'] = 'gzip'
 
         data, header = nrrd.read(GZ_NRRD_FILE_PATH, index_order=self.index_order)
 
@@ -123,9 +118,9 @@ class TestReadingFunctions(object):
 
     def test_read_header_and_gz_compressed_data_with_byteskip_minus1(self):
         expected_header = self.expected_header
-        expected_header[u'encoding'] = 'gzip'
-        expected_header[u'type'] = 'int16'
-        expected_header[u'byte skip'] = -1
+        expected_header['encoding'] = 'gzip'
+        expected_header['type'] = 'int16'
+        expected_header['byte skip'] = -1
 
         data, header = nrrd.read(GZ_BYTESKIP_NRRD_FILE_PATH, index_order=self.index_order)
 
@@ -137,7 +132,7 @@ class TestReadingFunctions(object):
 
     def test_read_header_and_bz2_compressed_data(self):
         expected_header = self.expected_header
-        expected_header[u'encoding'] = 'bzip2'
+        expected_header['encoding'] = 'bzip2'
 
         data, header = nrrd.read(BZ2_NRRD_FILE_PATH, index_order=self.index_order)
 
@@ -149,8 +144,8 @@ class TestReadingFunctions(object):
 
     def test_read_header_and_gz_compressed_data_with_lineskip3(self):
         expected_header = self.expected_header
-        expected_header[u'encoding'] = 'gzip'
-        expected_header[u'line skip'] = 3
+        expected_header['encoding'] = 'gzip'
+        expected_header['line skip'] = 3
 
         data, header = nrrd.read(GZ_LINESKIP_NRRD_FILE_PATH, index_order=self.index_order)
 
@@ -161,16 +156,16 @@ class TestReadingFunctions(object):
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_raw_header(self):
-        expected_header = {u'type': 'float', u'dimension': 3, u'min': 0, u'max': 35.4}
+        expected_header = {'type': 'float', 'dimension': 3, 'min': 0, 'max': 35.4}
         header = nrrd.read_header(('NRRD0005', 'type: float', 'dimension: 3', 'min: 0', 'max: 35.4'))
         self.assertEqual(expected_header, header)
 
-        expected_header = {u'my extra info': u'my : colon-separated : values'}
+        expected_header = {'my extra info': 'my : colon-separated : values'}
         header = nrrd.read_header(('NRRD0005', 'my extra info:=my : colon-separated : values'))
         np.testing.assert_equal(expected_header, header)
 
     def test_read_dup_field_error_and_warn(self):
-        expected_header = {u'type': 'float', u'dimension': 3}
+        expected_header = {'type': 'float', 'dimension': 3}
         header_txt_tuple = ('NRRD0005', 'type: float', 'dimension: 3', 'type: float')
 
         with self.assertRaisesRegex(nrrd.NRRDError, "Duplicate header field: 'type'"):
@@ -187,12 +182,12 @@ class TestReadingFunctions(object):
             nrrd.reader.ALLOW_DUPLICATE_FIELD = False
 
     def test_read_header_and_ascii_1d_data(self):
-        expected_header = {u'dimension': 1,
-                           u'encoding': 'ASCII',
-                           u'kinds': ['domain'],
-                           u'sizes': [27],
-                           u'spacings': [1.0458000000000001],
-                           u'type': 'unsigned char'}
+        expected_header = {'dimension': 1,
+                           'encoding': 'ASCII',
+                           'kinds': ['domain'],
+                           'sizes': [27],
+                           'spacings': [1.0458000000000001],
+                           'type': 'unsigned char'}
 
         data, header = nrrd.read(ASCII_1D_NRRD_FILE_PATH, index_order=self.index_order)
 
@@ -204,12 +199,12 @@ class TestReadingFunctions(object):
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_read_header_and_ascii_2d_data(self):
-        expected_header = {u'dimension': 2,
-                           u'encoding': 'ASCII',
-                           u'kinds': ['domain', 'domain'],
-                           u'sizes': [3, 9],
-                           u'spacings': [1.0458000000000001, 2],
-                           u'type': 'unsigned short'}
+        expected_header = {'dimension': 2,
+                           'encoding': 'ASCII',
+                           'kinds': ['domain', 'domain'],
+                           'sizes': [3, 9],
+                           'spacings': [1.0458000000000001, 2],
+                           'type': 'unsigned short'}
 
         data, header = nrrd.read(ASCII_2D_NRRD_FILE_PATH, index_order=self.index_order)
 
@@ -248,44 +243,44 @@ class TestReadingFunctions(object):
         self.assertTrue(data.flags['WRITEABLE'])
 
     def test_custom_fields_without_field_map(self):
-        expected_header = {u'dimension': 1,
-                           u'encoding': 'ASCII',
-                           u'kinds': ['domain'],
-                           u'sizes': [27],
-                           u'spacings': [1.0458000000000001],
-                           u'int': '24',
-                           u'double': '25.5566',
-                           u'string': 'This is a long string of information that is important.',
-                           u'int list': '1 2 3 4 5 100',
-                           u'double list': '0.2 0.502 0.8',
-                           u'string list': 'words are split by space in list',
-                           u'int vector': '(100, 200, -300)',
-                           u'double vector': '(100.5,200.3,-300.99)',
-                           u'int matrix': '(1,0,0) (0,1,0) (0,0,1)',
-                           u'double matrix': '(1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)',
-                           u'type': 'unsigned char'}
+        expected_header = {'dimension': 1,
+                           'encoding': 'ASCII',
+                           'kinds': ['domain'],
+                           'sizes': [27],
+                           'spacings': [1.0458000000000001],
+                           'int': '24',
+                           'double': '25.5566',
+                           'string': 'This is a long string of information that is important.',
+                           'int list': '1 2 3 4 5 100',
+                           'double list': '0.2 0.502 0.8',
+                           'string list': 'words are split by space in list',
+                           'int vector': '(100, 200, -300)',
+                           'double vector': '(100.5,200.3,-300.99)',
+                           'int matrix': '(1,0,0) (0,1,0) (0,0,1)',
+                           'double matrix': '(1.2,0.3,0) (0,1.5,0) (0,-0.55,1.6)',
+                           'type': 'unsigned char'}
 
         header = nrrd.read_header(ASCII_1D_CUSTOM_FIELDS_FILE_PATH)
 
         self.assertEqual(header, expected_header)
 
     def test_custom_fields_with_field_map(self):
-        expected_header = {u'dimension': 1,
-                           u'encoding': 'ASCII',
-                           u'kinds': ['domain'],
-                           u'sizes': [27],
-                           u'spacings': [1.0458000000000001],
-                           u'int': 24,
-                           u'double': 25.5566,
-                           u'string': 'This is a long string of information that is important.',
-                           u'int list': np.array([1, 2, 3, 4, 5, 100]),
-                           u'double list': np.array([0.2, 0.502, 0.8]),
-                           u'string list': ['words', 'are', 'split', 'by', 'space', 'in', 'list'],
-                           u'int vector': np.array([100, 200, -300]),
-                           u'double vector': np.array([100.5, 200.3, -300.99]),
-                           u'int matrix': np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
-                           u'double matrix': np.array([[1.2, 0.3, 0.0], [0.0, 1.5, 0.0], [0.0, -0.55, 1.6]]),
-                           u'type': 'unsigned char'}
+        expected_header = {'dimension': 1,
+                           'encoding': 'ASCII',
+                           'kinds': ['domain'],
+                           'sizes': [27],
+                           'spacings': [1.0458000000000001],
+                           'int': 24,
+                           'double': 25.5566,
+                           'string': 'This is a long string of information that is important.',
+                           'int list': np.array([1, 2, 3, 4, 5, 100]),
+                           'double list': np.array([0.2, 0.502, 0.8]),
+                           'string list': ['words', 'are', 'split', 'by', 'space', 'in', 'list'],
+                           'int vector': np.array([100, 200, -300]),
+                           'double vector': np.array([100.5, 200.3, -300.99]),
+                           'int matrix': np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+                           'double matrix': np.array([[1.2, 0.3, 0.0], [0.0, 1.5, 0.0], [0.0, -0.55, 1.6]]),
+                           'type': 'unsigned char'}
 
         custom_field_map = {'int': 'int',
                             'double': 'double',
@@ -355,7 +350,7 @@ class TestReadingFunctions(object):
                 nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
     def test_detached_header_no_filename(self):
-        self.expected_header[u'data file'] = os.path.basename(RAW_DATA_FILE_PATH)
+        self.expected_header['data file'] = os.path.basename(RAW_DATA_FILE_PATH)
 
         with open(RAW_NHDR_FILE_PATH, 'rb') as fh:
             header = nrrd.read_header(fh)

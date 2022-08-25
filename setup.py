@@ -1,18 +1,19 @@
 import os
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 from nrrd._version import __version__
 
 currentPath = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(os.path.join(currentPath, 'README.rst'), 'r') as fh:
+with open(os.path.join(currentPath, 'README.rst')) as fh:
     longDescription = fh.read()
 
 longDescription = '\n' + longDescription
 
 setup(name='pynrrd',
+      python_requires='>=3.7',
       version=__version__,
       description='Pure python module for reading and writing NRRD files.',
       long_description=longDescription,
@@ -28,11 +29,11 @@ setup(name='pynrrd',
           'License :: OSI Approved :: MIT License',
           'Topic :: Scientific/Engineering',
           'Programming Language :: Python',
-          "Programming Language :: Python :: 2.7",
-          'Programming Language :: Python :: 3',
-          "Programming Language :: Python :: 3.4",
-          "Programming Language :: Python :: 3.5",
-          "Programming Language :: Python :: 3.6"
+          "Programming Language :: Python :: 3.7",
+          "Programming Language :: Python :: 3.8",
+          "Programming Language :: Python :: 3.9",
+          "Programming Language :: Python :: 3.10",
+          "Programming Language :: Python :: 3.11"
       ],
       project_urls={
           'Tracker': 'https://github.com/mhe/pynrrd/issues',
