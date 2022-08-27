@@ -1,7 +1,8 @@
 import unittest
-from typing import ClassVar, Literal
+from typing import ClassVar
 
 import numpy as np
+from typing_extensions import Literal
 
 import nrrd
 from nrrd.tests.util import *
