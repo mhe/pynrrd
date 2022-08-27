@@ -26,7 +26,7 @@ class Abstract:
             if encoding is not None:
                 headers['encoding'] = encoding
             nrrd.write(output_filename, self.data_input, headers, compression_level=level,
-                    index_order=self.index_order)
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -159,15 +159,15 @@ class Abstract:
                 self.assertEqual(lines[17], 'int vector:=(100,200,-300)')
                 self.assertEqual(lines[18], 'double vector:=(100.5,200.30000000000001,-300.99000000000001)')
                 self.assertEqual(lines[19], 'int matrix:=(1,0,0) (0,1,0) (0,0,1)')
-                self.assertEqual(lines[20], 'double matrix:=(1.2,0.29999999999999999,0) (0,1.5,0) (0,-0.55000000000000004,'
-                                            '1.6000000000000001)')
+                self.assertEqual(lines[20], 'double matrix:=(1.2,0.29999999999999999,0) (0,1.5,0) (0,'
+                                            '-0.55000000000000004,1.6000000000000001)')
 
         def test_write_detached_raw_as_nrrd(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
             output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nrrd')
 
             nrrd.write(output_data_filename, self.data_input, {'encoding': 'raw'}, detached_header=True,
-                    relative_data_path=False, index_order=self.index_order)
+                       relative_data_path=False, index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -179,7 +179,7 @@ class Abstract:
             output_data_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nrrd2')
 
             nrrd.write(output_data_filename, self.data_input, {'encoding': 'raw'}, detached_header=True,
-                    index_order=self.index_order)
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_data_filename, index_order=self.index_order)
@@ -199,7 +199,7 @@ class Abstract:
             # Data & header are still detached even though detached_header is False because the filename is .nhdr
             # Test also checks detached data filename that it is relative (default value)
             nrrd.write(output_filename, self.data_input, {'encoding': 'raw'}, detached_header=False,
-                    index_order=self.index_order)
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -214,7 +214,7 @@ class Abstract:
             # Data & header are still detached even though detached_header is False because the filename is .nhdr
             # Test also checks detached data filename that it is absolute
             nrrd.write(output_filename, self.data_input, {'encoding': 'gz'}, detached_header=False,
-                    relative_data_path=False, index_order=self.index_order)
+                       relative_data_path=False, index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -228,7 +228,7 @@ class Abstract:
             # Data & header are still detached even though detached_header is False because the filename is .nhdr
             # Test also checks detached data filename that it is relative (default value)
             nrrd.write(output_filename, self.data_input, {'encoding': 'bz2'}, detached_header=False,
-                    index_order=self.index_order)
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -242,7 +242,7 @@ class Abstract:
             # Data & header are still detached even though detached_header is False because the filename is .nhdr
             # Test also checks detached data filename that it is relative (default value)
             nrrd.write(output_filename, self.data_input, {'encoding': 'txt'}, detached_header=False,
-                    index_order=self.index_order)
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -257,7 +257,7 @@ class Abstract:
 
             with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid field type given: fake'):
                 nrrd.write(output_filename, np.zeros((3, 9)), header, custom_field_map=custom_field_map,
-                        index_order=self.index_order)
+                           index_order=self.index_order)
 
         def test_remove_endianness(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_remove_endianness.nrrd')
@@ -314,8 +314,9 @@ class Abstract:
         def test_write_detached_datafile_check(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
-            nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detachedWRONG.gz'}, detached_header=True,
-                    index_order=self.index_order)
+            nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detachedWRONG.gz'},
+                       detached_header=True,
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -324,8 +325,9 @@ class Abstract:
         def test_write_detached_datafile_check2(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
-            nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detachedWRONG.gz'}, detached_header=True,
-                    index_order=self.index_order)
+            nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detachedWRONG.gz'},
+                       detached_header=True,
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -337,7 +339,7 @@ class Abstract:
             output_header_filename = os.path.join(self.temp_write_dir, 'testfile_detachedDifferent.gz')
 
             nrrd.write(output_filename, self.data_input, detached_header=output_header_filename,
-                    index_order=self.index_order)
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -347,7 +349,7 @@ class Abstract:
             output_filename = os.path.join(self.temp_write_dir, 'testfile.nrrd')
 
             nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detached.gz'}, detached_header=False,
-                    index_order=self.index_order)
+                       index_order=self.index_order)
 
             # Read back the same file
             # The 'data file' parameter should be missing since this is NOT a detached file
@@ -366,7 +368,8 @@ class Abstract:
 
             data, header = nrrd.read(default_output_filename, index_order=self.index_order)
             memory_header = nrrd.read_header(memory_nrrd)
-            memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None, index_order=self.index_order)
+            memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None,
+                                         index_order=self.index_order)
 
             self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
             self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
@@ -380,7 +383,6 @@ class Abstract:
             default_output_memory_filename = os.path.join(self.temp_write_dir, 'testfile_default_memory_filename.nrrd')
 
             with open(default_output_memory_filename, mode='wb') as memory_nrrd:
-
                 nrrd.write(memory_nrrd, self.data_input, {}, index_order=self.index_order)
 
             data, header = nrrd.read(default_output_filename, index_order=self.index_order)
@@ -388,7 +390,7 @@ class Abstract:
             with open(default_output_memory_filename, mode='rb') as memory_nrrd:
                 memory_header = nrrd.read_header(memory_nrrd)
                 memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None,
-                                            index_order=self.index_order)
+                                             index_order=self.index_order)
 
             self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
             self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
