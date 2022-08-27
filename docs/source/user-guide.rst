@@ -197,7 +197,7 @@ Some NRRD files, while prohibited by specification, may contain duplicated heade
 
 Writing NRRD files
 ------------------
-Writing to NRRD files can be done with the function :meth:`write`. The :obj:`filename` parameter to the function specifies the absolute or relative filename to write the NRRD file. If the :obj:`filename` extension is .nhdr, then the :obj:`detached_header` parameter is set to true automatically. If the :obj:`detached_header` parameter is set to :obj:`True` and the :obj:`filename` ends in .nrrd, then the header file will have the same path and base name as the :obj:`filename` but with an extension of .nhdr. In all other cases, the header and data are saved in the same file.
+Writing to NRRD files can be done with the function :meth:`write`. The :obj:`filename` parameter to the function specifies the absolute or relative filename to write the NRRD file. If the :obj:`filename` extension is .nhdr, then :obj:`detached_header` will be set to true automatically. If :obj:`detached_header` is :obj:`True` and :obj:`filename` extension is .nrrd, then the header file will have the same path and base name as :obj:`filename` but with an extension of .nhdr. In all other cases, the header and data are saved in the same file.
 
 The :obj:`data` parameter is a :class:`numpy.ndarray` of data to be saved. :obj:`header` is an optional parameter of type :class:`dict` containing the field/values to be saved to the NRRD file.
 
