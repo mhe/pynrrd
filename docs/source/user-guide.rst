@@ -72,7 +72,7 @@ string list
 :NRRD Syntax: <s> <s> ... <s>
 :NRRD Example: this is space separated
 :Python Datatype: :class:`list` of :class:`str`
-:Python Example: ['this', 'is', 'string', 'separated']
+:Python Example: ['this', 'is', 'space', 'separated']
 
 quoted string list
 ~~~~~~~~~~~~~~~~~~
