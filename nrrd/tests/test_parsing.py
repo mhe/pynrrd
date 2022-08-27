@@ -1,7 +1,7 @@
 import numpy as np
+import unittest
 
 import nrrd
-from nrrd.tests.util import *
 
 
 class TestFieldParsing(unittest.TestCase):
