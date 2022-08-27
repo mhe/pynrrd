@@ -1,4 +1,5 @@
 import bz2
+import io
 import os
 import re
 import shlex
@@ -401,9 +402,16 @@ def read_data(header, fh=None, filename=None, index_order='F'):
 
     # If a compression encoding is used, then byte skip AFTER decompressing
     if header['encoding'] == 'raw':
-        data = np.fromfile(fh, dtype)
+        if isinstance(fh, io.BytesIO):
+            raw_data = bytearray(fh.read(total_data_points * dtype.itemsize))
+            data = np.frombuffer(raw_data, dtype)
+        else:
+            data = np.fromfile(fh, dtype)
     elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-        data = np.fromfile(fh, dtype, sep=' ')
+        if isinstance(fh, io.BytesIO):
+            data = np.fromstring(fh.read(), dtype, sep=' ')
+        else:
+            data = np.fromfile(fh, dtype, sep=' ')
     else:
         # Handle compressed data now
         # Construct the decompression object based on encoding

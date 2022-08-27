@@ -363,7 +363,7 @@ class Abstract:
                 np.testing.assert_equal(self.expected_header, header)
 
                 # No filename is specified for read_data
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Filename parameter must be specified when a relative data ' 
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Filename parameter must be specified when a relative data '
                                                             'file path is given'):
                     nrrd.read_data(header, fh)
 
@@ -375,7 +375,7 @@ class Abstract:
                 # Set the line skip to be incorrect
                 header['line skip'] = -1
 
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid lineskip, allowed values are greater than or ' 
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid lineskip, allowed values are greater than or '
                                                             'equal to 0'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
@@ -463,7 +463,8 @@ class Abstract:
             def test(filename: str):
                 with open(filename, 'rb') as fh:
                     # Read into BytesIO and test that
-                    memory_file = io.BytesIO(fh.read())
+                    x = fh.read()
+                    memory_file = io.BytesIO(x)
                     memory_header = nrrd.read_header(memory_file)
                     memory_data = nrrd.read_data(memory_header, memory_file)
 
@@ -478,9 +479,15 @@ class Abstract:
                     # Test that the data read is able to be edited
                     self.assertTrue(memory_data.flags['WRITEABLE'])
 
-            # TODO Repeat this for a bunch of different
             paths = [
                 RAW_NRRD_FILE_PATH,
+                GZ_NRRD_FILE_PATH,
+                GZ_BYTESKIP_NRRD_FILE_PATH,
+                GZ_LINESKIP_NRRD_FILE_PATH,
+                BZ2_NRRD_FILE_PATH,
+                ASCII_1D_NRRD_FILE_PATH,
+                ASCII_2D_NRRD_FILE_PATH,
+                RAW_4D_NRRD_FILE_PATH,
             ]
 
             for filename in paths:
