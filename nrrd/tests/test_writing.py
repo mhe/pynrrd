@@ -1,5 +1,6 @@
 import io
 import tempfile
+import unittest
 from typing import ClassVar, Literal
 
 import numpy as np
@@ -406,25 +407,14 @@ class Abstract:
             memory_nrrd_file.seek(0)
             memory_nrrd = memory_nrrd_file.readlines()
 
-            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
-            nrrd.write(expected_filename, self.data_input, **kwargs)
-            with open(expected_filename, 'rb') as fh:
-                expected_nrrd = fh.readlines()
+        self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+        self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
+        self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
+        self.assertSequenceEqual(header, memory_header)
 
-            self.assertEqual(expected_nrrd, memory_nrrd)
-
-        def test_write_memory_gzip(self):
-            kwargs = {
-                'header': {
-                    'encoding': 'gzip'
-                },
-                'index_order': self.index_order
-            }
-
-            memory_nrrd_file = io.BytesIO()
-            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
-            memory_nrrd_file.seek(0)
-            memory_nrrd = memory_nrrd_file.readlines()
+    def test_write_memory_file_handle(self):
+        default_output_filename = os.path.join(self.temp_write_dir, 'testfile_default_filename.nrrd')
+        nrrd.write(default_output_filename, self.data_input, {}, index_order=self.index_order)
 
             expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
             nrrd.write(expected_filename, self.data_input, **kwargs)
