@@ -31,16 +31,16 @@ class Abstract:
                 header = nrrd.read_header(fh)
 
             # np.testing.assert_equal is used to compare the headers because it will appropriately handle each
-            # value in the structure. Since some of the values can be Numpy arrays inside the headers, this must be
-            # used to compare the two values.
+            # value in the structure. Since some values can be Numpy arrays inside the headers, this must be used to
+            # compare the two values.
             np.testing.assert_equal(self.expected_header, header)
 
         def test_read_header_only_with_filename(self):
             header = nrrd.read_header(RAW_NRRD_FILE_PATH)
 
             # np.testing.assert_equal is used to compare the headers because it will appropriately handle each
-            # value in the structure. Since some of the values can be Numpy arrays inside the headers, this must be
-            # used to compare the two values.
+            # value in the structure. Since some values can be Numpy arrays inside the headers, this must be used to
+            # compare the two values.
             np.testing.assert_equal(self.expected_header, header)
 
         def test_read_detached_header_only(self):
