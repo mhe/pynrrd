@@ -380,7 +380,6 @@ class Abstract:
             default_output_memory_filename = os.path.join(self.temp_write_dir, 'testfile_default_memory_filename.nrrd')
 
             with open(default_output_memory_filename, mode='wb') as memory_nrrd:
-
                 nrrd.write(memory_nrrd, self.data_input, {}, index_order=self.index_order)
 
             data, header = nrrd.read(default_output_filename, index_order=self.index_order)
