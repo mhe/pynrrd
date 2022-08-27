@@ -1,9 +1,10 @@
 import io
 import tempfile
 import unittest
-from typing import ClassVar, Literal
+from typing import ClassVar
 
 import numpy as np
+from typing_extensions import Literal
 
 import nrrd
 from nrrd.tests.util import *
@@ -337,7 +338,8 @@ class Abstract:
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
             nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detachedWRONG.gz'},
-                       detached_header=True, index_order=self.index_order)
+                       detached_header=True,
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -347,7 +349,8 @@ class Abstract:
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
             nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detachedWRONG.gz'},
-                       detached_header=True, index_order=self.index_order)
+                       detached_header=True,
+                       index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)

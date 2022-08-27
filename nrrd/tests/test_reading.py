@@ -1,8 +1,9 @@
 import unittest
+from typing import ClassVar
 import io
-from typing import ClassVar, Literal
 
 import numpy as np
+from typing_extensions import Literal
 
 import nrrd
 from nrrd.tests.util import *
@@ -32,16 +33,16 @@ class Abstract:
                 header = nrrd.read_header(fh)
 
             # np.testing.assert_equal is used to compare the headers because it will appropriately handle each
-            # value in the structure. Since some of the values can be Numpy arrays inside the headers, this must be
-            # used to compare the two values.
+            # value in the structure. Since some values can be Numpy arrays inside the headers, this must be used to
+            # compare the two values.
             np.testing.assert_equal(self.expected_header, header)
 
         def test_read_header_only_with_filename(self):
             header = nrrd.read_header(RAW_NRRD_FILE_PATH)
 
             # np.testing.assert_equal is used to compare the headers because it will appropriately handle each
-            # value in the structure. Since some of the values can be Numpy arrays inside the headers, this must be
-            # used to compare the two values.
+            # value in the structure. Since some values can be Numpy arrays inside the headers, this must be used to
+            # compare the two values.
             np.testing.assert_equal(self.expected_header, header)
 
         def test_read_detached_header_only(self):
@@ -104,11 +105,13 @@ class Abstract:
 
         def test_read_detached_header_and_nifti_data(self):
             with self.assertRaisesRegex(
-                    nrrd.NRRDError, 'Size of the data does not equal the product of all the dimensions: 27000-27176=-176'):
+                    nrrd.NRRDError,
+                    'Size of the data does not equal the product of all the dimensions: 27000-27176=-176'):
                 nrrd.read(GZ_NIFTI_NHDR_FILE_PATH, index_order=self.index_order)
 
         def test_read_detached_header_and_data_with_byteskip_minus5(self):
-            with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid byteskip, allowed values are greater than or equal to -1'):
+            with self.assertRaisesRegex(nrrd.NRRDError,
+                                        'Invalid byteskip, allowed values are greater than or equal to -1'):
                 nrrd.read(RAW_INVALID_BYTESKIP_NHDR_FILE_PATH, index_order=self.index_order)
 
         def test_read_header_and_gz_compressed_data(self):
@@ -314,8 +317,9 @@ class Abstract:
                 nrrd.read_header(('invalid magic line', 'my extra info:=my : colon-separated : values'))
 
         def test_invalid_magic_line2(self):
-            with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported NRRD file version \\(version: 2000\\). This library '
-                                                        'only supports v5 and below.'):
+            with self.assertRaisesRegex(nrrd.NRRDError,
+                                        'Unsupported NRRD file version \\(version: 2000\\). This library '
+                                        'only supports v5 and below.'):
                 nrrd.read_header(('NRRD2000', 'my extra info:=my : colon-separated : values'))
 
         def test_invalid_magic_line3(self):
@@ -364,8 +368,9 @@ class Abstract:
                 np.testing.assert_equal(self.expected_header, header)
 
                 # No filename is specified for read_data
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Filename parameter must be specified when a relative data '
-                                                            'file path is given'):
+                with self.assertRaisesRegex(nrrd.NRRDError,
+                                            'Filename parameter must be specified when a relative data file'
+                                            ' path is given'):
                     nrrd.read_data(header, fh)
 
         def test_invalid_lineskip(self):
@@ -376,8 +381,9 @@ class Abstract:
                 # Set the line skip to be incorrect
                 header['line skip'] = -1
 
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid lineskip, allowed values are greater than or '
-                                                            'equal to 0'):
+                with self.assertRaisesRegex(nrrd.NRRDError,
+                                            'Invalid lineskip, allowed values are greater than or equal to'
+                                            ' 0'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
         def test_missing_endianness(self):
