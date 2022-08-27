@@ -158,8 +158,8 @@ class Abstract:
                 self.assertEqual(lines[17], 'int vector:=(100,200,-300)')
                 self.assertEqual(lines[18], 'double vector:=(100.5,200.30000000000001,-300.99000000000001)')
                 self.assertEqual(lines[19], 'int matrix:=(1,0,0) (0,1,0) (0,0,1)')
-                self.assertEqual(lines[20], 'double matrix:=(1.2,0.29999999999999999,0) (0,1.5,0) (0,-0.55000000000000004,'
-                                            '1.6000000000000001)')
+                self.assertEqual(lines[20], 'double matrix:=(1.2,0.29999999999999999,0) (0,1.5,0) (0,'
+                                            '-0.55000000000000004,1.6000000000000001)')
 
         def test_write_detached_raw_as_nrrd(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached_raw.nhdr')
@@ -313,8 +313,8 @@ class Abstract:
         def test_write_detached_datafile_check(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
-            nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detachedWRONG.gz'}, detached_header=True,
-                       index_order=self.index_order)
+            nrrd.write(output_filename, self.data_input, {'datafile': 'testfile_detachedWRONG.gz'},
+                       detached_header=True, index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -323,8 +323,8 @@ class Abstract:
         def test_write_detached_datafile_check2(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_detached.nhdr')
 
-            nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detachedWRONG.gz'}, detached_header=True,
-                       index_order=self.index_order)
+            nrrd.write(output_filename, self.data_input, {'data file': 'testfile_detachedWRONG.gz'},
+                       detached_header=True, index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
@@ -365,7 +365,8 @@ class Abstract:
 
             data, header = nrrd.read(default_output_filename, index_order=self.index_order)
             memory_header = nrrd.read_header(memory_nrrd)
-            memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None, index_order=self.index_order)
+            memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None,
+                                         index_order=self.index_order)
 
             self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
             self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))

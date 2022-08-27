@@ -362,8 +362,8 @@ class Abstract:
                 np.testing.assert_equal(self.expected_header, header)
 
                 # No filename is specified for read_data
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Filename parameter must be specified when a relative data file'
-                                                            ' path is given'):
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Filename parameter must be specified when a relative data ' 
+                                                            'file path is given'):
                     nrrd.read_data(header, fh)
 
         def test_invalid_lineskip(self):
@@ -374,8 +374,8 @@ class Abstract:
                 # Set the line skip to be incorrect
                 header['line skip'] = -1
 
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid lineskip, allowed values are greater than or equal to'
-                                                            ' 0'):
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid lineskip, allowed values are greater than or ' 
+                                                            'equal to 0'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
         def test_missing_endianness(self):
