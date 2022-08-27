@@ -1,7 +1,7 @@
 import io
 import tempfile
-from typing import ClassVar, Literal
 import unittest
+from typing import ClassVar, Literal
 
 import numpy as np
 
