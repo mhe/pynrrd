@@ -1,6 +1,6 @@
+import io
 import unittest
 from typing import ClassVar
-import io
 
 import numpy as np
 from typing_extensions import Literal
