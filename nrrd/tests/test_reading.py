@@ -4,7 +4,7 @@ import nrrd
 from nrrd.tests.util import *
 
 
-class TestReadingFunctions:
+class TestReadingFunctions(unittest.TestCase):
     def setUp(self):
         self.expected_header = {'dimension': 3,
                                 'encoding': 'raw',

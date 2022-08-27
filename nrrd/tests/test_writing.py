@@ -7,7 +7,7 @@ import nrrd
 from nrrd.tests.util import *
 
 
-class TestWritingFunctions:
+class TestWritingFunctions(unittest.TestCase):
     def setUp(self):
         self.temp_write_dir = tempfile.mkdtemp('nrrdtest')
         self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH, index_order=self.index_order)
