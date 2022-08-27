@@ -1,4 +1,5 @@
 import unittest
+from typing import ClassVar, Literal
 
 import numpy as np
 
@@ -8,6 +9,8 @@ from nrrd.tests.util import *
 
 class Abstract:
     class TestReadingFunctions(unittest.TestCase):
+        index_order: ClassVar[Literal['F', 'C']]
+
         def setUp(self):
             self.expected_header = {'dimension': 3,
                                     'encoding': 'raw',

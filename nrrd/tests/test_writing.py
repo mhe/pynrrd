@@ -1,5 +1,6 @@
 import io
 import tempfile
+from typing import ClassVar, Literal
 import unittest
 
 import numpy as np
@@ -10,6 +11,8 @@ from nrrd.tests.util import *
 
 class Abstract:
     class TestWritingFunctions(unittest.TestCase):
+        index_order: ClassVar[Literal['F', 'C']]
+
         def setUp(self):
             self.temp_write_dir = tempfile.mkdtemp('nrrdtest')
             self.data_input, _ = nrrd.read(RAW_NRRD_FILE_PATH, index_order=self.index_order)
