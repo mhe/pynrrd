@@ -375,46 +375,83 @@ class Abstract:
             data, header = nrrd.read(output_filename, index_order=self.index_order)
             self.assertFalse('data file' in header)
 
-        def test_write_memory(self):
-            default_output_filename = os.path.join(self.temp_write_dir, 'testfile_default_filename.nrrd')
-            nrrd.write(default_output_filename, self.data_input, {}, index_order=self.index_order)
+        def test_write_memory_default(self):
+            kwargs = {
+                'header': {},
+                'index_order': self.index_order
+            }
 
-            memory_nrrd = io.BytesIO()
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
 
-            nrrd.write(memory_nrrd, self.data_input, {}, index_order=self.index_order)
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
 
-            memory_nrrd.seek(0)
+            self.assertEqual(expected_nrrd, memory_nrrd)
 
-            data, header = nrrd.read(default_output_filename, index_order=self.index_order)
-            memory_header = nrrd.read_header(memory_nrrd)
-            memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None,
-                                         index_order=self.index_order)
+        def test_write_memory_raw(self):
+            kwargs = {
+                'header': {
+                    'encoding': 'raw'
+                },
+                'index_order': self.index_order
+            }
 
-            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
-            self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
-            self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
-            self.assertSequenceEqual(header, memory_header)
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
 
-        def test_write_memory_file_handle(self):
-            default_output_filename = os.path.join(self.temp_write_dir, 'testfile_default_filename.nrrd')
-            nrrd.write(default_output_filename, self.data_input, {}, index_order=self.index_order)
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
 
-            default_output_memory_filename = os.path.join(self.temp_write_dir, 'testfile_default_memory_filename.nrrd')
+            self.assertEqual(expected_nrrd, memory_nrrd)
 
-            with open(default_output_memory_filename, mode='wb') as memory_nrrd:
-                nrrd.write(memory_nrrd, self.data_input, {}, index_order=self.index_order)
+        def test_write_memory_gzip(self):
+            kwargs = {
+                'header': {
+                    'encoding': 'gzip'
+                },
+                'index_order': self.index_order
+            }
 
-            data, header = nrrd.read(default_output_filename, index_order=self.index_order)
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
 
-            with open(default_output_memory_filename, mode='rb') as memory_nrrd:
-                memory_header = nrrd.read_header(memory_nrrd)
-                memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None,
-                                             index_order=self.index_order)
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
 
-            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
-            self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
-            self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
-            self.assertSequenceEqual(header, memory_header)
+            self.assertEqual(expected_nrrd, memory_nrrd)
+
+        def test_write_memory_bzip2(self):
+            kwargs = {
+                'header': {
+                    'encoding': 'bzip2'
+                },
+                'index_order': self.index_order
+            }
+
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
+
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
+
+            self.assertEqual(expected_nrrd, memory_nrrd)
 
 
 class TestWritingFunctionsFortran(Abstract.TestWritingFunctions):
