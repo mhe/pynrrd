@@ -54,7 +54,7 @@ Example write and read from memory
     print(header)
     >>> OrderedDict([('type', 'double'), ('dimension', 1), ('sizes', array([50])), ('endian', 'little'), ('encoding', 'gzip')])
 
-    data2 = nrrd.read_data(header=header, fh=memory_nrrd)
+    data2 = nrrd.read_data(header, memory_nrrd)
 
     print(np.all(data == data2))
     >>> True
