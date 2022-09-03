@@ -1,3 +1,4 @@
+import io
 import unittest
 from typing import ClassVar
 
@@ -464,6 +465,41 @@ class Abstract:
             self.assertEqual(['mm', 'cm', 'in'], header['units'])
             self.assertEqual(['mm', 'cm', 'in'], header['space units'])
             self.assertEqual(['X', 'Y', 'f(log(X,10),Y)'], header['labels'])
+
+        def test_read_memory(self):
+            def test(filename: str):
+                with open(filename, 'rb') as fh:
+                    # Read into BytesIO and test that
+                    x = fh.read()
+                    memory_file = io.BytesIO(x)
+                    memory_header = nrrd.read_header(memory_file)
+                    memory_data = nrrd.read_data(memory_header, memory_file)
+
+                    # Read normally via file handle
+                    fh.seek(0)
+                    expected_header = nrrd.read_header(fh)
+                    expected_data = nrrd.read_data(expected_header, fh)
+
+                    np.testing.assert_equal(expected_header, memory_header)
+                    np.testing.assert_equal(expected_data, memory_data)
+
+                    # Test that the data read is able to be edited
+                    self.assertTrue(memory_data.flags['WRITEABLE'])
+
+            paths = [
+                RAW_NRRD_FILE_PATH,
+                GZ_NRRD_FILE_PATH,
+                GZ_BYTESKIP_NRRD_FILE_PATH,
+                GZ_LINESKIP_NRRD_FILE_PATH,
+                BZ2_NRRD_FILE_PATH,
+                ASCII_1D_NRRD_FILE_PATH,
+                ASCII_2D_NRRD_FILE_PATH,
+                RAW_4D_NRRD_FILE_PATH,
+            ]
+
+            for filename in paths:
+                with self.subTest(filename):
+                    test(filename)
 
 
 class TestReadingFunctionsFortran(Abstract.TestReadingFunctions):

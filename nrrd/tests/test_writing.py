@@ -21,44 +21,66 @@ class Abstract:
             with open(RAW_DATA_FILE_PATH, 'rb') as fh:
                 self.expected_data = fh.read()
 
-        def write_and_read_back(self, encoding=None, level=9):
-            output_filename = os.path.join(self.temp_write_dir, f'testfile_{encoding}_{str(level)}.nrrd')
-            headers = {}
-            if encoding is not None:
-                headers['encoding'] = encoding
-            nrrd.write(output_filename, self.data_input, headers, compression_level=level,
+        def test_write_default_header(self):
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_default.nrrd')
+            nrrd.write(output_filename, self.data_input, {}, index_order=self.index_order)
+
+            # Read back the same file
+            data, header = nrrd.read(output_filename, index_order=self.index_order)
+            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+            self.assertEqual(header.get('encoding'), 'gzip')  # default is gzip if not specified
+
+        def test_write_raw(self):
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_raw.nrrd')
+            nrrd.write(output_filename, self.data_input, {'encoding': 'raw'}, index_order=self.index_order)
+
+            # Read back the same file
+            data, header = nrrd.read(output_filename, index_order=self.index_order)
+            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+            self.assertEqual(header.get('encoding'), 'raw')
+
+        def test_write_gz(self):
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_gzip.nrrd')
+            nrrd.write(output_filename, self.data_input, {'encoding': 'gzip'}, index_order=self.index_order)
+
+            # Read back the same file
+            data, header = nrrd.read(output_filename, index_order=self.index_order)
+            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+            self.assertEqual(header.get('encoding'), 'gzip')
+
+        def test_write_bzip2(self):
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_bzip2.nrrd')
+            nrrd.write(output_filename, self.data_input, {'encoding': 'bzip2'}, index_order=self.index_order)
+
+            # Read back the same file
+            data, header = nrrd.read(output_filename, index_order=self.index_order)
+            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+            self.assertEqual(header.get('encoding'), 'bzip2')
+
+        def test_write_gz_level1(self):
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_gzip_1.nrrd')
+            nrrd.write(output_filename, self.data_input, {'encoding': 'gzip'}, compression_level=1,
                        index_order=self.index_order)
 
             # Read back the same file
             data, header = nrrd.read(output_filename, index_order=self.index_order)
             self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
-            self.assertEqual(header.get('encoding'), encoding or 'gzip')  # default is gzip is not specified
-
-            return output_filename
-
-        def test_write_default_header(self):
-            self.write_and_read_back()
-
-        def test_write_raw(self):
-            self.write_and_read_back('raw')
-
-        def test_write_gz(self):
-            self.write_and_read_back('gzip')
-
-        def test_write_bzip2(self):
-            self.write_and_read_back('bzip2')
-
-        def test_write_gz_level1(self):
-            filename = self.write_and_read_back('gzip', level=1)
-
-            self.assertLess(os.path.getsize(GZ_NRRD_FILE_PATH), os.path.getsize(filename))
+            self.assertEqual(header.get('encoding'), 'gzip')
+            self.assertLess(os.path.getsize(GZ_NRRD_FILE_PATH), os.path.getsize(output_filename))
 
         def test_write_bzip2_level1(self):
-            _ = self.write_and_read_back('bzip2', level=1)
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_bzip2_1.nrrd')
+            nrrd.write(output_filename, self.data_input, {'encoding': 'bzip2'}, compression_level=1,
+                       index_order=self.index_order)
+
+            # Read back the same file
+            data, header = nrrd.read(output_filename, index_order=self.index_order)
+            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
+            self.assertEqual(header.get('encoding'), 'bzip2')
 
             # note: we don't currently assert reduction here, because with the binary ball test data,
             #       the output size does not change at different bz2 levels.
-            # self.assertLess(os.path.getsize(BZ2_NRRD_FILE_PATH), os.path.getsize(fn))
+            # self.assertLess(os.path.getsize(BZ2_NRRD_FILE_PATH), os.path.getsize(output_filename))
 
         def test_write_ascii_1d(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_1d.nrrd')
@@ -357,25 +379,83 @@ class Abstract:
             data, header = nrrd.read(output_filename, index_order=self.index_order)
             self.assertFalse('data file' in header)
 
-        def test_write_memory(self):
-            default_output_filename = os.path.join(self.temp_write_dir, 'testfile_default_filename.nrrd')
-            nrrd.write(default_output_filename, self.data_input, {}, index_order=self.index_order)
+        def test_write_memory_default(self):
+            kwargs = {
+                'header': {},
+                'index_order': self.index_order
+            }
 
-            memory_nrrd = io.BytesIO()
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
 
-            nrrd.write(memory_nrrd, self.data_input, {}, index_order=self.index_order)
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
 
-            memory_nrrd.seek(0)
+            self.assertEqual(expected_nrrd, memory_nrrd)
 
-            data, header = nrrd.read(default_output_filename, index_order=self.index_order)
-            memory_header = nrrd.read_header(memory_nrrd)
-            memory_data = nrrd.read_data(header=memory_header, fh=memory_nrrd, filename=None,
-                                         index_order=self.index_order)
+        def test_write_memory_raw(self):
+            kwargs = {
+                'header': {
+                    'encoding': 'raw'
+                },
+                'index_order': self.index_order
+            }
 
-            self.assertEqual(self.expected_data, data.tobytes(order=self.index_order))
-            self.assertEqual(self.expected_data, memory_data.tobytes(order=self.index_order))
-            self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
-            self.assertSequenceEqual(header, memory_header)
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
+
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
+
+            self.assertEqual(expected_nrrd, memory_nrrd)
+
+        def test_write_memory_gzip(self):
+            kwargs = {
+                'header': {
+                    'encoding': 'gzip'
+                },
+                'index_order': self.index_order
+            }
+
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
+
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
+
+            self.assertEqual(expected_nrrd, memory_nrrd)
+
+        def test_write_memory_bzip2(self):
+            kwargs = {
+                'header': {
+                    'encoding': 'bzip2'
+                },
+                'index_order': self.index_order
+            }
+
+            memory_nrrd_file = io.BytesIO()
+            nrrd.write(memory_nrrd_file, self.data_input, **kwargs)
+            memory_nrrd_file.seek(0)
+            memory_nrrd = memory_nrrd_file.readlines()
+
+            expected_filename = os.path.join(self.temp_write_dir, 'testfile_expected.nrrd')
+            nrrd.write(expected_filename, self.data_input, **kwargs)
+            with open(expected_filename, 'rb') as fh:
+                expected_nrrd = fh.readlines()
+
+            self.assertEqual(expected_nrrd, memory_nrrd)
 
         def test_write_memory_file_handle(self):
             default_output_filename = os.path.join(self.temp_write_dir, 'testfile_default_filename.nrrd')
