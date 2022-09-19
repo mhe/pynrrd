@@ -227,7 +227,7 @@ def parse_number_auto_dtype(x: str) -> Union[int, float]:
         Number parsed from :obj:`x` string
     """
 
-    value = float(x)
+    value: Union[int, float] = float(x)
 
     if value.is_integer():
         value = int(value)
