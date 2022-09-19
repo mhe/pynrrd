@@ -15,7 +15,7 @@ from nrrd.types import IndexOrder, NRRDFieldType
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks.
 # Chunk size is set to be large at 1GB to improve performance. If issues arise decompressing larger files, try to reduce
 # this value
-_READ_CHUNKSIZE = 2 ** 32
+_READ_CHUNKSIZE: int = 2 ** 32
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
