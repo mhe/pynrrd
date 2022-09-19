@@ -10,7 +10,7 @@ import nptyping as npt
 from nrrd.errors import NRRDError
 from nrrd.formatters import *
 from nrrd.reader import _get_field_type
-from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap
+from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap, NRRDHeader
 
 # Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks. The
@@ -100,8 +100,7 @@ def _format_field_value(value: Any, field_type: NRRDFieldType) -> str:
         raise NRRDError('Invalid field type given: %s' % field_type)
 
 
-def _handle_header(data: npt.NDArray, header: Optional[Dict[str, Any]] = None, index_order: IndexOrder = 'F') \
-        -> Dict[str, Any]:
+def _handle_header(data: npt.NDArray, header: Optional[NRRDHeader] = None, index_order: IndexOrder = 'F') -> NRRDHeader:
     if header is None:
         header = {}
 
@@ -182,7 +181,7 @@ def _write_header(file, header: Dict[str, Any], custom_field_map: Optional[NRRDF
     file.write(b'\n')
 
 
-def _write_data(data: npt.NDArray, fh, header: Dict[str, Any], compression_level: Optional[int] = None, index_order: IndexOrder = 'F'):
+def _write_data(data: npt.NDArray, fh, header: NRRDHeader, compression_level: Optional[int] = None, index_order: IndexOrder = 'F'):
     if index_order not in ['F', 'C']:
         raise NRRDError('Invalid index order')
 
@@ -248,7 +247,7 @@ def _write_data(data: npt.NDArray, fh, header: Dict[str, Any], compression_level
         fh.flush()
 
 
-def write(file: Union[str, io.IOBase], data: npt.NDArray, header: Optional[Dict[str, Any]] = None,
+def write(file: Union[str, io.IOBase], data: npt.NDArray, header: Optional[NRRDHeader] = None,
           detached_header: bool = False, relative_data_path: bool = True,
           custom_field_map: Optional[NRRDFieldMap] = None, compression_level: int = 9,
           index_order: IndexOrder = 'F'):

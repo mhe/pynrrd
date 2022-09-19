@@ -9,7 +9,7 @@ from collections import OrderedDict
 from typing import Dict, Tuple
 
 from nrrd.parsers import *
-from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap
+from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap, NRRDHeader
 
 # Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks.
@@ -148,7 +148,7 @@ def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
         raise NRRDError('Invalid field type given: %s' % field_type)
 
 
-def _determine_datatype(header: Dict[str, Any]) -> np.dtype:
+def _determine_datatype(header: NRRDHeader) -> np.dtype:
     """Determine the numpy dtype of the data."""
 
     # Convert the NRRD type string identifier into a NumPy string identifier using a map
@@ -199,7 +199,7 @@ def _validate_magic_line(line: str) -> int:
     return len(line)
 
 
-def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> Dict[str, Any]:
+def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> NRRDHeader:
     """Read contents of header and parse values from :obj:`file`
 
     :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
@@ -303,7 +303,7 @@ def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> Dict[s
     return header
 
 
-def read_data(header: Dict[str, Any], fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F') -> npt.NDArray:
+def read_data(header: NRRDHeader, fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F') -> npt.NDArray:
     """Read data from file into :class:`numpy.ndarray`
 
     The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
@@ -479,7 +479,7 @@ def read_data(header: Dict[str, Any], fh=None, filename: Optional[str] = None, i
 
 
 def read(filename: str, custom_field_map: Optional[NRRDFieldMap] = None, index_order: IndexOrder = 'F') \
-        -> Tuple[npt.NDArray, Dict[str, Any]]:
+        -> Tuple[npt.NDArray, NRRDHeader]:
     """Read a NRRD file and return the header and data
 
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
