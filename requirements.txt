@@ -1,2 +1,3 @@
 numpy>=1.11.1
+nptyping
 typing_extensions

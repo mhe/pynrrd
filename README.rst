@@ -30,6 +30,11 @@ from numpy arrays.
 
 Dependencies
 ------------
+
+* `Numpy <https://numpy.org/>`_
+* nptyping
+* typing_extensions
+
 The module's only dependency is `numpy <http://numpy.scipy.org/>`_.
 
 Installation
