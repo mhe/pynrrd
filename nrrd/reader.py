@@ -101,7 +101,7 @@ def _get_field_type(field: str, custom_field_map: Optional[Dict[str, NRRDFieldTy
         return 'string list'
     elif field in ['labels', 'units', 'space units']:
         return 'quoted string list'
-    # No int vector fields as of now
+    # No int vector fields yet
     # elif field in []:
     #     return 'int vector'
     elif field in ['space origin']:
