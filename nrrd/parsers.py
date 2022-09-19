@@ -1,4 +1,4 @@
-from typing import Union, Any, Optional
+from typing import Union, Any, Optional, Type
 
 import numpy as np
 import nptyping as npt
@@ -6,7 +6,7 @@ import nptyping as npt
 from nrrd.errors import NRRDError
 
 
-def parse_vector(x: str, dtype=None) -> npt.NDArray[npt.Shape['*'], Any]:
+def parse_vector(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[npt.Shape['*'], Any]:
     """Parse NRRD vector from string into (N,) :class:`numpy.ndarray`.
 
     See :ref:`user-guide:int vector` and :ref:`user-guide:double vector` for more information on the format.
@@ -49,7 +49,8 @@ def parse_vector(x: str, dtype=None) -> npt.NDArray[npt.Shape['*'], Any]:
     return vector
 
 
-def parse_optional_vector(x: str, dtype=None) -> Optional[npt.NDArray[npt.Shape['*'], Any]]:
+def parse_optional_vector(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> \
+        Optional[npt.NDArray[npt.Shape['*'], Any]]:
     """Parse optional NRRD vector from string into (N,) :class:`numpy.ndarray` or :obj:`None`.
 
     Function parses optional NRRD vector from string into an (N,) :class:`numpy.ndarray`. This function works the same
@@ -79,7 +80,7 @@ def parse_optional_vector(x: str, dtype=None) -> Optional[npt.NDArray[npt.Shape[
         return parse_vector(x, dtype)
 
 
-def parse_matrix(x: str, dtype=None) -> npt.NDArray[npt.Shape['*, *'], Any]:
+def parse_matrix(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[npt.Shape['*, *'], Any]:
     """Parse NRRD matrix from string into (M,N) :class:`numpy.ndarray`.
 
     See :ref:`user-guide:int matrix` and :ref:`user-guide:double matrix` for more information on the format.
@@ -168,7 +169,7 @@ def parse_optional_matrix(x: str) -> Optional[npt.NDArray[npt.Shape['*, *'], Any
     return matrix
 
 
-def parse_number_list(x: str, dtype=None) -> npt.NDArray[npt.Shape['*'], Any]:
+def parse_number_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[npt.Shape['*'], Any]:
     """Parse NRRD number list from string into (N,) :class:`numpy.ndarray`.
 
     See :ref:`user-guide:int list` and :ref:`user-guide:double list` for more information on the format.
