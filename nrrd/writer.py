@@ -15,7 +15,7 @@ from nrrd.types import IndexOrder, NRRDFieldType
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks. The
 # chunk size is set to be small here at 1MB since performance did not vary much based on the chunk size. A smaller chunk
 # size has the benefit of using less RAM at once.
-_WRITE_CHUNKSIZE = 2 ** 20
+_WRITE_CHUNKSIZE: int = 2 ** 20
 
 _NRRD_FIELD_ORDER = [
     'type',
