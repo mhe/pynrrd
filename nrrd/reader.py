@@ -6,8 +6,10 @@ import shlex
 import warnings
 import zlib
 from collections import OrderedDict
+from typing import Dict
 
 from nrrd.parsers import *
+from nrrd.types import IndexOrder, NRRDFieldType
 
 # Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks.
@@ -84,7 +86,7 @@ _TYPEMAP_NRRD2NUMPY = {
 }
 
 
-def _get_field_type(field, custom_field_map):
+def _get_field_type(field: str, custom_field_map: Optional[Dict[str, NRRDFieldType]]) -> NRRDFieldType:
     if field in ['dimension', 'lineskip', 'line skip', 'byteskip', 'byte skip', 'space dimension']:
         return 'int'
     elif field in ['min', 'max', 'oldmin', 'old min', 'oldmax', 'old max']:
@@ -116,7 +118,7 @@ def _get_field_type(field, custom_field_map):
         return 'string'
 
 
-def _parse_field_value(value, field_type):
+def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
     if field_type == 'int':
         return int(value)
     elif field_type == 'double':
@@ -167,7 +169,7 @@ def _determine_datatype(fields):
     return np.dtype(np_typestring)
 
 
-def _validate_magic_line(line):
+def _validate_magic_line(line: str) -> int:
     """For NRRD files, the first four characters are always "NRRD", and
     remaining characters give information about the file format version
 
@@ -301,7 +303,7 @@ def read_header(file, custom_field_map=None):
     return header
 
 
-def read_data(header, fh=None, filename=None, index_order='F'):
+def read_data(header, fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F'):
     """Read data from file into :class:`numpy.ndarray`
 
     The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
@@ -476,7 +478,7 @@ def read_data(header, fh=None, filename=None, index_order='F'):
     return data
 
 
-def read(filename, custom_field_map=None, index_order='F'):
+def read(filename: str, custom_field_map=None, index_order: IndexOrder = 'F'):
     """Read a NRRD file and return the header and data
 
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
