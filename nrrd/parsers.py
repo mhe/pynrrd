@@ -1,9 +1,11 @@
+from typing import Union
+
 import numpy as np
 
 from nrrd.errors import NRRDError
 
 
-def parse_vector(x, dtype=None):
+def parse_vector(x: str, dtype=None):
     """Parse NRRD vector from string into (N,) :class:`numpy.ndarray`.
 
     See :ref:`user-guide:int vector` and :ref:`user-guide:double vector` for more information on the format.
@@ -46,7 +48,7 @@ def parse_vector(x, dtype=None):
     return vector
 
 
-def parse_optional_vector(x, dtype=None):
+def parse_optional_vector(x: str, dtype=None):
     """Parse optional NRRD vector from string into (N,) :class:`numpy.ndarray` or :obj:`None`.
 
     Function parses optional NRRD vector from string into an (N,) :class:`numpy.ndarray`. This function works the same
@@ -76,7 +78,7 @@ def parse_optional_vector(x, dtype=None):
         return parse_vector(x, dtype)
 
 
-def parse_matrix(x, dtype=None):
+def parse_matrix(x: str, dtype=None):
     """Parse NRRD matrix from string into (M,N) :class:`numpy.ndarray`.
 
     See :ref:`user-guide:int matrix` and :ref:`user-guide:double matrix` for more information on the format.
@@ -122,7 +124,7 @@ def parse_matrix(x, dtype=None):
     return matrix
 
 
-def parse_optional_matrix(x):
+def parse_optional_matrix(x: str):
     """Parse optional NRRD matrix from string into (M,N) :class:`numpy.ndarray` of :class:`float`.
 
     Function parses optional NRRD matrix from string into an (M,N) :class:`numpy.ndarray` of :class:`float`. This
@@ -165,7 +167,7 @@ def parse_optional_matrix(x):
     return matrix
 
 
-def parse_number_list(x, dtype=None):
+def parse_number_list(x: str, dtype=None):
     """Parse NRRD number list from string into (N,) :class:`numpy.ndarray`.
 
     See :ref:`user-guide:int list` and :ref:`user-guide:double list` for more information on the format.
@@ -204,7 +206,7 @@ def parse_number_list(x, dtype=None):
     return number_list
 
 
-def parse_number_auto_dtype(x):
+def parse_number_auto_dtype(x: str) -> Union[int, float]:
     """Parse number from string with automatic type detection.
 
     Parses input string and converts to a number using automatic type detection. If the number contains any
