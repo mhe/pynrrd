@@ -148,7 +148,7 @@ def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
         raise NRRDError('Invalid field type given: %s' % field_type)
 
 
-def _determine_datatype(header) -> np.dtype:
+def _determine_datatype(header: Dict[str, Any]) -> np.dtype:
     """Determine the numpy dtype of the data."""
 
     # Convert the NRRD type string identifier into a NumPy string identifier using a map
@@ -199,7 +199,7 @@ def _validate_magic_line(line: str) -> int:
     return len(line)
 
 
-def read_header(file, custom_field_map: Optional[Dict[str, NRRDFieldType]] = None):
+def read_header(file, custom_field_map: Optional[Dict[str, NRRDFieldType]] = None) -> Dict[str, Any]:
     """Read contents of header and parse values from :obj:`file`
 
     :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
@@ -303,7 +303,7 @@ def read_header(file, custom_field_map: Optional[Dict[str, NRRDFieldType]] = Non
     return header
 
 
-def read_data(header, fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F') -> npt.NDArray:
+def read_data(header: Dict[str, Any], fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F') -> npt.NDArray:
     """Read data from file into :class:`numpy.ndarray`
 
     The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
@@ -479,7 +479,7 @@ def read_data(header, fh=None, filename: Optional[str] = None, index_order: Inde
 
 
 def read(filename: str, custom_field_map: Optional[Dict[str, NRRDFieldType]] = None, index_order: IndexOrder = 'F') \
-        -> Tuple[npt.NDArray, Any]:
+        -> Tuple[npt.NDArray, Dict[str, Any]]:
     """Read a NRRD file and return the header and data
 
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
