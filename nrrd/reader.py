@@ -9,7 +9,7 @@ from collections import OrderedDict
 from typing import Dict, Tuple
 
 from nrrd.parsers import *
-from nrrd.types import IndexOrder, NRRDFieldType
+from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap
 
 # Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks.
@@ -86,7 +86,7 @@ _TYPEMAP_NRRD2NUMPY = {
 }
 
 
-def _get_field_type(field: str, custom_field_map: Optional[Dict[str, NRRDFieldType]]) -> NRRDFieldType:
+def _get_field_type(field: str, custom_field_map: Optional[NRRDFieldMap]) -> NRRDFieldType:
     if field in ['dimension', 'lineskip', 'line skip', 'byteskip', 'byte skip', 'space dimension']:
         return 'int'
     elif field in ['min', 'max', 'oldmin', 'old min', 'oldmax', 'old max']:
@@ -199,7 +199,7 @@ def _validate_magic_line(line: str) -> int:
     return len(line)
 
 
-def read_header(file, custom_field_map: Optional[Dict[str, NRRDFieldType]] = None) -> Dict[str, Any]:
+def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> Dict[str, Any]:
     """Read contents of header and parse values from :obj:`file`
 
     :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
@@ -288,7 +288,7 @@ def read_header(file, custom_field_map: Optional[Dict[str, NRRDFieldType]] = Non
 
             warnings.warn(dup_message)
 
-        # Get the datatype of the field based on it's field name and custom field map
+        # Get the datatype of the field based on its field name and custom field map
         field_type = _get_field_type(field, custom_field_map)
 
         # Parse the field value using the datatype retrieved
@@ -478,7 +478,7 @@ def read_data(header: Dict[str, Any], fh=None, filename: Optional[str] = None, i
     return data
 
 
-def read(filename: str, custom_field_map: Optional[Dict[str, NRRDFieldType]] = None, index_order: IndexOrder = 'F') \
+def read(filename: str, custom_field_map: Optional[NRRDFieldMap] = None, index_order: IndexOrder = 'F') \
         -> Tuple[npt.NDArray, Dict[str, Any]]:
     """Read a NRRD file and return the header and data
 
