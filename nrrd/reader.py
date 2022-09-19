@@ -6,7 +6,7 @@ import shlex
 import warnings
 import zlib
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, Tuple
 
 from nrrd.parsers import *
 from nrrd.types import IndexOrder, NRRDFieldType
@@ -148,23 +148,23 @@ def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
         raise NRRDError('Invalid field type given: %s' % field_type)
 
 
-def _determine_datatype(fields):
+def _determine_datatype(header) -> np.dtype:
     """Determine the numpy dtype of the data."""
 
     # Convert the NRRD type string identifier into a NumPy string identifier using a map
-    np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
+    np_typestring = _TYPEMAP_NRRD2NUMPY[header['type']]
 
     # This is only added if the datatype has more than one byte and is not using ASCII encoding
     # Note: Endian is not required for ASCII encoding
-    if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
-        if 'endian' not in fields:
+    if np.dtype(np_typestring).itemsize > 1 and header['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
+        if 'endian' not in header:
             raise NRRDError('Header is missing required field: "endian".')
-        elif fields['endian'] == 'big':
+        elif header['endian'] == 'big':
             np_typestring = '>' + np_typestring
-        elif fields['endian'] == 'little':
+        elif header['endian'] == 'little':
             np_typestring = '<' + np_typestring
         else:
-            raise NRRDError('Invalid endian value in header: "%s"' % fields['endian'])
+            raise NRRDError('Invalid endian value in header: "%s"' % header['endian'])
 
     return np.dtype(np_typestring)
 
@@ -199,7 +199,7 @@ def _validate_magic_line(line: str) -> int:
     return len(line)
 
 
-def read_header(file, custom_field_map=None):
+def read_header(file, custom_field_map: Optional[Dict[str, NRRDFieldType]] = None):
     """Read contents of header and parse values from :obj:`file`
 
     :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
@@ -303,7 +303,7 @@ def read_header(file, custom_field_map=None):
     return header
 
 
-def read_data(header, fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F'):
+def read_data(header, fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F') -> npt.NDArray:
     """Read data from file into :class:`numpy.ndarray`
 
     The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
@@ -431,7 +431,7 @@ def read_data(header, fh=None, filename: Optional[str] = None, index_order: Inde
         # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
         decompressed_data = bytearray()
 
-        # Read all of the remaining data from the file
+        # Read all the remaining data from the file
         # Obtain the length of the compressed data since we will be using it repeatedly, more efficient
         compressed_data = fh.read()
         compressed_data_len = len(compressed_data)
@@ -478,7 +478,8 @@ def read_data(header, fh=None, filename: Optional[str] = None, index_order: Inde
     return data
 
 
-def read(filename: str, custom_field_map=None, index_order: IndexOrder = 'F'):
+def read(filename: str, custom_field_map: Optional[Dict[str, NRRDFieldType]] = None, index_order: IndexOrder = 'F') \
+        -> Tuple[npt.NDArray, Any]:
     """Read a NRRD file and return the header and data
 
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
