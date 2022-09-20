@@ -156,7 +156,7 @@ def _determine_datatype(fields):
     # Note: Endian is not required for ASCII encoding
     if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
         if 'endian' not in fields:
-            raise NRRDError('Header is missing required field: "endian".')
+            raise NRRDError('Header is missing required field: endian')
         elif fields['endian'] == 'big':
             np_typestring = '>' + np_typestring
         elif fields['endian'] == 'little':
