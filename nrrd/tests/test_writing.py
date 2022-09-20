@@ -303,7 +303,7 @@ class Abstract:
             output_filename = os.path.join(self.temp_write_dir, 'testfile_unsupported_encoding.nrrd')
             header = {'encoding': 'fake'}
 
-            with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: fake'):
                 nrrd.write(output_filename, np.zeros((3, 9)), header, index_order=self.index_order)
 
         def test_invalid_index_order(self):
