@@ -231,7 +231,6 @@ def read_header(file: Union[str, Iterable[AnyStr]], custom_field_map: Optional[N
 
     # If the file is a filename rather than the file handle, then open the file and call this function again with the
     # file handle. Since read function uses a filename, it is easy to think read_header is the same syntax.
-    # TODO Bug here if you use a filename with a \n
     if isinstance(file, str) and file.count('\n') == 0:
         with open(file, 'rb') as fh:
             return read_header(fh, custom_field_map)
