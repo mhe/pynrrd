@@ -178,7 +178,7 @@ class Abstract:
             expected_header = {'type': 'float', 'dimension': 3}
             header_txt_tuple = ('NRRD0005', 'type: float', 'dimension: 3', 'type: float')
 
-            with self.assertRaisesRegex(nrrd.NRRDError, "Duplicate header field: 'type'"):
+            with self.assertRaisesRegex(nrrd.NRRDError, "Duplicate header field: type"):
                 header = nrrd.read_header(header_txt_tuple)
 
             import warnings
@@ -186,7 +186,7 @@ class Abstract:
                 nrrd.reader.ALLOW_DUPLICATE_FIELD = True
                 header = nrrd.read_header(header_txt_tuple)
 
-                self.assertTrue("Duplicate header field: 'type'" in str(w[0].message))
+                self.assertTrue("Duplicate header field: type" in str(w[0].message))
 
                 self.assertEqual(expected_header, header)
                 nrrd.reader.ALLOW_DUPLICATE_FIELD = False
@@ -334,7 +334,7 @@ class Abstract:
                 # Delete required field
                 del header['type']
 
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: "type".'):
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: type'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
         def test_wrong_sizes(self):
@@ -357,7 +357,7 @@ class Abstract:
                 # Set the encoding to be incorrect
                 header['encoding'] = 'fake'
 
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: "fake"'):
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Unsupported encoding: fake'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
         def test_detached_header_no_filename(self):
@@ -417,7 +417,7 @@ class Abstract:
                 # Set endianness to fake value
                 header['endian'] = 'fake'
 
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid endian value in header: "fake"'):
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Invalid endian value in header: fake'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
         def test_invalid_index_order(self):
