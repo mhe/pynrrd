@@ -97,7 +97,7 @@ def _format_field_value(value: Any, field_type: NRRDFieldType) -> str:
     elif field_type == 'double matrix':
         return format_optional_matrix(value)
     else:
-        raise NRRDError('Invalid field type given: %s' % field_type)
+        raise NRRDError(f'Invalid field type given: {field_type}')
 
 
 def _handle_header(data: npt.NDArray, header: Optional[NRRDHeader] = None, index_order: IndexOrder = 'F') -> NRRDHeader:
@@ -225,7 +225,7 @@ def _write_data(data: npt.NDArray, fh: IO, header: NRRDHeader, compression_level
         elif header['encoding'] in ['bzip2', 'bz2']:
             compressobj = bz2.BZ2Compressor(compression_level)
         else:
-            raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
+            raise NRRDError(f'Unsupported encoding: {header["encoding"]}')
 
         # Write the data in chunks (see _WRITE_CHUNKSIZE declaration for more information why)
         # Obtain the length of the data since we will be using it repeatedly, more efficient
@@ -339,20 +339,15 @@ def write(file: Union[str, IO], data: npt.NDArray, header: Optional[NRRDHeader] 
             # Get the appropriate data filename based on encoding, see here for information on the standard detached
             # filename: http://teem.sourceforge.net/nrrd/format.html#encoding
             if header['encoding'] == 'raw':
-                # TODO F-string
-                data_filename = '%s.raw' % base_filename
+                data_filename = f'{base_filename}.raw'
             elif header['encoding'] in ['ASCII', 'ascii', 'text', 'txt']:
-                # TODO F-string
-                data_filename = '%s.txt' % base_filename
+                data_filename = f'{base_filename}.txt'
             elif header['encoding'] in ['gzip', 'gz']:
-                # TODO F-string
-                data_filename = '%s.raw.gz' % base_filename
+                data_filename = f'{base_filename}.raw.gz'
             elif header['encoding'] in ['bzip2', 'bz2']:
-                # TODO F-string
-                data_filename = '%s.raw.bz2' % base_filename
+                data_filename = f'{base_filename}.raw.bz2'
             else:
-                # TODO F-string
-                raise NRRDError('Invalid encoding specification while writing NRRD file: %s' % header['encoding'])
+                raise NRRDError(f'Invalid encoding specification while writing NRRD file: {header["encoding"]}')
 
         # Update the data file field in the header with the path of the detached data
         # TODO This will cause problems when the user specifies a relative data path and gives a custom path OUTSIDE
@@ -361,7 +356,7 @@ def write(file: Union[str, IO], data: npt.NDArray, header: Optional[NRRDHeader] 
         detached_header = True
     elif file.endswith('.nrrd') and detached_header:
         data_filename = file
-        file = '%s.nhdr' % os.path.splitext(file)[0]
+        file = f'{os.path.splitext(file)[0]}.nhdr'
         header['data file'] = os.path.basename(data_filename) if relative_data_path else os.path.abspath(data_filename)
     else:
         # Write header & data as one file

@@ -145,7 +145,7 @@ def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
         # for none rows. NaN is only valid for floating point numbers
         return parse_optional_matrix(value)
     else:
-        raise NRRDError('Invalid field type given: %s' % field_type)
+        raise NRRDError(f'Invalid field type given: {field_type}')
 
 
 def _determine_datatype(header: NRRDHeader) -> np.dtype:
@@ -158,13 +158,13 @@ def _determine_datatype(header: NRRDHeader) -> np.dtype:
     # Note: Endian is not required for ASCII encoding
     if np.dtype(np_typestring).itemsize > 1 and header['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
         if 'endian' not in header:
-            raise NRRDError('Header is missing required field: "endian".')
+            raise NRRDError('Header is missing required field: endian')
         elif header['endian'] == 'big':
             np_typestring = '>' + np_typestring
         elif header['endian'] == 'little':
             np_typestring = '<' + np_typestring
         else:
-            raise NRRDError('Invalid endian value in header: "%s"' % header['endian'])
+            raise NRRDError(f'Invalid endian value in header: {header["endian"]}')
 
     return np.dtype(np_typestring)
 
@@ -191,10 +191,10 @@ def _validate_magic_line(line: str) -> int:
     try:
         version = int(line[4:])
         if version > 5:
-            raise NRRDError('Unsupported NRRD file version (version: %i). This library only supports v%i and below.'
-                            % (version, 5))
+            raise NRRDError(f'Unsupported NRRD file version (version: {version}). This library only supports v5 '
+                            'and below.')
     except ValueError:
-        raise NRRDError('Invalid NRRD magic line: %s' % line)
+        raise NRRDError(f'Invalid NRRD magic line: {line}')
 
     return len(line)
 
@@ -282,14 +282,10 @@ def read_header(file: Union[str, Iterable[AnyStr]], custom_field_map: Optional[N
 
         # Check if the field has been added already
         if field in header.keys():
-            # TODO Use f-string
-            # TODO Replace dup_message with local call
-            dup_message = "Duplicate header field: '%s'" % str(field)
-
             if not ALLOW_DUPLICATE_FIELD:
-                raise NRRDError(dup_message)
-
-            warnings.warn(dup_message)
+                raise NRRDError(f'Duplicate header field: {field}')
+            else:
+                warnings.warn(f'Duplicate header field: {field}')
 
         # Get the datatype of the field based on its field name and custom field map
         field_type = _get_field_type(field, custom_field_map)
@@ -347,11 +343,11 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
     # Check that the required fields are in the header
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in header:
-            raise NRRDError('Header is missing required field: "%s".' % field)
+            raise NRRDError(f'Header is missing required field: {field}')
 
     if header['dimension'] != len(header['sizes']):
-        raise NRRDError('Number of elements in sizes does not match dimension. Dimension: %i, len(sizes): %i' % (
-            header['dimension'], len(header['sizes'])))
+        raise NRRDError(f'Number of elements in sizes does not match dimension. Dimension: {header["dimension"]}, '
+                        f'len(sizes): {len(header["sizes"])}')
 
     # Determine the data type from the header
     dtype = _determine_datatype(header)
@@ -430,8 +426,7 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
             # to close it for us
             fh.close()
 
-            # TODO Switch to f-string
-            raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
+            raise NRRDError(f'Unsupported encoding: {header["encoding"]}')
 
         # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
         decompressed_data = bytearray()
@@ -518,7 +513,6 @@ def read(filename: str, custom_field_map: Optional[NRRDFieldMap] = None, index_o
     :meth:`write`, :meth:`read_header`, :meth:`read_data`
     """
 
-    """Read a NRRD file and return a tuple (data, header)."""
     with open(filename, 'rb') as fh:
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename, index_order)
