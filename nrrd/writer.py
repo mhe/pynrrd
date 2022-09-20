@@ -351,7 +351,7 @@ def write(file, data, header=None, detached_header=False, relative_data_path=Tru
         detached_header = True
     elif file.endswith('.nrrd') and detached_header:
         data_filename = file
-        file = '%s.nhdr' % os.path.splitext(file)[0]
+        file = f'{os.path.splitext(file)[0]}.nhdr'
         header['data file'] = os.path.basename(data_filename) \
             if relative_data_path else os.path.abspath(data_filename)
     else:
