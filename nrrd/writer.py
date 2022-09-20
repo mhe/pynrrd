@@ -4,13 +4,14 @@ import os
 import zlib
 from collections import OrderedDict
 from datetime import datetime
-from typing import Dict, IO
+from typing import IO, Dict
+
 import nptyping as npt
 
 from nrrd.errors import NRRDError
 from nrrd.formatters import *
 from nrrd.reader import _get_field_type
-from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap, NRRDHeader
+from nrrd.types import IndexOrder, NRRDFieldMap, NRRDFieldType, NRRDHeader
 
 # Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks. The

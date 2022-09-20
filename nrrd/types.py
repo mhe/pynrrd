@@ -1,4 +1,4 @@
-from typing import Literal, Dict, Any
+from typing import Any, Dict, Literal
 
 NRRDFieldType = Literal['int', 'double', 'string', 'int list', 'double list', 'string list', 'quoted string list',
                         'int vector', 'double vector', 'int matrix', 'double matrix']

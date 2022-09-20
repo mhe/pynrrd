@@ -6,10 +6,10 @@ import shlex
 import warnings
 import zlib
 from collections import OrderedDict
-from typing import IO, Tuple, Iterable, AnyStr
+from typing import IO, AnyStr, Iterable, Tuple
 
 from nrrd.parsers import *
-from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap, NRRDHeader
+from nrrd.types import IndexOrder, NRRDFieldMap, NRRDFieldType, NRRDHeader
 
 # Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks.
