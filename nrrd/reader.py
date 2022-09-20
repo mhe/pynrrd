@@ -342,7 +342,7 @@ def read_data(header, fh=None, filename=None, index_order='F'):
             raise NRRDError(f'Header is missing required field: {field}')
 
     if header['dimension'] != len(header['sizes']):
-        raise NRRDError(f'Number of elements in sizes does not match dimension. Dimension: {header["dimension"]}, ' 
+        raise NRRDError(f'Number of elements in sizes does not match dimension. Dimension: {header["dimension"]}, '
                         f'len(sizes): {len(header["sizes"])}')
 
     # Determine the data type from the header
