@@ -279,12 +279,10 @@ def read_header(file, custom_field_map=None):
 
         # Check if the field has been added already
         if field in header.keys():
-            dup_message = "Duplicate header field: '%s'" % str(field)
-
             if not ALLOW_DUPLICATE_FIELD:
-                raise NRRDError(dup_message)
-
-            warnings.warn(dup_message)
+                raise NRRDError(f'Duplicate header field: {field}')
+            else:
+                warnings.warn(f'Duplicate header field: {field}')
 
         # Get the datatype of the field based on it's field name and custom field map
         field_type = _get_field_type(field, custom_field_map)
@@ -341,11 +339,10 @@ def read_data(header, fh=None, filename=None, index_order='F'):
     # Check that the required fields are in the header
     for field in _NRRD_REQUIRED_FIELDS:
         if field not in header:
-            raise NRRDError('Header is missing required field: {field}')
+            raise NRRDError(f'Header is missing required field: {field}')
 
     if header['dimension'] != len(header['sizes']):
-        raise NRRDError('Number of elements in sizes does not match dimension. Dimension: %i, len(sizes): %i' % (
-            header['dimension'], len(header['sizes'])))
+        raise NRRDError(f'Number of elements in sizes does not match dimension. Dimension: {header["dimension"]}, len(sizes): {len(header["sizes"])}')
 
     # Determine the data type from the header
     dtype = _determine_datatype(header)
