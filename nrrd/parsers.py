@@ -1,7 +1,8 @@
-from typing import Any, Literal, Optional, Type, Union
+from typing import Any, Optional, Type, Union
 
 import nptyping as npt
 import numpy as np
+from typing_extensions import Literal
 
 from nrrd.errors import NRRDError
 

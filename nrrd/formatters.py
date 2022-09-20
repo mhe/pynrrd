@@ -1,7 +1,8 @@
-from typing import Any, Literal, Optional, Union
+from typing import Any, Optional, Union
 
 import nptyping as npt
 import numpy as np
+from typing_extensions import Literal
 
 
 def format_number(x: Union[int, float]) -> str:
