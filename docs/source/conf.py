@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 import nrrd
 
 def setup(app):
-    app.add_stylesheet('css/custom.css')
+    app.add_css_file('css/custom.css')
 
 
 # -- General configuration ------------------------------------------------
@@ -35,7 +35,8 @@ def setup(app):
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = [
+    'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.autosummary',
@@ -43,7 +44,8 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
 	'sphinx.ext.autosectionlabel',
-	'numpydoc']
+	'numpydoc'
+]
 
 autosectionlabel_prefix_document = True
 
@@ -60,7 +62,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pynrrd'
-copyright = '2018, Maarten Everts'
+copyright = '2018'
 author = 'Maarten Everts'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -77,7 +79,7 @@ release = nrrd.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
