@@ -395,7 +395,7 @@ class Abstract:
                 # Since our data is short (itemsize = 2), we should receive an error
                 del header['endian']
 
-                with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: "endian".'):
+                with self.assertRaisesRegex(nrrd.NRRDError, 'Header is missing required field: endian'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
 
         def test_big_endian(self):
