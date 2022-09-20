@@ -2,8 +2,8 @@ from nrrd._version import __version__
 from nrrd.formatters import *
 from nrrd.parsers import *
 from nrrd.reader import read, read_data, read_header
+from nrrd.types import NRRDFieldMap, NRRDFieldType, NRRDHeader
 from nrrd.writer import write
-from nrrd.types import NRRDFieldType, NRRDFieldMap, NRRDHeader
 
 __all__ = ['read', 'read_data', 'read_header', 'write', 'format_number_list', 'format_number', 'format_matrix',
            'format_optional_matrix', 'format_optional_vector', 'format_vector', 'parse_matrix',
