@@ -6,14 +6,16 @@ import shlex
 import warnings
 import zlib
 from collections import OrderedDict
+from typing import IO, AnyStr, Iterable, Tuple
 
 from nrrd.parsers import *
+from nrrd.types import IndexOrder, NRRDFieldMap, NRRDFieldType, NRRDHeader
 
 # Older versions of Python had issues when uncompressed data was larger than 4GB (2^32). This should be fixed in latest
 # version of Python 2.7 and all versions of Python 3. The fix for this issue is to read the data in smaller chunks.
 # Chunk size is set to be large at 1GB to improve performance. If issues arise decompressing larger files, try to reduce
 # this value
-_READ_CHUNKSIZE = 2 ** 32
+_READ_CHUNKSIZE: int = 2 ** 32
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
@@ -84,7 +86,7 @@ _TYPEMAP_NRRD2NUMPY = {
 }
 
 
-def _get_field_type(field, custom_field_map):
+def _get_field_type(field: str, custom_field_map: Optional[NRRDFieldMap]) -> NRRDFieldType:
     if field in ['dimension', 'lineskip', 'line skip', 'byteskip', 'byte skip', 'space dimension']:
         return 'int'
     elif field in ['min', 'max', 'oldmin', 'old min', 'oldmax', 'old max']:
@@ -99,7 +101,7 @@ def _get_field_type(field, custom_field_map):
         return 'string list'
     elif field in ['labels', 'units', 'space units']:
         return 'quoted string list'
-    # No int vector fields as of now
+    # No int vector fields yet
     # elif field in []:
     #     return 'int vector'
     elif field in ['space origin']:
@@ -116,7 +118,7 @@ def _get_field_type(field, custom_field_map):
         return 'string'
 
 
-def _parse_field_value(value, field_type):
+def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
     if field_type == 'int':
         return int(value)
     elif field_type == 'double':
@@ -146,28 +148,28 @@ def _parse_field_value(value, field_type):
         raise NRRDError(f'Invalid field type given: {field_type}')
 
 
-def _determine_datatype(fields):
+def _determine_datatype(header: NRRDHeader) -> np.dtype:
     """Determine the numpy dtype of the data."""
 
     # Convert the NRRD type string identifier into a NumPy string identifier using a map
-    np_typestring = _TYPEMAP_NRRD2NUMPY[fields['type']]
+    np_typestring = _TYPEMAP_NRRD2NUMPY[header['type']]
 
     # This is only added if the datatype has more than one byte and is not using ASCII encoding
     # Note: Endian is not required for ASCII encoding
-    if np.dtype(np_typestring).itemsize > 1 and fields['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
-        if 'endian' not in fields:
+    if np.dtype(np_typestring).itemsize > 1 and header['encoding'] not in ['ASCII', 'ascii', 'text', 'txt']:
+        if 'endian' not in header:
             raise NRRDError('Header is missing required field: endian')
-        elif fields['endian'] == 'big':
+        elif header['endian'] == 'big':
             np_typestring = '>' + np_typestring
-        elif fields['endian'] == 'little':
+        elif header['endian'] == 'little':
             np_typestring = '<' + np_typestring
         else:
-            raise NRRDError(f'Invalid endian value in header: {fields["endian"]}')
+            raise NRRDError(f'Invalid endian value in header: {header["endian"]}')
 
     return np.dtype(np_typestring)
 
 
-def _validate_magic_line(line):
+def _validate_magic_line(line: str) -> int:
     """For NRRD files, the first four characters are always "NRRD", and
     remaining characters give information about the file format version
 
@@ -197,7 +199,7 @@ def _validate_magic_line(line):
     return len(line)
 
 
-def read_header(file, custom_field_map=None):
+def read_header(file: Union[str, Iterable[AnyStr]], custom_field_map: Optional[NRRDFieldMap] = None) -> NRRDHeader:
     """Read contents of header and parse values from :obj:`file`
 
     :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
@@ -284,7 +286,7 @@ def read_header(file, custom_field_map=None):
             else:
                 warnings.warn(f'Duplicate header field: {field}')
 
-        # Get the datatype of the field based on it's field name and custom field map
+        # Get the datatype of the field based on its field name and custom field map
         field_type = _get_field_type(field, custom_field_map)
 
         # Parse the field value using the datatype retrieved
@@ -299,7 +301,8 @@ def read_header(file, custom_field_map=None):
     return header
 
 
-def read_data(header, fh=None, filename=None, index_order='F'):
+def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[str] = None,
+              index_order: IndexOrder = 'F') -> npt.NDArray:
     """Read data from file into :class:`numpy.ndarray`
 
     The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
@@ -427,7 +430,7 @@ def read_data(header, fh=None, filename=None, index_order='F'):
         # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
         decompressed_data = bytearray()
 
-        # Read all of the remaining data from the file
+        # Read all the remaining data from the file
         # Obtain the length of the compressed data since we will be using it repeatedly, more efficient
         compressed_data = fh.read()
         compressed_data_len = len(compressed_data)
@@ -474,7 +477,8 @@ def read_data(header, fh=None, filename=None, index_order='F'):
     return data
 
 
-def read(filename, custom_field_map=None, index_order='F'):
+def read(filename: str, custom_field_map: Optional[NRRDFieldMap] = None, index_order: IndexOrder = 'F') \
+        -> Tuple[npt.NDArray, NRRDHeader]:
     """Read a NRRD file and return the header and data
 
     See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
