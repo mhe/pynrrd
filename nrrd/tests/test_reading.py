@@ -178,7 +178,7 @@ class Abstract:
             expected_header = {'type': 'float', 'dimension': 3}
             header_txt_tuple = ('NRRD0005', 'type: float', 'dimension: 3', 'type: float')
 
-            with self.assertRaisesRegex(nrrd.NRRDError, "Duplicate header field: type"):
+            with self.assertRaisesRegex(nrrd.NRRDError, 'Duplicate header field: type'):
                 header = nrrd.read_header(header_txt_tuple)
 
             import warnings
@@ -186,7 +186,7 @@ class Abstract:
                 nrrd.reader.ALLOW_DUPLICATE_FIELD = True
                 header = nrrd.read_header(header_txt_tuple)
 
-                self.assertTrue("Duplicate header field: type" in str(w[0].message))
+                self.assertTrue('Duplicate header field: type' in str(w[0].message))
 
                 self.assertEqual(expected_header, header)
                 nrrd.reader.ALLOW_DUPLICATE_FIELD = False

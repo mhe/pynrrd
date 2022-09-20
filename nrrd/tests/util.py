@@ -2,7 +2,7 @@ import os
 import warnings
 
 # Enable all warnings
-warnings.simplefilter("always")
+warnings.simplefilter('always')
 
 DATA_DIR_PATH = os.path.join(os.path.dirname(__file__), 'data')
 RAW_NRRD_FILE_PATH = os.path.join(DATA_DIR_PATH, 'BallBinary30x30x30.nrrd')
