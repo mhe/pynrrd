@@ -508,7 +508,6 @@ def read(filename, custom_field_map=None, index_order='F'):
     :meth:`write`, :meth:`read_header`, :meth:`read_data`
     """
 
-    """Read a NRRD file and return a tuple (data, header)."""
     with open(filename, 'rb') as fh:
         header = read_header(fh, custom_field_map)
         data = read_data(header, fh, filename, index_order)
