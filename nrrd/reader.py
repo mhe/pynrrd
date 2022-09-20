@@ -6,7 +6,7 @@ import shlex
 import warnings
 import zlib
 from collections import OrderedDict
-from typing import Dict, Tuple
+from typing import IO, Tuple, Iterable, AnyStr
 
 from nrrd.parsers import *
 from nrrd.types import IndexOrder, NRRDFieldType, NRRDFieldMap, NRRDHeader
@@ -199,7 +199,7 @@ def _validate_magic_line(line: str) -> int:
     return len(line)
 
 
-def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> NRRDHeader:
+def read_header(file: Union[str, Iterable[AnyStr]], custom_field_map: Optional[NRRDFieldMap] = None) -> NRRDHeader:
     """Read contents of header and parse values from :obj:`file`
 
     :obj:`file` can be a filename indicating where the NRRD header is located or a string iterator object. If a
@@ -231,6 +231,7 @@ def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> NRRDHe
 
     # If the file is a filename rather than the file handle, then open the file and call this function again with the
     # file handle. Since read function uses a filename, it is easy to think read_header is the same syntax.
+    # TODO Bug here if you use a filename with a \n
     if isinstance(file, str) and file.count('\n') == 0:
         with open(file, 'rb') as fh:
             return read_header(fh, custom_field_map)
@@ -281,6 +282,8 @@ def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> NRRDHe
 
         # Check if the field has been added already
         if field in header.keys():
+            # TODO Use f-string
+            # TODO Replace dup_message with local call
             dup_message = "Duplicate header field: '%s'" % str(field)
 
             if not ALLOW_DUPLICATE_FIELD:
@@ -303,7 +306,8 @@ def read_header(file, custom_field_map: Optional[NRRDFieldMap] = None) -> NRRDHe
     return header
 
 
-def read_data(header: NRRDHeader, fh=None, filename: Optional[str] = None, index_order: IndexOrder = 'F') -> npt.NDArray:
+def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[str] = None,
+              index_order: IndexOrder = 'F') -> npt.NDArray:
     """Read data from file into :class:`numpy.ndarray`
 
     The two parameters :obj:`fh` and :obj:`filename` are optional depending on the parameters but it never hurts to
@@ -426,6 +430,7 @@ def read_data(header: NRRDHeader, fh=None, filename: Optional[str] = None, index
             # to close it for us
             fh.close()
 
+            # TODO Switch to f-string
             raise NRRDError('Unsupported encoding: "%s"' % header['encoding'])
 
         # Loop through the file and read a chunk at a time (see _READ_CHUNKSIZE why it is read in chunks)
