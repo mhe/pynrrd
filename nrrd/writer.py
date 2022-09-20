@@ -182,7 +182,8 @@ def _write_header(file: IO, header: Dict[str, Any], custom_field_map: Optional[N
     file.write(b'\n')
 
 
-def _write_data(data: npt.NDArray, fh: IO, header: NRRDHeader, compression_level: Optional[int] = None, index_order: IndexOrder = 'F'):
+def _write_data(data: npt.NDArray, fh: IO, header: NRRDHeader, compression_level: Optional[int] = None,
+                index_order: IndexOrder = 'F'):
     if index_order not in ['F', 'C']:
         raise NRRDError('Invalid index order')
 
