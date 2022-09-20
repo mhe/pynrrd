@@ -22,10 +22,6 @@ import sys
 sys.path.insert(0, os.path.abspath('../../'))
 import nrrd
 
-def setup(app):
-    app.add_css_file('css/custom.css')
-
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -99,6 +95,7 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_css_files = ['css/custom.css']
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
