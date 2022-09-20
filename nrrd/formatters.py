@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import nptyping as npt
 import numpy as np
@@ -41,7 +41,7 @@ def format_number(x: Union[int, float]) -> str:
     return value
 
 
-def format_vector(x: npt.NDArray[npt.Shape['*'], Any]) -> str:
+def format_vector(x: npt.NDArray[Literal['*'], Any]) -> str:
     """Format a (N,) :class:`numpy.ndarray` into a NRRD vector string
 
     See :ref:`user-guide:int vector` and :ref:`user-guide:double vector` for more information on the format.
@@ -60,7 +60,7 @@ def format_vector(x: npt.NDArray[npt.Shape['*'], Any]) -> str:
     return '(' + ','.join([format_number(y) for y in x]) + ')'
 
 
-def format_optional_vector(x: Optional[npt.NDArray[npt.Shape['*'], Any]]) -> str:
+def format_optional_vector(x: Optional[npt.NDArray[Literal['*'], Any]]) -> str:
     """Format a (N,) :class:`numpy.ndarray` into a NRRD optional vector string
 
     Function converts a (N,) :class:`numpy.ndarray` or :obj:`None` into a string using NRRD vector format. If the input
@@ -87,7 +87,7 @@ def format_optional_vector(x: Optional[npt.NDArray[npt.Shape['*'], Any]]) -> str
         return format_vector(x)
 
 
-def format_matrix(x: npt.NDArray[npt.Shape['*, *'], Any]) -> str:
+def format_matrix(x: npt.NDArray[Literal['*, *'], Any]) -> str:
     """Format a (M,N) :class:`numpy.ndarray` into a NRRD matrix string
 
     See :ref:`user-guide:int matrix` and :ref:`user-guide:double matrix` for more information on the format.
@@ -106,7 +106,7 @@ def format_matrix(x: npt.NDArray[npt.Shape['*, *'], Any]) -> str:
     return ' '.join([format_vector(y) for y in x])
 
 
-def format_optional_matrix(x: Optional[npt.NDArray[npt.Shape['*, *'], Any]]) -> str:
+def format_optional_matrix(x: Optional[npt.NDArray[Literal['*, *'], Any]]) -> str:
     """Format a (M,N) :class:`numpy.ndarray` of :class:`float` into a NRRD optional matrix string
 
     Function converts a (M,N) :class:`numpy.ndarray` of :class:`float` into a string using the NRRD matrix format. For
@@ -132,7 +132,7 @@ def format_optional_matrix(x: Optional[npt.NDArray[npt.Shape['*, *'], Any]]) -> 
     return ' '.join([format_optional_vector(y) for y in x])
 
 
-def format_number_list(x: npt.NDArray[npt.Shape['*'], Any]) -> str:
+def format_number_list(x: npt.NDArray[Literal['*'], Any]) -> str:
     """Format a (N,) :class:`numpy.ndarray` into a NRRD number list.
 
     See :ref:`user-guide:int list` and :ref:`user-guide:double list` for more information on the format.
