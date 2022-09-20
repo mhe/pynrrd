@@ -35,7 +35,7 @@ Example only reading header
     >>> OrderedDict([('type', 'double'), ('dimension', 1), ('sizes', array([50])), ('endian', 'little'), ('encoding', 'gzip')])
 
 Example write and read from memory
--------------
+----------------------------------
 .. code-block:: python
 
     import io
