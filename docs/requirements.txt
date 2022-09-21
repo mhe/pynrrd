@@ -1,2 +1,4 @@
 numpy>=1.11.1
 numpydoc
+nptyping
+typing_extensions
