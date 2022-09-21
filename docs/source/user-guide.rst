@@ -234,39 +234,3 @@ C-order is the index order used in Python and many Python libraries (e.g. NumPy,
 .. note::
 
     All header fields are specified in Fortran order, per the NRRD specification, regardless of the index order. For example, a C-ordered array with shape (60, 800, 600) would have a sizes field of (600, 800, 60).
-
-Example reading and writing NRRD files with C-order indexing
-------------------------------------------------------------
-.. code-block:: python
-
-    import numpy as np
-    import nrrd
-
-    # Treat this data array as a 3D volume using C-order indexing
-    # This means we have a volume with a shape of 600x800x70 (x by y by z)
-    data = np.zeros((70, 800, 600))
-    # Save the NRRD object with the correct index order
-    nrrd.write('output.nrrd', data, index_order='C')
-
-    # Read the NRRD file with C-order indexing
-    # Note: We can specify either index order here, this is just a preference unlike in nrrd.write where
-    # it MUST be set based on the data setup
-    data, header = nrrd.read('output.nrrd', index_order='C')
-
-    # The data shape is exactly the same shape as what we wrote
-    print(data.shape)
-    >>> (70, 800, 600)
-
-    # But the shape saved in the header is in Fortran-order
-    print(header['sizes'])
-    >>> [600 800  70]
-
-    # Read the NRRD file with Fortran-order indexing now
-    data, header = nrrd.read('output.nrrd', index_order='F')
-
-    # The data shape is exactly the same shape as what we wrote
-    # The data shape is now in Fortran order, or transposed from what we wrote
-    print(data.shape)
-    >>> (600, 800, 70)
-    print(header['sizes'])
-    >>> [600 800  70]
