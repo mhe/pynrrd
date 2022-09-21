@@ -85,7 +85,11 @@ Contents
    :maxdepth: 1
    :caption: Background
 
-   user-guide
+   background/about
+   background/how-to-use
+   background/datatypes
+   background/fields
+   background/index-ordering
 
 .. toctree::
    :maxdepth: 1
