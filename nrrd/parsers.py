@@ -10,7 +10,8 @@ from nrrd.errors import NRRDError
 def parse_vector(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[Literal['*'], Any]:
     """Parse NRRD vector from string into (N,) :class:`numpy.ndarray`.
 
-    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on the format.
+    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on
+    the format.
 
     Parameters
     ----------
@@ -57,7 +58,8 @@ def parse_optional_vector(x: str, dtype: Optional[Type[Union[int, float]]] = Non
     Function parses optional NRRD vector from string into an (N,) :class:`numpy.ndarray`. This function works the same
     as :meth:`parse_vector` except if :obj:`x` is 'none', :obj:`vector` will be :obj:`None`
 
-    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on the format.
+    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on
+    the format.
 
     Parameters
     ----------
@@ -84,7 +86,8 @@ def parse_optional_vector(x: str, dtype: Optional[Type[Union[int, float]]] = Non
 def parse_matrix(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[Literal['*, *'], Any]:
     """Parse NRRD matrix from string into (M,N) :class:`numpy.ndarray`.
 
-    See :ref:`background/datatypes:int matrix` and :ref:`background/datatypes:double matrix` for more information on the format.
+    See :ref:`background/datatypes:int matrix` and :ref:`background/datatypes:double matrix` for more information on
+    the format.
 
     Parameters
     ----------
@@ -173,7 +176,8 @@ def parse_optional_matrix(x: str) -> Optional[npt.NDArray[Literal['*, *'], Any]]
 def parse_number_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[Literal['*'], Any]:
     """Parse NRRD number list from string into (N,) :class:`numpy.ndarray`.
 
-    See :ref:`background/datatypes:int list` and :ref:`background/datatypes:double list` for more information on the format.
+    See :ref:`background/datatypes:int list` and :ref:`background/datatypes:double list` for more information on the
+    format.
 
     Parameters
     ----------

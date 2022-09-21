@@ -45,7 +45,8 @@ def format_number(x: Union[int, float]) -> str:
 def format_vector(x: npt.NDArray[Literal['*'], Any]) -> str:
     """Format a (N,) :class:`numpy.ndarray` into a NRRD vector string
 
-    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on the format.
+    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on
+    the format.
 
     Parameters
     ----------
@@ -67,7 +68,8 @@ def format_optional_vector(x: Optional[npt.NDArray[Literal['*'], Any]]) -> str:
     Function converts a (N,) :class:`numpy.ndarray` or :obj:`None` into a string using NRRD vector format. If the input
     :obj:`x` is :obj:`None`, then :obj:`vector` will be 'none'
 
-    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on the format.
+    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on
+    the format.
 
     Parameters
     ----------
@@ -91,7 +93,8 @@ def format_optional_vector(x: Optional[npt.NDArray[Literal['*'], Any]]) -> str:
 def format_matrix(x: npt.NDArray[Literal['*, *'], Any]) -> str:
     """Format a (M,N) :class:`numpy.ndarray` into a NRRD matrix string
 
-    See :ref:`background/datatypes:int matrix` and :ref:`background/datatypes:double matrix` for more information on the format.
+    See :ref:`background/datatypes:int matrix` and :ref:`background/datatypes:double matrix` for more information on
+    the format.
 
     Parameters
     ----------
@@ -136,7 +139,8 @@ def format_optional_matrix(x: Optional[npt.NDArray[Literal['*, *'], Any]]) -> st
 def format_number_list(x: npt.NDArray[Literal['*'], Any]) -> str:
     """Format a (N,) :class:`numpy.ndarray` into a NRRD number list.
 
-    See :ref:`background/datatypes:int list` and :ref:`background/datatypes:double list` for more information on the format.
+    See :ref:`background/datatypes:int list` and :ref:`background/datatypes:double list` for more information on the
+    format.
 
     Parameters
     ----------
