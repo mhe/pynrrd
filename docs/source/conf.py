@@ -34,7 +34,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pynrrd'
-copyright = '2018'
+copyright = '2018-2022'
 author = 'Maarten Everts'
 
 # The version info for the project you're documenting, acts as replacement for
