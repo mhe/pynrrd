@@ -28,14 +28,14 @@ pynrrd
 pynrrd is a pure-Python module for reading and writing `NRRD <http://teem.sourceforge.net/nrrd/>`_ files into and
 from numpy arrays.
 
-Dependencies
+Requirements
 ------------
 
-* `Numpy <https://numpy.org/>`_
+* `numpy <https://numpy.org/>`_
 * nptyping
 * typing_extensions
 
-The module's only dependency is `numpy <http://numpy.scipy.org/>`_.
+v1.0+ requires Python 3.7 or above. If you have an older Python version, please install a v0.x release instead.
 
 Installation
 ------------
