@@ -91,7 +91,10 @@ Contents
    :maxdepth: 1
    :caption: Reference
 
-   pynrrd
+   reference/reading
+   reference/writing
+   reference/parsing
+   reference/formatting
 
 .. toctree::
     :caption: Links
