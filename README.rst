@@ -103,7 +103,6 @@ Example usage
     print(header)
 
 
-
 Next Steps
 ----------
 For more information, see the `documentation <http://pynrrd.readthedocs.io/>`_.

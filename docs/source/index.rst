@@ -69,8 +69,6 @@ Quick Start
 Contents
 --------
 
-TODO Put titles here!
-
 .. toctree::
    :hidden:
    :maxdepth: 1
