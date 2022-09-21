@@ -209,7 +209,7 @@ def read_header(file: Union[str, Iterable[AnyStr]], custom_field_map: Optional[N
     :obj:`file` is a file object, it must be opened with the binary flag ('b') on platforms where that makes a
     difference, such as Windows.
 
-    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
+    See :ref:`background/how-to-use:reading nrrd files` for more information on reading NRRD files.
 
     Parameters
     ----------
@@ -310,7 +310,7 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
     the NRRD data is detached from the header, then the :obj:`filename` parameter is required to obtain the absolute
     path to the data file.
 
-    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
+    See :ref:`background/how-to-use:reading nrrd files` for more information on reading NRRD files.
 
     Parameters
     ----------
@@ -481,7 +481,7 @@ def read(filename: str, custom_field_map: Optional[NRRDFieldMap] = None, index_o
         -> Tuple[npt.NDArray, NRRDHeader]:
     """Read a NRRD file and return the header and data
 
-    See :ref:`user-guide:Reading NRRD files` for more information on reading NRRD files.
+    See :ref:`background/how-to-use:reading nrrd files` for more information on reading NRRD files.
 
     .. note::
             Users should be aware that the `index_order` argument needs to be consistent between `nrrd.read` and

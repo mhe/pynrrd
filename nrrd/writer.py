@@ -281,7 +281,7 @@ def write(file: Union[str, IO], data: npt.NDArray, header: Optional[NRRDHeader] 
             Reading an NRRD file in C-order and then writing as Fortran-order or vice versa will result in the data
             being transposed in the NRRD file.
 
-    See :ref:`user-guide:Writing NRRD files` for more information on writing NRRD files.
+    See :ref:`reference/writing:writing nrrd files` for more information on writing NRRD files.
 
     Parameters
     ----------

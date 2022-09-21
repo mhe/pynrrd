@@ -11,7 +11,7 @@ def format_number(x: Union[int, float]) -> str:
     Function converts a number to string. For numbers of class :class:`float`, up to 17 digits will be used to print
     the entire floating point number. Any padding zeros will be removed at the end of the number.
 
-    See :ref:`user-guide:int` and :ref:`user-guide:double` for more information on the format.
+    See :ref:`background/datatypes:int` and :ref:`background/datatypes:double` for more information on the format.
 
     .. note::
             IEEE754-1985 standard says that 17 significant decimal digits are required to adequately represent a
@@ -45,7 +45,8 @@ def format_number(x: Union[int, float]) -> str:
 def format_vector(x: npt.NDArray[Literal['*'], Any]) -> str:
     """Format a (N,) :class:`numpy.ndarray` into a NRRD vector string
 
-    See :ref:`user-guide:int vector` and :ref:`user-guide:double vector` for more information on the format.
+    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on
+    the format.
 
     Parameters
     ----------
@@ -67,7 +68,8 @@ def format_optional_vector(x: Optional[npt.NDArray[Literal['*'], Any]]) -> str:
     Function converts a (N,) :class:`numpy.ndarray` or :obj:`None` into a string using NRRD vector format. If the input
     :obj:`x` is :obj:`None`, then :obj:`vector` will be 'none'
 
-    See :ref:`user-guide:int vector` and :ref:`user-guide:double vector` for more information on the format.
+    See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on
+    the format.
 
     Parameters
     ----------
@@ -91,7 +93,8 @@ def format_optional_vector(x: Optional[npt.NDArray[Literal['*'], Any]]) -> str:
 def format_matrix(x: npt.NDArray[Literal['*, *'], Any]) -> str:
     """Format a (M,N) :class:`numpy.ndarray` into a NRRD matrix string
 
-    See :ref:`user-guide:int matrix` and :ref:`user-guide:double matrix` for more information on the format.
+    See :ref:`background/datatypes:int matrix` and :ref:`background/datatypes:double matrix` for more information on
+    the format.
 
     Parameters
     ----------
@@ -114,7 +117,7 @@ def format_optional_matrix(x: Optional[npt.NDArray[Literal['*, *'], Any]]) -> st
     any rows of the matrix that contain all NaNs for each element, the row will be replaced with a 'none' indicating
     the row has no vector.
 
-    See :ref:`user-guide:double matrix` for more information on the format.
+    See :ref:`background/datatypes:double matrix` for more information on the format.
 
     .. note::
             :obj:`x` must have a datatype of float because NaN's are only defined for floating point numbers.
@@ -136,7 +139,8 @@ def format_optional_matrix(x: Optional[npt.NDArray[Literal['*, *'], Any]]) -> st
 def format_number_list(x: npt.NDArray[Literal['*'], Any]) -> str:
     """Format a (N,) :class:`numpy.ndarray` into a NRRD number list.
 
-    See :ref:`user-guide:int list` and :ref:`user-guide:double list` for more information on the format.
+    See :ref:`background/datatypes:int list` and :ref:`background/datatypes:double list` for more information on the
+    format.
 
     Parameters
     ----------
