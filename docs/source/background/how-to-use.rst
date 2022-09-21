@@ -9,7 +9,7 @@ There are three functions that are used to read NRRD files: :meth:`read`, :meth:
 
 Reading NRRD files using :meth:`read` or :meth:`read_data` will return arrays indexed in Fortran-order by default, i.e array elements are accessed by `data[x, y, z]`. This differs from the C-order where array elements are accessed by `data[z, y, x]`, which is the more common order in Python and libraries (e.g. NumPy, scikit-image, PIL, OpenCV). The :obj:`index_order` parameter can be used to specify which index ordering should be used on the returned array ('C' or 'F'). The :obj:`index_order` parameter needs to be consistent with the parameter of same name in :meth:`write`.
 
-The :meth:`read` and :meth:`read_header` methods accept an optional parameter :obj:`custom_field_map` for parsing custom field types not listed in `Supported Fields`_ of the header. It is a :class:`dict` where the key is the custom field name and the value is a string identifying datatype for the custom field. See `Header datatypes`_ for a list of supported datatypes.
+The :meth:`read` and :meth:`read_header` methods accept an optional parameter :obj:`custom_field_map` for parsing custom field types not listed in :doc:`/background/fields` of the header. It is a :class:`dict` where the key is the custom field name and the value is a string identifying datatype for the custom field. See :doc:`/background/datatypes` for a list of supported datatypes.
 
 The :meth:`read_data` will typically be called in conjunction with :meth:`read_header` because header information is required in order to read the data. The function returns a :class:`numpy.ndarray` of the data saved in the given NRRD file.
 
