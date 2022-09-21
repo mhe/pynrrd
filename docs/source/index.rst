@@ -77,12 +77,6 @@ Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Examples
-
-   examples
-
-.. toctree::
-   :maxdepth: 1
    :caption: Background
 
    background/about
@@ -90,6 +84,12 @@ Contents
    background/datatypes
    background/fields
    background/index-ordering
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Examples
+
+   examples
 
 .. toctree::
    :maxdepth: 1
