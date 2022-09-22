@@ -14,8 +14,8 @@
     :target: https://badge.fury.io/py/pynrrd
     :alt: PyPi version
 
-.. image:: https://readthedocs.org/projects/pynrrd/badge/?version=latest
-    :target: https://pynrrd.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/pynrrd/badge/?version=stable
+    :target: https://pynrrd.readthedocs.io/en/stable/?badge=stable
     :alt: Documentation Status
 
 .. image:: https://codecov.io/gh/mhe/pynrrd/branch/master/graph/badge.svg
