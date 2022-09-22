@@ -289,7 +289,7 @@ def write(file: Union[str, IO], data: npt.NDArray, header: Optional[NRRDHeader] 
         Filename or file object of the NRRD file
     data : :class:`numpy.ndarray`
         Data to save to the NRRD file
-    header: :class:`dict` , optional
+    header : :class:`dict` (:class:`str`, :obj:`Object`), optional
         NRRD headers
     detached_header : :obj:`bool` or :obj:`str`, optional
         Whether the header and data should be saved in separate files. Defaults to :obj:`False`. If a :obj:`str` is
