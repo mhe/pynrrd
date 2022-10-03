@@ -28,4 +28,4 @@ jobs:
         with:
           # TODO Temporary for testing
           repository_url: https://test.pypi.org/legacy/
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
