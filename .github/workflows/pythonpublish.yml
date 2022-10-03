@@ -1,11 +1,8 @@
 name: Publish Python Package to PyPi
 
 on:
-  # TODO Temporary for testing
-  pull_request:
-    types: [labeled]
-  # release:
-  #   types: [published]
+  release:
+    types: [published]
 
 jobs:
   deploy:
@@ -26,6 +23,4 @@ jobs:
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          # TODO Temporary for testing
-          repository_url: https://test.pypi.org/legacy/
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
