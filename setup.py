@@ -15,7 +15,7 @@ with open(os.path.join(currentPath, 'README.rst')) as fh:
 
 longDescription = '\n' + longDescription
 
-setup(name='pynrrd2',
+setup(name='pynrrd',
       python_requires='>=3.7',
       version=__version__,
       description='Pure python module for reading and writing NRRD files.',
