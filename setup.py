@@ -2,9 +2,11 @@ import os
 
 from setuptools import find_packages, setup
 
-from nrrd._version import __version__
-
 currentPath = os.path.abspath(os.path.dirname(__file__))
+
+# Get __version__ from _version.py
+with open(os.path.join(currentPath, 'nrrd/_version.py')) as fh:
+    exec(fh.read())
 
 # Get the long description from the README file
 with open(os.path.join(currentPath, 'README.rst')) as fh:
