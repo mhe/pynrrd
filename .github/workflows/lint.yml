@@ -1,4 +1,4 @@
-name: Lint
+  name: Lint
 
 on: [push, pull_request]
 
@@ -17,7 +17,9 @@ jobs:
           python-version: 3.7
 
       - name: Install Python dependencies
-        run: pip install pre-commit
+        run: |
+          pip install importlib-metadata>=1.1.0,<5
+          pip install pre-commit
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
