@@ -22,7 +22,7 @@ setup(name='pynrrd',
       author_email='me@nn8.nl',
       url='https://github.com/mhe/pynrrd',
       license='MIT License',
-      install_requires=['numpy>=1.11.1'],
+      install_requires=['numpy>=1.11.1', 'nptyping', 'typing_extensions'],
       packages=find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests']),
       keywords='nrrd teem image processing file format',
       classifiers=[
