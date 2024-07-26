@@ -87,7 +87,9 @@ _TYPEMAP_NRRD2NUMPY = {
 
 
 def _get_field_type(field: str, custom_field_map: Optional[NRRDFieldMap]) -> NRRDFieldType:
-    if field in ['dimension', 'lineskip', 'line skip', 'byteskip', 'byte skip', 'space dimension']:
+    if custom_field_map and field in custom_field_map:
+        return custom_field_map[field]
+    elif field in ['dimension', 'lineskip', 'line skip', 'byteskip', 'byte skip', 'space dimension']:
         return 'int'
     elif field in ['min', 'max', 'oldmin', 'old min', 'oldmax', 'old max']:
         return 'double'
@@ -111,9 +113,6 @@ def _get_field_type(field: str, custom_field_map: Optional[NRRDFieldMap]) -> NRR
     elif field in ['space directions']:
         return 'double matrix'
     else:
-        if custom_field_map and field in custom_field_map:
-            return custom_field_map[field]
-
         # Default the type to string if unknown type
         return 'string'
 
