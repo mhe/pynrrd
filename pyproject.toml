@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pynrrd"
 dynamic = ["version"]
 description = "Pure python module for reading and writing NRRD files."
-readme = {file = "README.txt", content-type = "text/x-rst"}
+readme = { file = "README.txt", content-type = "text/x-rst" }
 requires-python = ">=3.7"
 license = { text = "MIT License" }
 authors = [{ name = "Maarten Everts", email = "me@nn8.nl" }]
@@ -19,14 +19,10 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11"
+    "Programming Language :: Python :: 3.11",
 ]
 
-dependencies = [
-    "numpy >=1.11.1",
-    "nptyping",
-    "typing_extensions"
-]
+dependencies = ["numpy >=1.11.1", "nptyping", "typing_extensions"]
 
 [project.optional-dependencies]
 dev = ["build", "pre-commit", "pytest"]
@@ -36,4 +32,7 @@ Homepage = "https://github.com/mhe/pynrrd"
 Tracker = "https://github.com/mhe/pynrrd/issues"
 
 [tool.setuptools.dynamic]
-version = {attr = "nrrd._version.__version__"}
+version = { attr = "nrrd._version.__version__" }
+
+[tool.setuptools.packages]
+find = { exclude = ["*.tests", "*.tests.*", "tests.*", "tests"] }
