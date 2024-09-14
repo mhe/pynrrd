@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pynrrd"
+dynamic = ["version"]
+description = "Pure python module for reading and writing NRRD files."
+readme = {file = "README.txt", content-type = "text/x-rst"}
+requires-python = ">=3.7"
+license = { text = "MIT License" }
+authors = [{ name = "Maarten Everts", email = "me@nn8.nl" }]
+keywords = ["nrrd", "teem", "image", "processing", "file", "format"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11"
+]
+
+dependencies = [
+    "numpy >=1.11.1",
+    "nptyping",
+    "typing_extensions"
+]
+
+[project.optional-dependencies]
+dev = ["build", "pre-commit", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/mhe/pynrrd"
+Tracker = "https://github.com/mhe/pynrrd/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "nrrd._version.__version__"}

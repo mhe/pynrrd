@@ -11,3 +11,6 @@ docs/build/
 
 # coverage.py files
 .coverage
+
+# Virtual environments
+.venv
