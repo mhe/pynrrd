@@ -29,6 +29,7 @@ dev = ["build", "pre-commit", "pytest"]
 
 [project.urls]
 Homepage = "https://github.com/mhe/pynrrd"
+Documentation = "https://pynrrd.readthedocs.io/en/stable"
 Tracker = "https://github.com/mhe/pynrrd/issues"
 
 [tool.setuptools.dynamic]
