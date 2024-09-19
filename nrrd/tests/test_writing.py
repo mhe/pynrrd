@@ -329,7 +329,7 @@ class Abstract:
                 # Strip newline from end of line
                 lines = [line.rstrip() for line in lines]
 
-                # Note the order of the lines dont matter, we just want to verify theyre outputted correctly
+                # Note the order of the lines dont matter, we just want to verify they are outputted correctly
                 self.assertTrue('units: "mm" "cm" "in"' in lines)
                 self.assertTrue('space units: "mm" "cm" "in"' in lines)
                 self.assertTrue('labels: "X" "Y" "f(log(X, 10), Y)"' in lines)
