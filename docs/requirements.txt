@@ -1,6 +1,5 @@
 sphinx==5.1.1
 sphinx-rtd-theme==1.0.0
-numpy>=1.11.1
+numpy>=1.21
 numpydoc==1.4.0
-nptyping
 typing_extensions

@@ -32,7 +32,6 @@ Requirements
 ------------
 
 * `numpy <https://numpy.org/>`_
-* nptyping
 * typing_extensions
 
 v1.0+ requires Python 3.7 or above. If you have an older Python version, please install a v0.x release instead.
