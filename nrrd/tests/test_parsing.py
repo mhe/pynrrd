@@ -119,12 +119,12 @@ class TestFieldParsing(unittest.TestCase):
 
         self.assert_equal_with_datatype(nrrd.parse_optional_matrix(
             'none (1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
-            [[np.NaN, np.NaN, np.NaN], [1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0],
+            [[np.nan, np.nan, np.nan], [1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0],
              [0, 0, 4.7619115092114601]])
 
         self.assert_equal_with_datatype(nrrd.parse_optional_matrix(
             '(1.4726600000000003,-0,0) none (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
-            [[1.4726600000000003, 0, 0], [np.NaN, np.NaN, np.NaN], [0, 1.4726600000000003, 0],
+            [[1.4726600000000003, 0, 0], [np.nan, np.nan, np.nan], [0, 1.4726600000000003, 0],
              [0, 0, 4.7619115092114601]])
 
         with self.assertRaisesRegex(nrrd.NRRDError, 'Matrix should have same number of elements in each row'):

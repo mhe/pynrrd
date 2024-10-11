@@ -235,7 +235,7 @@ class Abstract:
                                'space directions': np.array([[1.5, 0., 0.],
                                                              [0., 1.5, 0.],
                                                              [0., 0., 1.],
-                                                             [np.NaN, np.NaN, np.NaN]]),
+                                                             [np.nan, np.nan, np.nan]]),
                                'endian': 'little',
                                'encoding': 'raw',
                                'measurement frame': np.array([[1.0001, 0., 0.],
