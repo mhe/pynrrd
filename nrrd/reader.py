@@ -6,7 +6,7 @@ import shlex
 import warnings
 import zlib
 from collections import OrderedDict
-from typing import IO, AnyStr, Iterable, Tuple
+from typing import IO, Any, AnyStr, Iterable, Tuple
 
 from nrrd.parsers import *
 from nrrd.types import IndexOrder, NRRDFieldMap, NRRDFieldType, NRRDHeader

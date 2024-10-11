@@ -1,13 +1,12 @@
-from typing import Any, Optional, Type, Union
+from typing import Optional, Type, Union
 
-import nptyping as npt
 import numpy as np
-from typing_extensions import Literal
+import numpy.typing as npt
 
 from nrrd.errors import NRRDError
 
 
-def parse_vector(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[Literal['*'], Any]:
+def parse_vector(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray:
     """Parse NRRD vector from string into (N,) :class:`numpy.ndarray`.
 
     See :ref:`background/datatypes:int vector` and :ref:`background/datatypes:double vector` for more information on
@@ -52,7 +51,7 @@ def parse_vector(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt
 
 
 def parse_optional_vector(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> \
-        Optional[npt.NDArray[Literal['*'], Any]]:
+        Optional[npt.NDArray]:
     """Parse optional NRRD vector from string into (N,) :class:`numpy.ndarray` or :obj:`None`.
 
     Function parses optional NRRD vector from string into an (N,) :class:`numpy.ndarray`. This function works the same
@@ -83,7 +82,7 @@ def parse_optional_vector(x: str, dtype: Optional[Type[Union[int, float]]] = Non
         return parse_vector(x, dtype)
 
 
-def parse_matrix(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[Literal['*, *'], Any]:
+def parse_matrix(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray:
     """Parse NRRD matrix from string into (M,N) :class:`numpy.ndarray`.
 
     See :ref:`background/datatypes:int matrix` and :ref:`background/datatypes:double matrix` for more information on
@@ -130,7 +129,7 @@ def parse_matrix(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt
     return matrix
 
 
-def parse_optional_matrix(x: str) -> Optional[npt.NDArray[Literal['*, *'], Any]]:
+def parse_optional_matrix(x: str) -> Optional[npt.NDArray]:
     """Parse optional NRRD matrix from string into (M,N) :class:`numpy.ndarray` of :class:`float`.
 
     Function parses optional NRRD matrix from string into an (M,N) :class:`numpy.ndarray` of :class:`float`. This
@@ -173,7 +172,7 @@ def parse_optional_matrix(x: str) -> Optional[npt.NDArray[Literal['*, *'], Any]]
     return matrix
 
 
-def parse_number_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray[Literal['*'], Any]:
+def parse_number_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> npt.NDArray:
     """Parse NRRD number list from string into (N,) :class:`numpy.ndarray`.
 
     See :ref:`background/datatypes:int list` and :ref:`background/datatypes:double list` for more information on the

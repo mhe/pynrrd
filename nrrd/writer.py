@@ -4,9 +4,9 @@ import os
 import zlib
 from collections import OrderedDict
 from datetime import datetime
-from typing import IO, Dict
+from typing import IO, Any, Dict
 
-import nptyping as npt
+import numpy.typing as npt
 
 from nrrd.errors import NRRDError
 from nrrd.formatters import *
