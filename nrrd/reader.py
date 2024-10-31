@@ -109,6 +109,8 @@ def _get_field_type(field: str, custom_field_map: Optional[NRRDFieldMap]) -> NRR
     elif field in ['measurement frame']:
         return 'double matrix'
     elif field in ['space directions']:
+        # TODO Addison
+        # return 'double vector list'
         return 'double matrix'
     else:
         if custom_field_map and field in custom_field_map:
@@ -144,6 +146,10 @@ def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
         # This is only valid for double matrices because the matrix is represented with NaN in the entire row
         # for none rows. NaN is only valid for floating point numbers
         return parse_optional_matrix(value)
+    elif field_type == 'int vector list':
+        return parse_optional_vector_list(value, dtype=int)
+    elif field_type == 'double vector list':
+        return parse_optional_vector_list(value, dtype=float)
     else:
         raise NRRDError(f'Invalid field type given: {field_type}')
 
