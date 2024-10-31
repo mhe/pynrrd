@@ -97,7 +97,7 @@ int vector list
 :Python Datatype: (M,N) :class:`list` of (N,) :class:`numpy.ndarray` of :class:`int`
 :Python Example: [np.array([1, 0, 0]), np.array([0, 1, 0]), None, np.array([0, 0, 1])]
 
-All rows of the matrix are required, unlike that of the `double matrix`_. If some of the rows need to be 'none', then use a `double matrix`_ instead. The reason is that empty rows (i.e. containing 'none') are represented as a row of NaN's, and NaN's are only available for floating point numbers.
+This datatype is similar to `int matrix`_ except instead of returning a (M,N) :class:`numpy.ndarray`, it returns a list of (,N) :class:`numpy.ndarray`. Each row is optional and designated by :code:`none` in the NRRD specification and represented as :obj:`None` in this Python library.
 
 double vector list
 ~~~~~~~~~~~~~~~~~~
@@ -106,4 +106,4 @@ double vector list
 :Python Datatype: (M,N) :class:`list` of (N,) :class:`numpy.ndarray` of :class:`float`
 :Python Example: [np.array([2.54, 1.3, 0.0]), np.array([3.14, 0.3, 3.3]), None, np.array([0.0, -12.3, -3.3])]
 
-This datatype has the added feature where rows can be defined as empty by setting the vector as :code:`none`. In the NRRD specification, instead of the row, the :code:`none` keyword is used in it's place. This is represented in the Python NumPy array as a row of all NaN's. An example use case for this optional row matrix is for the 'space directions' field where one row may be empty because it is not a domain type.
+This datatype is similar to `double matrix`_ except instead of returning a (M,N) :class:`numpy.ndarray`, it returns a list of (,N) :class:`numpy.ndarray`. Each row is optional and designated by :code:`none` in the NRRD specification and represented as :obj:`None` in this Python library.
