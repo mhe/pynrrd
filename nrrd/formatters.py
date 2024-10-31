@@ -165,50 +165,43 @@ def format_number_list(x: npt.NDArray) -> str:
 
 
 def format_vector_list(x: List[npt.NDArray]) -> str:
-    """Format a (M,N) :class:`numpy.ndarray` into a NRRD matrix string
+    """Format a :class:`list` of (N,) :class:`numpy.ndarray` into a NRRD vector list string
 
-    TODO
-
-    See :ref:`background/datatypes:int matrix` and :ref:`background/datatypes:double matrix` for more information on
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
     the format.
 
     Parameters
     ----------
-    x : (M,N) :class:`numpy.ndarray`
-        Matrix to convert to NRRD vector string
+    x : :class:`list` of (N,) :class:`numpy.ndarray`
+        Vector list to convert to NRRD vector list string
 
     Returns
     -------
-    matrix : :class:`str`
-        String containing NRRD matrix
+    vector_list : :class:`str`
+        String containing NRRD vector list
     """
 
     return ' '.join([format_vector(y) for y in x])
 
 
 def format_optional_vector_list(x: List[Optional[npt.NDArray]]) -> str:
-    """Format a (M,N) :class:`numpy.ndarray` of :class:`float` into a NRRD optional matrix string
+    """Format a :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None` into a NRRD optional vector list string
 
-    TODO
+    Function converts a :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None` into a string using
+    the NRRD vector list format.
 
-    Function converts a (M,N) :class:`numpy.ndarray` of :class:`float` into a string using the NRRD matrix format. For
-    any rows of the matrix that contain all NaNs for each element, the row will be replaced with a 'none' indicating
-    the row has no vector.
-
-    See :ref:`background/datatypes:double matrix` for more information on the format.
-
-    .. note::
-            :obj:`x` must have a datatype of float because NaN's are only defined for floating point numbers.
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
+    the format.
 
     Parameters
     ----------
-    x : (M,N) :class:`numpy.ndarray` of :class:`float`
-        Matrix to convert to NRRD vector string
+    x : :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None`
+        Vector list to convert to NRRD vector list string
 
     Returns
     -------
-    matrix : :class:`str`
-        String containing NRRD matrix
+    vector_list : :class:`str`
+        String containing NRRD vector list
     """
     # Convert to float dtype to convert None to NaN
     x = np.asarray(x, dtype=float)
