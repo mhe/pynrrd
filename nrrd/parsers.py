@@ -217,8 +217,8 @@ def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
 
     Parses input string to convert it into a list of Numpy arrays using the NRRD vector list format.
 
-    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
-    the format.
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more
+    information on the format.
 
     Parameters
     ----------
@@ -265,8 +265,8 @@ def parse_optional_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] 
     This function works the same as :meth:`parse_vector_list` except if a row vector in the list is none, the resulting
     row in the returned list will be :obj:`None`.
 
-    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
-    the format.
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more
+    information on the format.
 
     Parameters
     ----------

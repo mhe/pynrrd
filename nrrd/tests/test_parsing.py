@@ -164,12 +164,12 @@ class TestFieldParsing(unittest.TestCase):
 
         self.assert_equal_with_datatype(
             nrrd.parse_vector_list('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
-                              dtype=float),
+                                   dtype=float),
             [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
 
         self.assert_equal_with_datatype(
             nrrd.parse_vector_list('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
-                              dtype=int), [[1, 0, 0], [0, 1, 0], [0, 0, 4]])
+                                   dtype=int), [[1, 0, 0], [0, 1, 0], [0, 0, 4]])
 
         self.assert_equal_with_datatype(nrrd.parse_vector_list('(1,0,0) (0,1,0) (0,0,1)'),
                                         [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -214,6 +214,7 @@ class TestFieldParsing(unittest.TestCase):
         vector_list = nrrd.parse_optional_vector_list('(1,0,0) (0,1,0) none (0,0,1)')
         self.assertIsInstance(vector_list, list)
         self.assertTrue(all(vector is None or isinstance(vector, np.ndarray) for vector in vector_list))
+
 
 if __name__ == '__main__':
     unittest.main()

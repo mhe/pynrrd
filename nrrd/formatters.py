@@ -89,7 +89,7 @@ def format_optional_vector(x: Optional[npt.NDArray]) -> str:
 
     # If all elements are None or NaN, then return none
     # Otherwise format the vector as normal
-    if np.all(x == None) or np.all(np.isnan(x)):
+    if np.all(x == None) or np.all(np.isnan(x)):  # noqa: E711
         return 'none'
     else:
         return format_vector(x)
@@ -167,8 +167,8 @@ def format_number_list(x: npt.NDArray) -> str:
 def format_vector_list(x: List[npt.NDArray]) -> str:
     """Format a :class:`list` of (N,) :class:`numpy.ndarray` into a NRRD vector list string
 
-    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
-    the format.
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more
+    information on the format.
 
     Parameters
     ----------
@@ -190,8 +190,8 @@ def format_optional_vector_list(x: List[Optional[npt.NDArray]]) -> str:
     Function converts a :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None` into a string using
     the NRRD vector list format.
 
-    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
-    the format.
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more
+    information on the format.
 
     Parameters
     ----------
