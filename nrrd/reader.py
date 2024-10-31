@@ -6,7 +6,7 @@ import shlex
 import warnings
 import zlib
 from collections import OrderedDict
-from typing import IO, Any, AnyStr, Iterable, Tuple
+from typing import IO, Any, AnyStr, Iterable, Literal, Tuple
 
 from nrrd.parsers import *
 from nrrd.types import IndexOrder, NRRDFieldMap, NRRDFieldType, NRRDHeader
@@ -21,6 +21,30 @@ _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
 ALLOW_DUPLICATE_FIELD = False
 """Allow duplicate header fields when reading NRRD files
+
+When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as
+:obj:`True` will instead show a warning.
+
+Example:
+    Reading a NRRD file with duplicated header field 'space' with field set to :obj:`False`.
+
+    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
+    nrrd.errors.NRRDError: Duplicate header field: 'space'
+
+    Set the field as :obj:`True` to receive a warning instead.
+
+    >>> nrrd.reader.ALLOW_DUPLICATE_FIELD = True
+    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
+    UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)
+
+Note:
+    Duplicated fields are prohibited by the NRRD file specification.
+"""
+
+SPACE_DIRECTIONS_TYPE: Literal['double matrix', 'double vector list'] = 'double matrix'
+"""Allow duplicate header fields when reading NRRD files
+
+TODO Addison
 
 When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as
 :obj:`True` will instead show a warning.
@@ -109,9 +133,7 @@ def _get_field_type(field: str, custom_field_map: Optional[NRRDFieldMap]) -> NRR
     elif field in ['measurement frame']:
         return 'double matrix'
     elif field in ['space directions']:
-        # TODO Addison
-        # return 'double vector list'
-        return 'double matrix'
+        return SPACE_DIRECTIONS_TYPE
     else:
         if custom_field_map and field in custom_field_map:
             return custom_field_map[field]
