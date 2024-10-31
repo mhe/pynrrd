@@ -1,7 +1,7 @@
 from nrrd._version import __version__
 from nrrd.formatters import *
 from nrrd.parsers import *
-from nrrd.reader import read, read_data, read_header, SPACE_DIRECTIONS_TYPE
+from nrrd.reader import SPACE_DIRECTIONS_TYPE, read, read_data, read_header
 from nrrd.types import NRRDFieldMap, NRRDFieldType, NRRDHeader
 from nrrd.writer import write
 

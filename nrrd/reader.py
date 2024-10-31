@@ -19,7 +19,7 @@ _READ_CHUNKSIZE: int = 2 ** 32
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
-ALLOW_DUPLICATE_FIELD = False
+ALLOW_DUPLICATE_FIELD: bool = False
 """Allow duplicate header fields when reading NRRD files
 
 When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as
