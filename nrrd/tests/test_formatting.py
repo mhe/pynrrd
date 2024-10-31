@@ -83,9 +83,19 @@ class TestFieldFormatting(unittest.TestCase):
             'none (1,2,3) (4,5,6) (7,8,9)')
         self.assertEqual(nrrd.format_optional_matrix(np.array([
             [1, 2, 3], [np.nan, np.nan, np.nan], [4, 5, 6], [7, 8, 9]])),
-            '(1,2,3) none (4,5,6) (7,8,9)')       
+            '(1,2,3) none (4,5,6) (7,8,9)')
         self.assertEqual(nrrd.format_optional_matrix(np.array([
             [None, None, None], [1, 2, 3], [4, 5, 6], [7, 8, 9]])),
+            'none (1,2,3) (4,5,6) (7,8,9)')
+
+        self.assertEqual(nrrd.format_optional_matrix([
+            [np.nan, np.nan, np.nan], [1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+            'none (1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_matrix([
+            [1, 2, 3], [np.nan, np.nan, np.nan], [4, 5, 6], [7, 8, 9]]),
+            '(1,2,3) none (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_matrix([
+            [None, None, None], [1, 2, 3], [4, 5, 6], [7, 8, 9]]),
             'none (1,2,3) (4,5,6) (7,8,9)')
 
     def test_format_number_list(self):
