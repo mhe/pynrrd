@@ -213,9 +213,9 @@ def parse_number_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
 
 
 def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> List[npt.NDArray]:
-    """Parse NRRD vector list from string into (N,) :class:`numpy.ndarray`.
+    """Parse NRRD vector list from string into a :class`list` of (N,) :class:`numpy.ndarray`.
 
-    TODO
+    Parses input string to convert it into a list of Numpy arrays using the NRRD vector list format.
 
     See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
     the format.
@@ -223,17 +223,17 @@ def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
     Parameters
     ----------
     x : :class:`str`
-        String containing NRRD matrix
+        String containing NRRD vector list
     dtype : data-type, optional
-        Datatype to use for the resulting Numpy array. Datatype can be :class:`float`, :class:`int` or :obj:`None`. If
-        :obj:`dtype` is :obj:`None`, then it will be automatically determined by checking any of the elements
-        for fractional numbers. If found, then the matrix will be converted to :class:`float`, otherwise :class:`int`.
+        Datatype to use for the resulting Numpy arrays. Datatype can be :class:`float`, :class:`int` or :obj:`None`. If
+        :obj:`dtype` is :obj:`None`, it will be automatically determined by checking any of the vector elements
+        for fractional numbers. If found, the vectors will be converted to :class:`float`, otherwise :class:`int`.
         Default is to automatically determine datatype.
 
     Returns
     -------
-    matrix : (M,N) :class:`numpy.ndarray`
-        Matrix that is parsed from the :obj:`x` string
+    vector_list : :class:`list` of (N,) :class:`numpy.ndarray`
+        List of vectors that are parsed from the :obj:`x` string
     """
 
     # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
@@ -259,25 +259,24 @@ def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
 
 
 def parse_optional_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> List[Optional[npt.NDArray]]:
-    """Parse optional NRRD matrix from string into (M,N) :class:`numpy.ndarray` of :class:`float`.
+    """Parse optional NRRD vector list from string into :class`list` of (N,) :class:`numpy.ndarray` of :class:`float`.
 
-    TODO
+    Function parses optional NRRD vector list from string into a list of (N,) :class:`numpy.ndarray` or :obj:`None`.
+    This function works the same as :meth:`parse_vector_list` except if a row vector in the list is none, the resulting
+    row in the returned list will be :obj:`None`.
 
-    Function parses optional NRRD matrix from string into an (M,N) :class:`numpy.ndarray` of :class:`float`. This
-    function works the same as :meth:`parse_matrix` except if a row vector in the matrix is none, the resulting row in
-    the returned matrix will be all NaNs.
-
-    See :ref:`background/datatypes:double matrix` for more information on the format.
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more information on
+    the format.
 
     Parameters
     ----------
     x : :class:`str`
-        String containing NRRD matrix
+        String containing NRRD vector list
 
     Returns
     -------
-    matrix : (M,N) :class:`numpy.ndarray` of :class:`float`
-        Matrix that is parsed from the :obj:`x` string
+    vector_list : :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None`
+        List of vectors that is parsed from the :obj:`x` string
     """
 
     # Split input by spaces to get each row and convert into a vector. The row can be 'none', in which case it will
