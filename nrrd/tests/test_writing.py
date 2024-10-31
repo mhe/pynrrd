@@ -478,6 +478,8 @@ class Abstract:
             self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
             self.assertSequenceEqual(header, memory_header)
 
+    # TODO Space direcitons tests
+
 
 class TestWritingFunctionsFortran(Abstract.TestWritingFunctions):
     index_order = 'F'

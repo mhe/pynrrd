@@ -8,7 +8,7 @@ from nrrd.types import NRRDFieldMap, NRRDFieldType, NRRDHeader
 from nrrd.writer import write
 
 SPACE_DIRECTIONS_TYPE: Literal['double matrix', 'double vector list'] = 'double matrix'
-"""Allow duplicate header fields when reading NRRD files
+"""Datatype to use for 'space directions' field when reading/writing NRRD files
 
 TODO Addison
 
@@ -26,9 +26,6 @@ Example:
     >>> nrrd.reader.ALLOW_DUPLICATE_FIELD = True
     >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
     UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)
-
-Note:
-    Duplicated fields are prohibited by the NRRD file specification.
 """
 
 __all__ = ['read', 'read_data', 'read_header', 'write', 'format_number_list', 'format_number', 'format_matrix',
