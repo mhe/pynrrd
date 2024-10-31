@@ -212,33 +212,6 @@ def parse_number_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
     return number_list
 
 
-def parse_number_auto_dtype(x: str) -> Union[int, float]:
-    """Parse number from string with automatic type detection.
-
-    Parses input string and converts to a number using automatic type detection. If the number contains any
-    fractional parts, then the number will be converted to float, otherwise the number will be converted to an int.
-
-    See :ref:`background/datatypes:int` and :ref:`background/datatypes:double` for more information on the format.
-
-    Parameters
-    ----------
-    x : :class:`str`
-        String representation of number
-
-    Returns
-    -------
-    result : :class:`int` or :class:`float`
-        Number parsed from :obj:`x` string
-    """
-
-    value: Union[int, float] = float(x)
-
-    if value.is_integer():
-        value = int(value)
-
-    return value
-
-
 def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> List[npt.NDArray]:
     """Parse NRRD vector list from string into (N,) :class:`numpy.ndarray`.
 
@@ -269,25 +242,26 @@ def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
     # Get the size of each row vector and then remove duplicate sizes
     # There should be exactly one value in the matrix because all row sizes need to be the same
     if len(np.unique([len(x) for x in vector_list])) != 1:
-        raise NRRDError('Matrix should have same number of elements in each row')
+        raise NRRDError('Vector list should have same number of elements in each row')
 
     # If using automatic datatype detection, then start by converting to float and determining if the number is whole
     # Truncate to integer if dtype is int also
     if dtype is None:
-        matrix_trunc = vector_list.astype(int)
-
-        if np.all((vector_list - matrix_trunc) == 0):
-            vector_list = matrix_trunc
+        vector_list_trunc = [x.astype(int) for x in vector_list]
+        if np.all([np.array_equal(x, y) for x, y in zip(vector_list, vector_list_trunc)]):
+            vector_list = vector_list_trunc
     elif dtype == int:
-        vector_list = [x.astype(int) if x is not None else None for x in vector_list]
+        vector_list = [x.astype(int) for x in vector_list]
     elif dtype != float:
         raise NRRDError('dtype should be None for automatic type detection, float or int')
 
     return vector_list
 
 
-def parse_optional_vector_list(x: str) -> List[Optional[npt.NDArray]]:
+def parse_optional_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> List[Optional[npt.NDArray]]:
     """Parse optional NRRD matrix from string into (M,N) :class:`numpy.ndarray` of :class:`float`.
+
+    TODO
 
     Function parses optional NRRD matrix from string into an (M,N) :class:`numpy.ndarray` of :class:`float`. This
     function works the same as :meth:`parse_matrix` except if a row vector in the matrix is none, the resulting row in
@@ -321,9 +295,43 @@ def parse_optional_vector_list(x: str) -> List[Optional[npt.NDArray]]:
     if len(unique_sizes) != 1 and (len(unique_sizes) != 2 or unique_sizes.min() != 0):
         raise NRRDError('Matrix should have same number of elements in each row')
 
-    # Create a vector row of NaN's that matches same size of remaining vector rows
-    # Stack the vector rows together to create matrix
-    nan_row = np.full((unique_sizes.max()), np.nan)
-    vector_list = np.vstack([nan_row if x is None else x for x in vector_list])
+    # If using automatic datatype detection, then start by converting to float and determining if the number is whole
+    # Truncate to integer if dtype is int also
+    if dtype is None:
+        vector_list_trunc = [x.astype(int) if x is not None else None for x in vector_list]
+
+        if np.all([np.array_equal(x, y) for x, y in zip(vector_list, vector_list_trunc)]):
+            vector_list = vector_list_trunc
+    elif dtype == int:
+        vector_list = [x.astype(int) if x is not None else None for x in vector_list]
+    elif dtype != float:
+        raise NRRDError('dtype should be None for automatic type detection, float or int')
 
     return vector_list
+
+
+def parse_number_auto_dtype(x: str) -> Union[int, float]:
+    """Parse number from string with automatic type detection.
+
+    Parses input string and converts to a number using automatic type detection. If the number contains any
+    fractional parts, then the number will be converted to float, otherwise the number will be converted to an int.
+
+    See :ref:`background/datatypes:int` and :ref:`background/datatypes:double` for more information on the format.
+
+    Parameters
+    ----------
+    x : :class:`str`
+        String representation of number
+
+    Returns
+    -------
+    result : :class:`int` or :class:`float`
+        Number parsed from :obj:`x` string
+    """
+
+    value: Union[int, float] = float(x)
+
+    if value.is_integer():
+        value = int(value)
+
+    return value
