@@ -213,7 +213,7 @@ def parse_number_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
 
 
 def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> List[npt.NDArray]:
-    """Parse NRRD vector list from string into a :class`list` of (N,) :class:`numpy.ndarray`.
+    """Parse NRRD vector list from string into a :class:`list` of (N,) :class:`numpy.ndarray`.
 
     Parses input string to convert it into a list of Numpy arrays using the NRRD vector list format.
 
@@ -259,7 +259,7 @@ def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
 
 
 def parse_optional_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -> List[Optional[npt.NDArray]]:
-    """Parse optional NRRD vector list from string into :class`list` of (N,) :class:`numpy.ndarray` of :class:`float`.
+    """Parse optional NRRD vector list from string into :class:`list` of (N,) :class:`numpy.ndarray` of :class:`float`.
 
     Function parses optional NRRD vector list from string into a list of (N,) :class:`numpy.ndarray` or :obj:`None`.
     This function works the same as :meth:`parse_vector_list` except if a row vector in the list is none, the resulting
