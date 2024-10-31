@@ -236,7 +236,7 @@ def parse_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] = None) -
         List of vectors that are parsed from the :obj:`x` string
     """
 
-    # Split input by spaces, convert each row into a vector and stack them vertically to get a matrix
+    # Split input by spaces, convert each row into a vector
     vector_list = [parse_vector(x, dtype=float) for x in x.split()]
 
     # Get the size of each row vector and then remove duplicate sizes
