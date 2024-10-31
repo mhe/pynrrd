@@ -503,16 +503,19 @@ class Abstract:
 
         def test_read_space_directions_list(self):
             try:
-                # TODO This doesn't work
-                # nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
-                nrrd.reader.SPACE_DIRECTIONS_TYPE = 'double vector list'
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
 
                 _, header = nrrd.read(RAW_4D_NRRD_FILE_PATH, index_order=self.index_order)
                 self.assertIsInstance(header['space directions'], list)
-                self.assertTrue(all(vector is None or isinstance(vector, np.ndarray) for vector in header['space directions']))
+                self.assertTrue(
+                    all(vector is None or isinstance(vector, np.ndarray) for vector in header['space directions']))
                 np.testing.assert_equal(header['space directions'][0].dtype, np.float64)
+                np.testing.assert_equal(header['space directions'], [np.array([1.5, 0., 0.]),
+                                        np.array([0., 1.5, 0.]),
+                                        np.array([0., 0., 1.]),
+                                        None])
             finally:
-                nrrd.reader.SPACE_DIRECTIONS_TYPE = 'double matrix'
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
 
 
 class TestReadingFunctionsFortran(Abstract.TestReadingFunctions):
