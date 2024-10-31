@@ -292,7 +292,7 @@ def parse_optional_vector_list(x: str, dtype: Optional[Type[Union[int, float]]] 
     unique_sizes = np.unique(sizes)
 
     if len(unique_sizes) != 1 and (len(unique_sizes) != 2 or unique_sizes.min() != 0):
-        raise NRRDError('Matrix should have same number of elements in each row')
+        raise NRRDError('Vector list should have same number of elements in each row')
 
     # If using automatic datatype detection, then start by converting to float and determining if the number is whole
     # Truncate to integer if dtype is int also
