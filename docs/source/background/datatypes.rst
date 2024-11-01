@@ -97,7 +97,7 @@ int vector list
 :Python Datatype: (M,N) :class:`list` of (N,) :class:`numpy.ndarray` of :class:`int`
 :Python Example: [np.array([1, 0, 0]), np.array([0, 1, 0]), None, np.array([0, 0, 1])]
 
-This datatype is similar to `int matrix`_ except instead of returning a (M,N) :class:`numpy.ndarray`, it returns a list of (N,) :class:`numpy.ndarray`. Each row is optional and designated by :code:`none` in the NRRD specification and represented as :obj:`None` in this Python library.
+This datatype is similar to `int matrix`_ except instead of returning a (M,N) :class:`numpy.ndarray`, it returns a list of (N,) :class:`numpy.ndarray`. Each row is optional and designated by :code:`none` in the NRRD specification and represented as :obj:`None` in this library.
 
 double vector list
 ~~~~~~~~~~~~~~~~~~
@@ -106,4 +106,4 @@ double vector list
 :Python Datatype: (M,N) :class:`list` of (N,) :class:`numpy.ndarray` of :class:`float`
 :Python Example: [np.array([2.54, 1.3, 0.0]), np.array([3.14, 0.3, 3.3]), None, np.array([0.0, -12.3, -3.3])]
 
-This datatype is similar to `double matrix`_ except instead of returning a (M,N) :class:`numpy.ndarray`, it returns a list of (N,) :class:`numpy.ndarray`. Each row is optional and designated by :code:`none` in the NRRD specification and represented as :obj:`None` in this Python library.
+This datatype is similar to `double matrix`_ except instead of returning a (M,N) :class:`numpy.ndarray`, it returns a list of (N,) :class:`numpy.ndarray`. Each row is optional and designated by :code:`none` in the NRRD specification and represented as :obj:`None` in this library.
