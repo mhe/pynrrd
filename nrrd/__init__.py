@@ -7,10 +7,25 @@ from nrrd.reader import read, read_data, read_header
 from nrrd.types import NRRDFieldMap, NRRDFieldType, NRRDHeader
 from nrrd.writer import write
 
+# TODO Change to 'double vector list' in next major release
 SPACE_DIRECTIONS_TYPE: Literal['double matrix', 'double vector list'] = 'double matrix'
 """Datatype to use for 'space directions' field when reading/writing NRRD files
 
 TODO Addison
+The 'space directions' field can be represented in two different ways: as a matrix or as a list of vectors.
+
+The current default is to use a matrix, but it will be switched to a list of vectors in the next major release.
+
+The space directions field is defined per-axis where any of the axis can be 'none'. A matrix gives the false impression the s
+
+The default is to use a matrix, but it can be set to use a list of vectors by setting this variable to
+:obj:`'double vector list'`. This is mostly useful for backwards compatibility with older versions of the `nrrd` library
+which only supported the list of vectors representation.
+
+Example:
+    >>> nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
+    >>> nrrd.write('output.nrrd', data, {'space directions': [np.array([1.5, 0., 0.])]}, index_order='F')
+
 
 When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as
 :obj:`True` will instead show a warning.
