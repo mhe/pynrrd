@@ -488,27 +488,63 @@ class Abstract:
                                                [0., 0., 1.],
                                                [np.nan, np.nan, np.nan]])
 
-            # TODO Space directions tests
-            output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_3d.nrrd')
+            with self.subTest('double matrix -> double matrix'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_matrix.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_matrix},
+                           index_order=self.index_order)
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_matrix)
 
-            x = np.arange(1, 28).reshape((3, 3, 3), order=self.index_order)
-            nrrd.write(output_filename, x, {
-                'encoding': 'ascii',
-                'units': ['mm', 'cm', 'in'],
-                'space units': ['mm', 'cm', 'in'],
-                'labels': ['X', 'Y', 'f(log(X, 10), Y)'],
-            }, index_order=self.index_order)
+            with self.subTest('double matrix -> double vector list'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_matrix.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_matrix},
+                           index_order=self.index_order)
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_list)
 
-            with open(output_filename) as fh:
-                lines = fh.readlines()
+            with self.subTest('double vector list'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_list.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_list},
+                           index_order=self.index_order)
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_list)
 
-                # Strip newline from end of line
-                lines = [line.rstrip() for line in lines]
+            with self.subTest('double vector list -> double matrix'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_list.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_list},
+                           index_order=self.index_order)
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_matrix)
 
-                # Note the order of the lines dont matter, we just want to verify they are outputted correctly
-                self.assertTrue('units: "mm" "cm" "in"' in lines)
-                self.assertTrue('space units: "mm" "cm" "in"' in lines)
-                self.assertTrue('labels: "X" "Y" "f(log(X, 10), Y)"' in lines)
+            # nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+
+            # # TODO Space directions tests
+            # output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_3d.nrrd')
+
+            # x = np.arange(1, 28).reshape((3, 3, 3), order=self.index_order)
+            # nrrd.write(output_filename, x, {
+            #     'encoding': 'ascii',
+            #     'units': ['mm', 'cm', 'in'],
+            #     'space units': ['mm', 'cm', 'in'],
+            #     'labels': ['X', 'Y', 'f(log(X, 10), Y)'],
+            # }, index_order=self.index_order)
+
+            # with open(output_filename) as fh:
+            #     lines = fh.readlines()
+
+            #     # Strip newline from end of line
+            #     lines = [line.rstrip() for line in lines]
+
+            #     # Note the order of the lines dont matter, we just want to verify they are outputted correctly
+            #     self.assertTrue('units: "mm" "cm" "in"' in lines)
+            #     self.assertTrue('space units: "mm" "cm" "in"' in lines)
+            #     self.assertTrue('labels: "X" "Y" "f(log(X, 10), Y)"' in lines)
 
 
 class TestWritingFunctionsFortran(Abstract.TestWritingFunctions):

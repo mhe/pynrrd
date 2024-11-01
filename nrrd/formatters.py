@@ -203,7 +203,5 @@ def format_optional_vector_list(x: List[Optional[npt.NDArray]]) -> str:
     vector_list : :class:`str`
         String containing NRRD vector list
     """
-    # Convert to float dtype to convert None to NaN
-    x = np.asarray(x, dtype=float)
 
     return ' '.join([format_optional_vector(y) for y in x])

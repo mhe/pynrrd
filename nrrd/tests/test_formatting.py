@@ -147,6 +147,8 @@ class TestFieldFormatting(unittest.TestCase):
                          '(1,2,3) none (4,5,6) (7,8,9)')
         self.assertEqual(nrrd.format_optional_vector_list([[None, None, None], [1, 2, 3], [4, 5, 6], [7, 8, 9]]),
                          'none (1,2,3) (4,5,6) (7,8,9)')
+        self.assertEqual(nrrd.format_optional_vector_list([None, [1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+                         'none (1,2,3) (4,5,6) (7,8,9)')
 
 
 if __name__ == '__main__':
