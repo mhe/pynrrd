@@ -11,9 +11,13 @@ from nrrd.writer import write
 SPACE_DIRECTIONS_TYPE: Literal['double matrix', 'double vector list'] = 'double matrix'
 """Datatype to use for 'space directions' field when reading/writing NRRD files
 
-The 'space directions' field can be represented in two different ways: as a matrix or as a list of vectors. Per the NRRD specification, the 'space directions' field is a per-axis definition that represents the direction and spacing of each axis. Non-spatial axes are represented as 'none'.
+The 'space directions' field can be represented in two different ways: as a matrix or as a list of vectors. Per the
+NRRD specification, the 'space directions' field is a per-axis definition that represents the direction and spacing of
+each axis. Non-spatial axes are represented as 'none'.
 
-The current default is to return a matrix, where each non-spatial axis is represented as a row of `NaN` in the matrix. In the next major release, this default option will change to return a list of optional vectors, where each non-spatial axis is represented as `None`.
+The current default is to return a matrix, where each non-spatial axis is represented as a row of `NaN` in the matrix.
+In the next major release, this default option will change to return a list of optional vectors, where each non
+spatial axis is represented as `None`.
 
 Example:
     Reading a NRRD file with space directions type set to 'double matrix' (the default).
