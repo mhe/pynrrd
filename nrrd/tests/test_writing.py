@@ -478,6 +478,50 @@ class Abstract:
             self.assertEqual(header.pop('sizes').all(), memory_header.pop('sizes').all())
             self.assertSequenceEqual(header, memory_header)
 
+        def test_space_directions_header(self):
+            space_directions_list = [np.array([1.5, 0., 0.]),
+                                     np.array([0., 1.5, 0.]),
+                                     np.array([0., 0., 1.]),
+                                     None]
+            space_directions_matrix = np.array([[1.5, 0., 0.],
+                                               [0., 1.5, 0.],
+                                               [0., 0., 1.],
+                                               [np.nan, np.nan, np.nan]])
+
+            with self.subTest('double matrix -> double matrix'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_matrix.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_matrix},
+                           index_order=self.index_order)
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_matrix)
+
+            with self.subTest('double matrix -> double vector list'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_matrix.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_matrix},
+                           index_order=self.index_order)
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_list)
+
+            with self.subTest('double vector list'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_list.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_list},
+                           index_order=self.index_order)
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_list)
+
+            with self.subTest('double vector list -> double matrix'):
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
+                test_output_filename = os.path.join(self.temp_write_dir, 'testfile_space_directions_list.nrrd')
+                nrrd.write(test_output_filename, self.data_input, {'space directions': space_directions_list},
+                           index_order=self.index_order)
+                nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+                _, header = nrrd.read(test_output_filename, index_order=self.index_order)
+                np.testing.assert_equal(header['space directions'], space_directions_matrix)
+
 
 class TestWritingFunctionsFortran(Abstract.TestWritingFunctions):
     index_order = 'F'

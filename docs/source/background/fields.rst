@@ -33,7 +33,7 @@ centerings_               :ref:`background/datatypes:string list`
 space_                    :ref:`background/datatypes:string`
 `space dimension`_        :ref:`background/datatypes:int`
 `space units`_            :ref:`background/datatypes:quoted string list`
-`space directions`_       :ref:`background/datatypes:double matrix`
+`space directions`_       :ref:`background/datatypes:double matrix` or :ref:`background/datatypes:double vector list` depending on :data:`nrrd.SPACE_DIRECTIONS_TYPE`
 `space origin`_           :ref:`background/datatypes:double vector`
 `measurement frame`_      :ref:`background/datatypes:int matrix`
 ========================  ==============================================

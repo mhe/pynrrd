@@ -97,6 +97,10 @@ def _format_field_value(value: Any, field_type: NRRDFieldType) -> str:
         return format_matrix(value)
     elif field_type == 'double matrix':
         return format_optional_matrix(value)
+    elif field_type == 'int vector list':
+        return format_optional_vector_list(value)
+    elif field_type == 'double vector list':
+        return format_optional_vector_list(value)
     else:
         raise NRRDError(f'Invalid field type given: {field_type}')
 

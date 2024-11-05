@@ -8,6 +8,7 @@ import zlib
 from collections import OrderedDict
 from typing import IO, Any, AnyStr, Iterable, Tuple
 
+import nrrd
 from nrrd.parsers import *
 from nrrd.types import IndexOrder, NRRDFieldMap, NRRDFieldType, NRRDHeader
 
@@ -19,7 +20,7 @@ _READ_CHUNKSIZE: int = 2 ** 32
 
 _NRRD_REQUIRED_FIELDS = ['dimension', 'type', 'encoding', 'sizes']
 
-ALLOW_DUPLICATE_FIELD = False
+ALLOW_DUPLICATE_FIELD: bool = False
 """Allow duplicate header fields when reading NRRD files
 
 When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as
@@ -109,7 +110,7 @@ def _get_field_type(field: str, custom_field_map: Optional[NRRDFieldMap]) -> NRR
     elif field in ['measurement frame']:
         return 'double matrix'
     elif field in ['space directions']:
-        return 'double matrix'
+        return nrrd.SPACE_DIRECTIONS_TYPE
     else:
         if custom_field_map and field in custom_field_map:
             return custom_field_map[field]
@@ -144,6 +145,10 @@ def _parse_field_value(value: str, field_type: NRRDFieldType) -> Any:
         # This is only valid for double matrices because the matrix is represented with NaN in the entire row
         # for none rows. NaN is only valid for floating point numbers
         return parse_optional_matrix(value)
+    elif field_type == 'int vector list':
+        return parse_optional_vector_list(value, dtype=int)
+    elif field_type == 'double vector list':
+        return parse_optional_vector_list(value, dtype=float)
     else:
         raise NRRDError(f'Invalid field type given: {field_type}')
 

@@ -10,7 +10,10 @@ class TestFieldParsing(unittest.TestCase):
         pass
 
     def assert_equal_with_datatype(self, desired, actual):
-        self.assertEqual(desired.dtype, np.array(actual[0]).dtype)
+        if isinstance(desired, list):
+            self.assertEqual(desired[0].dtype, np.array(actual[0]).dtype)
+        else:
+            self.assertEqual(desired.dtype, np.array(actual[0]).dtype)
         np.testing.assert_equal(desired, actual)
 
     def test_parse_vector(self):
@@ -153,6 +156,64 @@ class TestFieldParsing(unittest.TestCase):
     def test_parse_number_auto_dtype(self):
         self.assertEqual(nrrd.parse_number_auto_dtype('25'), 25)
         self.assertEqual(nrrd.parse_number_auto_dtype('25.125'), 25.125)
+
+    def test_parse_vector_list(self):
+        self.assert_equal_with_datatype(
+            nrrd.parse_vector_list('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(
+            nrrd.parse_vector_list('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
+                                   dtype=float),
+            [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(
+            nrrd.parse_vector_list('(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)',
+                                   dtype=int), [[1, 0, 0], [0, 1, 0], [0, 0, 4]])
+
+        self.assert_equal_with_datatype(nrrd.parse_vector_list('(1,0,0) (0,1,0) (0,0,1)'),
+                                        [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        self.assert_equal_with_datatype(nrrd.parse_vector_list('(1,0,0) (0,1,0) (0,0,1)', dtype=float),
+                                        [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
+        self.assert_equal_with_datatype(nrrd.parse_vector_list('(1,0,0) (0,1,0) (0,0,1)', dtype=int),
+                                        [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector list should have same number of elements in each row'):
+            nrrd.parse_vector_list('(1,0,0,0) (0,1,0) (0,0,1)')
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'dtype should be None for automatic type detection, float or int'):
+            nrrd.parse_vector_list('(1,0,0) (0,1,0) (0,0,1)', dtype=np.uint8)
+
+        vector_list = nrrd.parse_vector_list('(1,0,0) (0,1,0) (0,0,1)')
+        self.assertIsInstance(vector_list, list)
+        self.assertTrue(all(isinstance(vector, np.ndarray) for vector in vector_list))
+
+    def test_parse_optional_vector_list(self):
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector_list(
+            '(1.4726600000000003,-0,0) (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[1.4726600000000003, 0, 0], [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector_list('(1,0,0) (0,1,0) (0,0,1)'),
+                                        [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector_list(
+            '(1.4726600000000003,-0,0) none (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[1.4726600000000003, 0, 0], None, [0, 1.4726600000000003, 0],
+             [0, 0, 4.7619115092114601]])
+
+        self.assert_equal_with_datatype(nrrd.parse_optional_vector_list(
+            '(1.4726600000000003,-0,0) none (-0,1.4726600000000003,-0) (0,-0,4.7619115092114601)'),
+            [[1.4726600000000003, 0, 0], None, [0, 1.4726600000000003, 0], [0, 0, 4.7619115092114601]])
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector list should have same number of elements in each row'):
+            nrrd.parse_optional_vector_list('(1,0,0,0) (0,1,0) (0,0,1)')
+
+        with self.assertRaisesRegex(nrrd.NRRDError, 'Vector list should have same number of elements in each row'):
+            nrrd.parse_optional_vector_list('none (1,0,0,0) (0,1,0) (0,0,1)')
+
+        vector_list = nrrd.parse_optional_vector_list('(1,0,0) (0,1,0) none (0,0,1)')
+        self.assertIsInstance(vector_list, list)
+        self.assertTrue(all(vector is None or isinstance(vector, np.ndarray) for vector in vector_list))
 
 
 if __name__ == '__main__':

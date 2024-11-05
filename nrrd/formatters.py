@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -57,6 +57,7 @@ def format_vector(x: npt.NDArray) -> str:
     vector : :class:`str`
         String containing NRRD vector
     """
+    x = np.asarray(x)
 
     return '(' + ','.join([format_number(y) for y in x]) + ')'
 
@@ -80,10 +81,15 @@ def format_optional_vector(x: Optional[npt.NDArray]) -> str:
     vector : :class:`str`
         String containing NRRD vector
     """
+    # If vector is None, return none
+    if x is None:
+        return 'none'
 
-    # If vector is None or all elements are NaN, then return none
+    x = np.asarray(x)
+
+    # If all elements are None or NaN, then return none
     # Otherwise format the vector as normal
-    if x is None or np.all(np.isnan(x)):
+    if np.all(x == None) or np.all(np.isnan(x)):  # noqa: E711
         return 'none'
     else:
         return format_vector(x)
@@ -131,6 +137,8 @@ def format_optional_matrix(x: Optional[npt.NDArray]) -> str:
     matrix : :class:`str`
         String containing NRRD matrix
     """
+    # Convert to float dtype to convert None to NaN
+    x = np.asarray(x, dtype=float)
 
     return ' '.join([format_optional_vector(y) for y in x])
 
@@ -151,5 +159,49 @@ def format_number_list(x: npt.NDArray) -> str:
     list : :class:`str`
         String containing NRRD list
     """
+    x = np.asarray(x)
 
     return ' '.join([format_number(y) for y in x])
+
+
+def format_vector_list(x: List[npt.NDArray]) -> str:
+    """Format a :class:`list` of (N,) :class:`numpy.ndarray` into a NRRD vector list string
+
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more
+    information on the format.
+
+    Parameters
+    ----------
+    x : :class:`list` of (N,) :class:`numpy.ndarray`
+        Vector list to convert to NRRD vector list string
+
+    Returns
+    -------
+    vector_list : :class:`str`
+        String containing NRRD vector list
+    """
+
+    return ' '.join([format_vector(y) for y in x])
+
+
+def format_optional_vector_list(x: List[Optional[npt.NDArray]]) -> str:
+    """Format a :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None` into a NRRD optional vector list string
+
+    Function converts a :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None` into a string using
+    the NRRD vector list format.
+
+    See :ref:`background/datatypes:int vector list` and :ref:`background/datatypes:double vector list` for more
+    information on the format.
+
+    Parameters
+    ----------
+    x : :class:`list` of (N,) :class:`numpy.ndarray` or :obj:`None`
+        Vector list to convert to NRRD vector list string
+
+    Returns
+    -------
+    vector_list : :class:`str`
+        String containing NRRD vector list
+    """
+
+    return ' '.join([format_optional_vector(y) for y in x])
