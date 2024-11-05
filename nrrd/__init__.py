@@ -11,36 +11,26 @@ from nrrd.writer import write
 SPACE_DIRECTIONS_TYPE: Literal['double matrix', 'double vector list'] = 'double matrix'
 """Datatype to use for 'space directions' field when reading/writing NRRD files
 
-TODO Addison
-The 'space directions' field can be represented in two different ways: as a matrix or as a list of vectors.
+The 'space directions' field can be represented in two different ways: as a matrix or as a list of vectors. Per the NRRD specification, the 'space directions' field is a per-axis definition that represents the direction and spacing of each axis. Non-spatial axes are represented as 'none'.
 
-The current default is to use a matrix, but it will be switched to a list of vectors in the next major release.
-
-The space directions field is defined per-axis where any of the axis can be 'none'. A matrix gives the false impression the s
-
-The default is to use a matrix, but it can be set to use a list of vectors by setting this variable to
-:obj:`'double vector list'`. This is mostly useful for backwards compatibility with older versions of the `nrrd` library
-which only supported the list of vectors representation.
+The current default is to return a matrix, where each non-spatial axis is represented as a row of `NaN` in the matrix. In the next major release, this default option will change to return a list of optional vectors, where each non-spatial axis is represented as `None`.
 
 Example:
+    Reading a NRRD file with space directions type set to 'double matrix' (the default).
+    >>> nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
+    >>> data, header = nrrd.read('file.nrrd')
+    >>> print(header['space directions'])
+    [[1.5 0.  0. ]
+     [0.  1.5 0. ]
+     [0.  0.  1. ]
+     [nan nan nan]]
+
+    Reading a NRRD file with space directions type set to 'double vector list'.
+
     >>> nrrd.SPACE_DIRECTIONS_TYPE = 'double vector list'
-    >>> nrrd.write('output.nrrd', data, {'space directions': [np.array([1.5, 0., 0.])]}, index_order='F')
-
-
-When there are duplicated fields in a NRRD file header, pynrrd throws an error by default. Setting this field as
-:obj:`True` will instead show a warning.
-
-Example:
-    Reading a NRRD file with duplicated header field 'space' with field set to :obj:`False`.
-
-    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
-    nrrd.errors.NRRDError: Duplicate header field: 'space'
-
-    Set the field as :obj:`True` to receive a warning instead.
-
-    >>> nrrd.reader.ALLOW_DUPLICATE_FIELD = True
-    >>> filedata, fileheader = nrrd.read('filename_duplicatedheader.nrrd')
-    UserWarning: Duplicate header field: 'space' warnings.warn(dup_message)
+    >>> data, header = nrrd.read('file.nrrd')
+    >>> print(header['space directions'])
+    [array([1.5, 0. , 0. ]), array([0. , 1.5, 0. ]), array([0., 0., 1.]), None]
 """
 
 __all__ = ['read', 'read_data', 'read_header', 'write', 'format_number_list', 'format_number', 'format_matrix',
