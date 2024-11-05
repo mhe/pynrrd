@@ -21,6 +21,7 @@ spatial axis is represented as `None`.
 
 Example:
     Reading a NRRD file with space directions type set to 'double matrix' (the default).
+
     >>> nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
     >>> data, header = nrrd.read('file.nrrd')
     >>> print(header['space directions'])
