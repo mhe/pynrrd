@@ -1,4 +1,4 @@
-from typing import Literal
+from typing_extensions import Literal
 
 from nrrd._version import __version__
 from nrrd.formatters import *
