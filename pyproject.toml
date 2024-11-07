@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pynrrd"
 dynamic = ["version"]
 description = "Pure python module for reading and writing NRRD files."
-readme = { file = "README.txt", content-type = "text/x-rst" }
+readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.7"
 license = { text = "MIT License" }
 authors = [{ name = "Maarten Everts", email = "me@nn8.nl" }]
