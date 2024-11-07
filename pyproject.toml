@@ -9,7 +9,10 @@ description = "Pure python module for reading and writing NRRD files."
 readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.7"
 license = { text = "MIT License" }
-authors = [{ name = "Maarten Everts", email = "me@nn8.nl" }]
+authors = [
+    { name = "Maarten Everts", email = "me@nn8.nl" }
+    { name = "Addison Elliott", email = "addison.elliott@gmail.com" }
+]
 keywords = ["nrrd", "teem", "image", "processing", "file", "format"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
