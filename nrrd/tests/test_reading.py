@@ -517,6 +517,12 @@ class Abstract:
             finally:
                 nrrd.SPACE_DIRECTIONS_TYPE = 'double matrix'
 
+        def test_file_parameter_not_closed(self):
+            with open(RAW_NRRD_FILE_PATH, 'rb') as fh:
+                header = nrrd.read_header(fh)
+                nrrd.read_data(header, fh)
+                self.assertFalse(fh.closed)
+
 
 class TestReadingFunctionsFortran(Abstract.TestReadingFunctions):
     index_order = 'F'
