@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   run-hooks:
     name: Run pre-commit hooks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check out Git repository
@@ -14,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.9
+          python-version: 3.13
 
       - name: Install Python dependencies
         run: pip install pre-commit
