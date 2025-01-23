@@ -279,7 +279,7 @@ def read_header(file: Union[str, Iterable[AnyStr]], custom_field_map: Optional[N
             break
 
         # Read the field and value from the line, split using regex to search for := or : delimiter
-        field, value = re.split(r':=?', line, 1)
+        field, value = re.split(r':=?', line, maxsplit=1)
 
         # Remove whitespace before and after the field and value
         field, value = field.strip(), value.strip()
