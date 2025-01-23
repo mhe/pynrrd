@@ -387,7 +387,8 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
     else:
         # Must close the file because if the file was opened above from detached filename, there is no "with" block to
         # close it for us
-        fh.close()
+        if data_filename is not None:
+            fh.close()
 
         raise NRRDError('Invalid lineskip, allowed values are greater than or equal to 0')
 
@@ -395,7 +396,8 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
     if byte_skip < -1:
         # Must close the file because if the file was opened above from detached filename, there is no "with" block to
         # close it for us
-        fh.close()
+        if data_filename is not None:
+            fh.close()
 
         raise NRRDError('Invalid byteskip, allowed values are greater than or equal to -1')
     elif byte_skip >= 0:
@@ -428,7 +430,8 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
         else:
             # Must close the file because if the file was opened above from detached filename, there is no "with" block
             # to close it for us
-            fh.close()
+            if data_filename is not None:
+                fh.close()
 
             raise NRRDError(f'Unsupported encoding: {header["encoding"]}')
 
@@ -461,8 +464,9 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
         # NumPy
         data = np.frombuffer(decompressed_data[byte_skip:], dtype)
 
-    # Close the file, even if opened using "with" block, closing it manually does not hurt
-    fh.close()
+    # Close the file if we opened it
+    if data_filename is not None:
+        fh.close()
 
     if total_data_points != data.size:
         raise NRRDError(f'Size of the data does not equal the product of all the dimensions: '
