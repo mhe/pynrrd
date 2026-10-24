@@ -401,7 +401,8 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
 
         raise NRRDError('Invalid byteskip, allowed values are greater than or equal to -1')
     elif byte_skip >= 0:
-        fh.seek(byte_skip, os.SEEK_CUR)
+        if header['encoding'] not in ['gzip', 'gz', 'bzip2', 'bz2']:
+            fh.seek(byte_skip, os.SEEK_CUR)
     elif byte_skip == -1 and header['encoding'] not in ['gzip', 'gz', 'bzip2', 'bz2']:
         fh.seek(-dtype.itemsize * total_data_points, os.SEEK_END)
     else:
