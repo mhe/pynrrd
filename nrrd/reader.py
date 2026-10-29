@@ -463,6 +463,11 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
         # This could potentially be using a lot of memory
         del compressed_data
 
+        if not decompobj.eof:
+            if data_filename is not None:
+                fh.close()
+            raise NRRDError('Data ended before reaching the end of the compressed stream')
+
         # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
         # NumPy
         data = np.frombuffer(decompressed_data[byte_skip:], dtype)

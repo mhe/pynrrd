@@ -1,3 +1,5 @@
+import bz2
+import gzip
 import io
 import unittest
 from tempfile import TemporaryDirectory
@@ -566,6 +568,28 @@ class Abstract:
                 header = nrrd.read_header(fh)
                 nrrd.read_data(header, fh)
                 self.assertFalse(fh.closed)
+
+
+class TestCompressedDataIntegrity(unittest.TestCase):
+    def test_truncated_compressed_data(self):
+        expected = np.arange(8, dtype=np.uint8)
+        for encoding, compress in [('gzip', gzip.compress), ('bzip2', bz2.compress)]:
+            with self.subTest(encoding=encoding):
+                header = {'type': 'uint8', 'dimension': 1, 'sizes': np.array([8]),
+                          'encoding': encoding}
+                # Removing the stream trailer can leave every decoded voxel intact.
+                stream = io.BytesIO(compress(expected.tobytes())[:-1])
+                with self.assertRaisesRegex(nrrd.NRRDError, 'end of the compressed stream'):
+                    nrrd.read_data(header, stream)
+
+    def test_complete_compressed_data(self):
+        expected = np.arange(8, dtype=np.uint8)
+        for encoding, compress in [('gzip', gzip.compress), ('bzip2', bz2.compress)]:
+            with self.subTest(encoding=encoding):
+                header = {'type': 'uint8', 'dimension': 1, 'sizes': np.array([8]),
+                          'encoding': encoding}
+                stream = io.BytesIO(compress(expected.tobytes()))
+                np.testing.assert_array_equal(nrrd.read_data(header, stream), expected)
 
 
 class TestReadingFunctionsFortran(Abstract.TestReadingFunctions):
