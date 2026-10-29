@@ -1,3 +1,5 @@
+import bz2
+import gzip
 import io
 import unittest
 from tempfile import TemporaryDirectory
@@ -566,6 +568,26 @@ class Abstract:
                 header = nrrd.read_header(fh)
                 nrrd.read_data(header, fh)
                 self.assertFalse(fh.closed)
+
+
+class TestPositiveByteSkip(unittest.TestCase):
+    def test_compressed_positive_byte_skip(self):
+        expected = np.arange(8, dtype=np.uint8)
+        for encoding, compress in [('gzip', gzip.compress), ('bzip2', bz2.compress)]:
+            for field in ['byte skip', 'byteskip']:
+                with self.subTest(encoding=encoding, field=field):
+                    header = {'type': 'uint8', 'dimension': 1, 'sizes': np.array([8]),
+                              'encoding': encoding, field: 4}
+                    stream = io.BytesIO(compress(b'junk' + expected.tobytes()))
+                    np.testing.assert_array_equal(nrrd.read_data(header, stream), expected)
+
+    def test_uncompressed_positive_byte_skip(self):
+        expected = np.arange(8, dtype=np.uint8)
+        for encoding, payload in [('raw', expected.tobytes()), ('ascii', b'0 1 2 3 4 5 6 7')]:
+            with self.subTest(encoding=encoding):
+                header = {'type': 'uint8', 'dimension': 1, 'sizes': np.array([8]),
+                          'encoding': encoding, 'byte skip': 4}
+                np.testing.assert_array_equal(nrrd.read_data(header, io.BytesIO(b'junk' + payload)), expected)
 
 
 class TestReadingFunctionsFortran(Abstract.TestReadingFunctions):
