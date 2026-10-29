@@ -1,5 +1,6 @@
 import io
 import unittest
+from tempfile import TemporaryDirectory
 from typing import ClassVar
 
 import numpy as np
@@ -348,6 +349,49 @@ class Abstract:
                 with self.assertRaisesRegex(nrrd.NRRDError, 'Number of elements in sizes does not match dimension. '
                                                             'Dimension: 2, len\\(sizes\\): 3'):
                     nrrd.read_data(header, fh, RAW_NRRD_FILE_PATH)
+
+        def test_nonpositive_dimensions(self):
+            cases = [(0, []), (-1, []), (1, [0]), (1, [-1]),
+                     (2, [2, 0]), (2, [2, -1]), (2, [-2, -3])]
+            for dimension, sizes in cases:
+                with self.subTest(dimension=dimension, sizes=sizes):
+                    header = {'type': 'uint8', 'encoding': 'raw',
+                              'dimension': dimension, 'sizes': np.array(sizes, dtype=int)}
+                    with io.BytesIO(b'\x01\x02\x03\x04\x05\x06') as fh:
+                        with self.assertRaises(nrrd.NRRDError):
+                            nrrd.read_data(header, fh, index_order=self.index_order)
+                        self.assertEqual(fh.tell(), 0)
+
+        def test_nonpositive_dimensions_before_datatype_lookup(self):
+            for dimension, sizes in [(0, []), (1, [0]), (1, [-1])]:
+                with self.subTest(dimension=dimension, sizes=sizes):
+                    header = {'type': 'invalid', 'encoding': 'raw',
+                              'dimension': dimension, 'sizes': np.array(sizes, dtype=int)}
+                    with io.BytesIO(b'\x01') as fh:
+                        with self.assertRaisesRegex(nrrd.NRRDError, 'must be positive'):
+                            nrrd.read_data(header, fh, index_order=self.index_order)
+
+        def test_nonpositive_dimensions_before_detached_file_access(self):
+            with TemporaryDirectory() as directory:
+                filename = os.path.join(directory, 'header.nhdr')
+                for dimension, sizes in [(0, []), (1, [0]), (1, [-1])]:
+                    with self.subTest(dimension=dimension, sizes=sizes):
+                        header = {'type': 'uint8', 'encoding': 'raw', 'data file': 'missing.raw',
+                                  'dimension': dimension, 'sizes': np.array(sizes, dtype=int)}
+                        with self.assertRaisesRegex(nrrd.NRRDError, 'must be positive'):
+                            nrrd.read_data(header, filename=filename, index_order=self.index_order)
+
+        def test_positive_dimensions(self):
+            expected_2d = [[1, 3, 5], [2, 4, 6]] if self.index_order == 'F' else [[1, 2], [3, 4], [5, 6]]
+            cases = [([1], b'\x07', [7]), ([2, 3], b'\x01\x02\x03\x04\x05\x06', expected_2d)]
+            for sizes, payload, expected in cases:
+                with self.subTest(sizes=sizes):
+                    header = {'type': 'uint8', 'encoding': 'raw',
+                              'dimension': len(sizes), 'sizes': np.array(sizes)}
+                    with io.BytesIO(payload) as fh:
+                        data = nrrd.read_data(header, fh, index_order=self.index_order)
+                    np.testing.assert_equal(data, expected)
+                    np.testing.assert_equal(data.dtype, np.uint8)
 
         def test_invalid_encoding(self):
             with open(RAW_NRRD_FILE_PATH, 'rb') as fh:

@@ -353,6 +353,9 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
         raise NRRDError(f'Number of elements in sizes does not match dimension. Dimension: {header["dimension"]}, '
                         f'len(sizes): {len(header["sizes"])}')
 
+    if header['dimension'] < 1 or np.any(header['sizes'] <= 0):
+        raise NRRDError('Dimension and sizes must be positive')
+
     # Determine the data type from the header
     dtype = _determine_datatype(header)
 
