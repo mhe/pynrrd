@@ -3,7 +3,7 @@ Index Ordering
 
 .. currentmodule:: nrrd
 
-NRRD stores the image elements in `row-major ordering <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_ where the row can be seen as the fastest-varying axis. The header fields of NRRD that describes the axes are always specified in the order from fastest-varying to slowest-varying, i.e., `sizes` will be equal to `(# rows, # columns)`. This is also applicable to images of higher dimensions.
+In NRRD, the header fields that describe the axes (`sizes`, `space directions`, etc.) are always specified in the order from fastest-varying to slowest-varying in the raw data. This is the same convention as Fortran (column-major) array indexing. For a typical 2D image where pixels along a scanline are stored contiguously, the first axis is the horizontal (column/x) axis, so `sizes` will be equal to `(# columns, # rows)`, i.e. `(width, height)`. For example, a 640x480 RGB image would have `sizes: 3 640 480`. This is also applicable to images of higher dimensions.
 
 Both the reading and writing functions in pynrrd include an :obj:`index_order` parameter that is used to specify whether the returned data array should be in C-order ('C') or Fortran-order ('F').
 
