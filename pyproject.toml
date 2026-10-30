@@ -41,4 +41,4 @@ Tracker = "https://github.com/mhe/pynrrd/issues"
 version = { attr = "nrrd._version.__version__" }
 
 [tool.setuptools.packages]
-find = { exclude = ["*.tests", "*.tests.*", "tests.*", "tests"] }
+find = { include = ["nrrd*"], exclude = ["*.tests", "*.tests.*", "tests.*", "tests"] }
