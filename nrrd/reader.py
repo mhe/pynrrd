@@ -353,6 +353,9 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
         raise NRRDError(f'Number of elements in sizes does not match dimension. Dimension: {header["dimension"]}, '
                         f'len(sizes): {len(header["sizes"])}')
 
+    if header['dimension'] < 1 or np.any(header['sizes'] <= 0):
+        raise NRRDError('Dimension and sizes must be positive')
+
     # Determine the data type from the header
     dtype = _determine_datatype(header)
 
@@ -459,6 +462,11 @@ def read_data(header: NRRDHeader, fh: Optional[IO] = None, filename: Optional[st
         # Delete the compressed data since we do not need it anymore
         # This could potentially be using a lot of memory
         del compressed_data
+
+        if not decompobj.eof:
+            if data_filename is not None:
+                fh.close()
+            raise NRRDError('Data ended before reaching the end of the compressed stream')
 
         # Byte skip is applied AFTER the decompression. Skip first x bytes of the decompressed data and parse it using
         # NumPy
