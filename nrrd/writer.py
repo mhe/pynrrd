@@ -214,11 +214,12 @@ def _write_data(data: npt.NDArray, fh: IO, header: NRRDHeader, compression_level
         fh.flush()
 
     elif header['encoding'].lower() in ['ascii', 'text', 'txt']:
+        fmt = '%d' if data.dtype.kind in 'iu' else '%.17g'
         # savetxt only works for 1D and 2D arrays, so reshape any > 2 dim arrays into one long 1D array
         if data.ndim > 2:
-            np.savetxt(fh, data.ravel(order=index_order), '%.17g')
+            np.savetxt(fh, data.ravel(order=index_order), fmt)
         else:
-            np.savetxt(fh, data if index_order == 'C' else data.T, '%.17g')
+            np.savetxt(fh, data if index_order == 'C' else data.T, fmt)
 
     else:
         # Convert the data into a string

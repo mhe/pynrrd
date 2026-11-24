@@ -115,6 +115,31 @@ class Abstract:
             self.assertEqual(header['encoding'], 'ascii')
             np.testing.assert_equal(x, data)
 
+        def test_write_ascii_64bit_integers(self):
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_integers.nrrd')
+
+            for dtype in (np.int64, np.uint64):
+                limits = np.iinfo(dtype)
+                values = np.array([limits.min, limits.max, 2 ** 53 + 1, 2 ** 53 + 3,
+                                   0, 1, 42, 2 ** 53 - 1], dtype=dtype)
+                for shape in ((8,), (2, 4), (2, 2, 2)):
+                    with self.subTest(dtype=dtype, shape=shape):
+                        expected = values.reshape(shape)
+                        nrrd.write(output_filename, expected, {'encoding': 'ascii'}, index_order=self.index_order)
+
+                        data, _ = nrrd.read(output_filename, index_order=self.index_order)
+                        self.assertEqual(data.dtype, expected.dtype)
+                        np.testing.assert_array_equal(data, expected)
+
+        def test_write_ascii_float_precision(self):
+            output_filename = os.path.join(self.temp_write_dir, 'testfile_ascii_float.nrrd')
+            expected = np.array([[0.1, 1.0 / 3.0], [1e-100, 1e100]], dtype=np.float64)
+
+            nrrd.write(output_filename, expected, {'encoding': 'ascii'}, index_order=self.index_order)
+
+            data, _ = nrrd.read(output_filename, index_order=self.index_order)
+            np.testing.assert_array_equal(data, expected)
+
         def test_write_custom_fields_without_custom_field_map(self):
             output_filename = os.path.join(self.temp_write_dir, 'testfile_custom_fields.nrrd')
 
